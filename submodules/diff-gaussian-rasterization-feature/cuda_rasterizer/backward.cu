@@ -20,7 +20,16 @@ namespace cg = cooperative_groups;
 
 // Backward pass for conversion of spherical harmonics to RGB for
 // each Gaussian.
-__device__ void computeColorFromSH(int idx, int deg, int max_coeffs, const glm::vec3* means, glm::vec3 campos, const float* shs, const bool* clamped, const glm::vec3* dL_dcolor, glm::vec3* dL_dmeans, glm::vec3* dL_dshs)
+__device__ void computeColorFromSH(
+	int idx, int deg, int max_coeffs, 
+	const glm::vec3* means, 
+	glm::vec3 campos, 
+	const float* shs, 
+	const bool* clamped, 
+	const glm::vec3* dL_dcolor, 
+	glm::vec3* dL_dmeans, // o
+	glm::vec3* dL_dshs // o
+)
 {
 	// Compute intermediate values, as it is done during forward
 	glm::vec3 pos = means[idx];
@@ -141,6 +150,9 @@ __device__ void computeColorFromSH(int idx, int deg, int max_coeffs, const glm::
 	dL_dmeans[idx] += glm::vec3(dL_dmean.x, dL_dmean.y, dL_dmean.z);
 }
 
+
+
+
 // Backward version of INVERSE 2D covariance matrix computation
 // (due to length launched as separate kernel before other 
 // backward steps contained in preprocess)
@@ -152,8 +164,9 @@ __global__ void computeCov2DCUDA(int P,
 	const float tan_fovx, float tan_fovy,
 	const float* view_matrix,
 	const float* dL_dconics,
-	float3* dL_dmeans,
-	float* dL_dcov)
+	float3* dL_dmeans, // o
+	float* dL_dcov // o
+)
 {
 	auto idx = cg::this_grid().thread_rank();
 	if (idx >= P || !(radii[idx] > 0))
@@ -276,6 +289,10 @@ __global__ void computeCov2DCUDA(int P,
 	dL_dmeans[idx] = dL_dmean;
 }
 
+
+
+
+
 // Backward pass for the conversion of scale and rotation to a 
 // 3D covariance matrix for each Gaussian. 
 __device__ void computeCov3D(int idx, const glm::vec3 scale, float mod, const glm::vec4 rot, const float* dL_dcov3Ds, glm::vec3* dL_dscales, glm::vec4* dL_drots)
@@ -346,6 +363,10 @@ __device__ void computeCov3D(int idx, const glm::vec3 scale, float mod, const gl
 
 
 
+
+
+
+
 // Backward pass of the preprocessing steps, except
 // for the covariance computation and inversion
 // (those are handled by a previous kernel call)
@@ -412,7 +433,10 @@ __global__ void preprocessCUDA(
 
 
 
-// Backward version of the rendering procedure.
+
+
+
+// Backward version of the rendering procedure. 針對每個tile計算對應的gradient
 template <uint32_t C>
 __global__ void __launch_bounds__(BLOCK_X * BLOCK_Y)
 renderCUDA(
@@ -425,17 +449,17 @@ renderCUDA(
 	const float* __restrict__ colors,
 	const float* __restrict__ semantic_feature,
 	const float* __restrict__ depths,
-	const float* __restrict__ final_Ts,
-	const uint32_t* __restrict__ n_contrib,
-	const float* __restrict__ dL_dpixels,
-	const float* __restrict__ dL_dfeaturepixels,
-	const float* __restrict__ dL_depths, 
+	const float* __restrict__ final_Ts,  // imgState.accum_alpha
+	const uint32_t* __restrict__ n_contrib, // 紀錄每個pixel經過了幾個gaussian
+	const float* __restrict__ dL_dpixels,    // input
+	const float* __restrict__ dL_dfeaturepixels,  // input
+	const float* __restrict__ dL_depths,   // input
 	float3* __restrict__ dL_dmean2D,
 	float4* __restrict__ dL_dconic2D,
 	float* __restrict__ dL_dopacity,
-	float* __restrict__ dL_dcolors,
-	float* __restrict__ dL_dsemantic_feature,
-	float* __restrict__ dL_dz,
+	float* __restrict__ dL_dcolors,  // color output
+	float* __restrict__ dL_dsemantic_feature,  // semantic output
+	float* __restrict__ dL_dz,       // depth output
 	float* collected_semantic_feature) 
 {
 	// We rasterize again. Compute necessary block info.
@@ -444,6 +468,7 @@ renderCUDA(
 	const uint2 pix_min = { block.group_index().x * BLOCK_X, block.group_index().y * BLOCK_Y };
 	const uint2 pix_max = { min(pix_min.x + BLOCK_X, W), min(pix_min.y + BLOCK_Y , H) };
 	const uint2 pix = { pix_min.x + block.thread_index().x, pix_min.y + block.thread_index().y };
+	
 	const uint32_t pix_id = W * pix.y + pix.x;
 	const float2 pixf = { (float)pix.x, (float)pix.y };
 
@@ -468,7 +493,8 @@ renderCUDA(
 	float T = T_final;
 
 	// We start from the back. The ID of the last contributing
-	// Gaussian is known from each pixel from the forward.
+	// Gaussian is known from each pixel from the forward. 
+	// 核心就是根据alpha合成的公式，手推每个变量的反向传播公式，推导过程可参考论文里的附录。
 	uint32_t contributor = toDo;
 	const int last_contributor = inside ? n_contrib[pix_id] : 0;
 
@@ -503,7 +529,7 @@ renderCUDA(
 	for (int i = 0; i < rounds; i++, toDo -= BLOCK_SIZE)
 	{
 		// Load auxiliary data into shared memory, start in the BACK
-		// and load them in revers order.
+		// and load them in revers order.　反著丟進去
 		block.sync();
 		const int progress = i * BLOCK_SIZE + block.thread_rank();
 		if (range.x + progress < range.y)
@@ -547,12 +573,14 @@ renderCUDA(
 			// Propagate gradients to per-Gaussian colors and keep
 			// gradients w.r.t. alpha (blending factor for a Gaussian/pixel
 			// pair).
-			float dL_dalpha = 0.0f;
+			float dL_dalpha = 0.0f;   // 可以通过 alpha compositing 的公式，利用 chain rule 倒推各个参数的梯度。
 			const int global_id = collected_id[j];
 			for (int ch = 0; ch < C; ch++)
 			{
 				const float c = collected_colors[ch * BLOCK_SIZE + j];
 				// Update last color (to be used in the next iteration)
+				// for dl dalpha
+				// accum rec也沒有T=alpha*(1~(n-1))
 				accum_rec[ch] = last_alpha * last_color[ch] + (1.f - last_alpha) * accum_rec[ch];
 				last_color[ch] = c;
 
@@ -563,16 +591,18 @@ renderCUDA(
 				// many that were affected by this Gaussian.
 				atomicAdd(&(dL_dcolors[global_id * C + ch]), dchannel_dcolor * dL_dchannel);
 			}
+
+			// 計算alpha gradient時 也加入depth的影響
 			const float c_d = collected_depths[j];
 			accum_depth_rec = last_alpha * last_depth + (1.f - last_alpha) * accum_depth_rec;
 			last_depth = c_d;
-			dL_dalpha += (c_d - accum_depth_rec) * dL_depth;
-
+			dL_dalpha += (c_d - accum_depth_rec) * dL_depth; // dL depth=0, 對dL dalpha無影響
 
 			for (int ch = 0; ch < NUM_SEMANTIC_CHANNELS; ch++) 
 			{
 				const float f = collected_semantic_feature[ch * BLOCK_SIZE + j];
 				// Update last semantic feature (to be used in the next iteration)
+				// not affect dalpha, not used in end
 				accum_semantic_feature_rec[ch] = last_alpha * last_semantic_feature[ch] + (1.f - last_alpha) * accum_semantic_feature_rec[ch];
 				last_semantic_feature[ch] = f;
 
@@ -585,10 +615,8 @@ renderCUDA(
 				// Atomic, since this pixel is just one of potentially
 				// many that were affected by this Gaussian.
 				atomicAdd(&(dL_dsemantic_feature[global_id * NUM_SEMANTIC_CHANNELS + ch]), dchannel_dsemantic_feature * dL_dfeaturechannel); 
-			}			
-
-
-
+			}
+			// accum rec也沒有T=alpha*(1~(n-1))
 			dL_dalpha *= T;
 			// Update last alpha (to be used in the next iteration)
 			last_alpha = alpha;
@@ -624,6 +652,10 @@ renderCUDA(
 		}
 	}
 }
+
+
+
+
 
 
 void BACKWARD::preprocess(
@@ -666,8 +698,9 @@ void BACKWARD::preprocess(
 		tan_fovy,
 		viewmatrix,
 		dL_dconic,
-		(float3*)dL_dmean3D,
-		dL_dcov3D);
+		(float3*)dL_dmean3D, // o
+		dL_dcov3D // o
+	);
 
 	// Propagate gradients for remaining steps: finish 3D mean gradients,
 	// propagate color gradients to SH (if desireD), propagate 3D covariance
@@ -691,8 +724,12 @@ void BACKWARD::preprocess(
 		dL_dsh,
 		dL_dscale,
 		dL_drot,
-		dL_dz);
+		dL_dz
+	);
 }
+
+
+
 
 
 
@@ -708,17 +745,17 @@ void BACKWARD::render(
 	const float* colors,
 	const float* semantic_feature,
 	const float* depths, 
-	const float* final_Ts,
-	const uint32_t* n_contrib,
-	const float* dL_dpixels,
-	const float* dL_dfeaturepixels,
-	const float* dL_depths, 
+	const float* final_Ts, // imgState.accum_alpha
+	const uint32_t* n_contrib, // 紀錄每個pixel經過了幾個gaussian
+	const float* dL_dpixels,    // input
+	const float* dL_dfeaturepixels, // input
+	const float* dL_depths,  // input
 	float3* dL_dmean2D,
 	float4* dL_dconic2D,
 	float* dL_dopacity,
-	float* dL_dcolors,
-	float* dL_dsemantic_feature,
-	float* dL_dz,
+	float* dL_dcolors,  // precomputed color
+	float* dL_dsemantic_feature, // semantic
+	float* dL_dz, // depth
 	float* collected_semantic_feature) 
 	
 {

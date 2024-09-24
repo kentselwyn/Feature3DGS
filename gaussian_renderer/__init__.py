@@ -18,6 +18,7 @@ from utils.sh_utils import eval_sh
 from torch import nn
 
 
+# used in render_edit
 def calculate_selection_score(features, query_features, score_threshold=None, positive_ids=[0]):
         features /= features.norm(dim=-1, keepdim=True)
         query_features /= query_features.norm(dim=-1, keepdim=True)
@@ -35,6 +36,8 @@ def calculate_selection_score(features, query_features, score_threshold=None, po
                 scores = torch.isin(torch.argmax(scores, dim=-1), torch.tensor(positive_ids).cuda()).float()
         return scores
 
+
+# used in render_edit
 def calculate_selection_score_delete(features, query_features, score_threshold=None, positive_ids=[0]):
         features /= features.norm(dim=-1, keepdim=True)
         query_features /= query_features.norm(dim=-1, keepdim=True)

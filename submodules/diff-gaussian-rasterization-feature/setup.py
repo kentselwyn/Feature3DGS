@@ -28,9 +28,17 @@ setup(
             "ext.cpp"],
             #extra_compile_args={"nvcc": ["-I" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "third_party/glm/")]})
             ### To fix illegal memory issue
-            extra_compile_args={"nvcc": ["-Xcompiler", "-fno-gnu-unique","-I" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "third_party/glm/")]})
-        ],
-    cmdclass={
-        'build_ext': BuildExtension
-    }
+            # extra_compile_args={"nvcc": [
+            #     "-Xcompiler", 
+            #     "-fno-gnu-unique",
+            #     "-I" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "third_party/glm/")]})
+            ###
+            extra_compile_args={"nvcc": ["-O0", "-Xcompiler", "-fPIC", "-G", "-g", 
+                                         "-I" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "third_party/glm/")],
+                "cxx": ["-g"]  # Generate debug info for C++ code
+            },
+            extra_link_args=["-shared"]
+        )
+    ],
+    cmdclass={'build_ext': BuildExtension}
 )

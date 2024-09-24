@@ -16,3 +16,4 @@ submodules/diff-gaussian-rasterization-feature/third_party
 SIBR_viewers
 viewer_windows/
 image.pt
+snapshot_bw.dump

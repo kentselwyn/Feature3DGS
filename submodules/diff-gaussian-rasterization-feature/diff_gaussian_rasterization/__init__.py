@@ -237,6 +237,8 @@ class GaussianRasterizer(nn.Module):
         if cov3D_precomp is None:
             cov3D_precomp = torch.Tensor([])
 
+
+
         # Invoke C++/CUDA rasterization routine
         return rasterize_gaussians(
             means3D,

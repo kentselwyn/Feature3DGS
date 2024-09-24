@@ -56,7 +56,7 @@ RasterizeGaussiansCUDA(
     const int image_height,
     const int image_width,
 	const torch::Tensor& sh,
-	const int degree,
+	const int degree,   // sh degree
 	const torch::Tensor& campos,
 	const bool prefiltered,
 	const bool debug)
@@ -69,37 +69,46 @@ RasterizeGaussiansCUDA(
   const int W = image_width;
 
   auto int_opts = means3D.options().dtype(torch::kInt32);
+  
+  
   auto float_opts = means3D.options().dtype(torch::kFloat32);
   torch::Tensor out_color = torch::full({NUM_CHANNELS, H, W}, 0.0, float_opts);
   torch::Tensor out_depth = torch::full({1, H, W}, 0.0, float_opts);
 
   torch::Tensor radii = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
 
+
   torch::Tensor out_feature_map = torch::full({NUM_SEMANTIC_CHANNELS, H, W}, 0.0, float_opts); /***/
   
   torch::Device device(torch::kCUDA);
   torch::TensorOptions options(torch::kByte);
+  
   torch::Tensor geomBuffer = torch::empty({0}, options.device(device));
   torch::Tensor binningBuffer = torch::empty({0}, options.device(device));
   torch::Tensor imgBuffer = torch::empty({0}, options.device(device));
+  
   std::function<char*(size_t)> geomFunc = resizeFunctional(geomBuffer);
   std::function<char*(size_t)> binningFunc = resizeFunctional(binningBuffer);
   std::function<char*(size_t)> imgFunc = resizeFunctional(imgBuffer);
   
+
+
   int rendered = 0;
   if(P != 0)
   {
 	  int M = 0;
 	  if(sh.size(0) != 0)
 	  {
-		M = sh.size(1);
+		M = sh.size(1);  // torch.Size([4227, 16, 3]) max sh size
       }
 
 	  rendered = CudaRasterizer::Rasterizer::forward(
 	    geomFunc,
 		binningFunc,
 		imgFunc,
-	    P, degree, M,
+	    P, 
+		degree, 
+		M,
 		background.contiguous().data<float>(),
 		W, H,
 		means3D.contiguous().data<float>(),
@@ -147,14 +156,14 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
     const torch::Tensor& projmatrix,
 	const float tan_fovx,
 	const float tan_fovy,
-    const torch::Tensor& dL_dout_color,
-	const torch::Tensor& dL_dout_feature, /*************/
-	const torch::Tensor& dL_dout_depth,
+    const torch::Tensor& dL_dout_color,   // input
+	const torch::Tensor& dL_dout_feature, // ***input
+	const torch::Tensor& dL_dout_depth,   // input
 	const torch::Tensor& sh,
-	const int degree,
+	const int degree,  // sh degree
 	const torch::Tensor& campos,
 	const torch::Tensor& geomBuffer,
-	const int R,
+	const int R,    // num_rendered
 	const torch::Tensor& binningBuffer,
 	const torch::Tensor& imageBuffer,
 	const bool debug) 
@@ -173,6 +182,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
   torch::Tensor dL_dmeans2D = torch::zeros({P, 3}, means3D.options());
   torch::Tensor dL_dcolors = torch::zeros({P, NUM_CHANNELS}, means3D.options());
   torch::Tensor dL_dsemantic_feature = torch::zeros({P, semantic_feature.size(1), NUM_SEMANTIC_CHANNELS}, means3D.options()); /***/ 
+  
   torch::Tensor dL_dconic = torch::zeros({P, 2, 2}, means3D.options());
   torch::Tensor dL_dopacity = torch::zeros({P, 1}, means3D.options());
   torch::Tensor dL_dcov3D = torch::zeros({P, 6}, means3D.options());
@@ -183,7 +193,8 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
   
   if(P != 0)
   {  
-	  CudaRasterizer::Rasterizer::backward(P, degree, M, R,
+	  CudaRasterizer::Rasterizer::backward(P, degree, M, 
+	  R, // num_rendered
 	  background.contiguous().data<float>(),
 	  W, H, 
 	  means3D.contiguous().data<float>(),
@@ -203,20 +214,22 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
 	  reinterpret_cast<char*>(geomBuffer.contiguous().data_ptr()),
 	  reinterpret_cast<char*>(binningBuffer.contiguous().data_ptr()),
 	  reinterpret_cast<char*>(imageBuffer.contiguous().data_ptr()),
-	  dL_dout_color.contiguous().data<float>(),
-	  dL_dout_feature.contiguous().data<float>(), /***************************/
-	  dL_dout_depth.contiguous().data<float>(),
+	  
+	  dL_dout_color.contiguous().data<float>(), // input
+	  dL_dout_feature.contiguous().data<float>(), //*** input
+	  dL_dout_depth.contiguous().data<float>(), // input
+
 	  dL_dmeans2D.contiguous().data<float>(),
-	  dL_dconic.contiguous().data<float>(),  
+	  dL_dconic.contiguous().data<float>(),  // not in final output
 	  dL_dopacity.contiguous().data<float>(),
-	  dL_dcolors.contiguous().data<float>(),
+	  dL_dcolors.contiguous().data<float>(), // precompute color
 	  dL_dsemantic_feature.contiguous().data<float>(), /***************************/
 	  dL_dmeans3D.contiguous().data<float>(),
 	  dL_dcov3D.contiguous().data<float>(),
 	  dL_dsh.contiguous().data<float>(),
 	  dL_dscales.contiguous().data<float>(),
 	  dL_drotations.contiguous().data<float>(),
-	  dL_dz.contiguous().data<float>(),
+	  dL_dz.contiguous().data<float>(), // not in final output
 	  debug);
   }
 

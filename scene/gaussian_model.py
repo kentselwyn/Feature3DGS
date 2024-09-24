@@ -41,7 +41,6 @@ class GaussianModel:
 
         self.rotation_activation = torch.nn.functional.normalize
 
-
     def __init__(self, sh_degree : int):
         self.active_sh_degree = 0
         self.max_sh_degree = sh_degree  
@@ -59,6 +58,7 @@ class GaussianModel:
         self.spatial_lr_scale = 0
         self.setup_functions()
         self._semantic_feature = torch.empty(0) 
+        self._score_feature = torch.empty(0)
 
     def capture(self):
         return (
@@ -74,7 +74,8 @@ class GaussianModel:
             self.denom,
             self.optimizer.state_dict(),
             self.spatial_lr_scale,
-            self._semantic_feature, 
+            self._semantic_feature,
+            self._score_feature,
         )
     
     def restore(self, model_args, training_args):
@@ -90,11 +91,14 @@ class GaussianModel:
         denom,
         opt_dict, 
         self.spatial_lr_scale,
-        self._semantic_feature) = model_args 
+        self._semantic_feature,
+        self._score_feature) = model_args 
         self.training_setup(training_args)
         self.xyz_gradient_accum = xyz_gradient_accum
         self.denom = denom
         self.optimizer.load_state_dict(opt_dict)
+
+
 
     @property
     def get_scaling(self):
@@ -119,8 +123,15 @@ class GaussianModel:
         return self.opacity_activation(self._opacity)
     @property
     def get_semantic_feature(self):
-        return self._semantic_feature 
-    
+        return self._semantic_feature
+
+    @property
+    def get_score_feature(self):
+        return self._score_feature 
+
+
+
+
     def rewrite_semantic_feature(self, x):
         self._semantic_feature = x
 
@@ -141,7 +152,10 @@ class GaussianModel:
         
         if speedup: # speed up for Segmentation
             semantic_feature_size = int(semantic_feature_size/4)
-        self._semantic_feature = torch.zeros(fused_point_cloud.shape[0], semantic_feature_size, 1).float().cuda() 
+        self._semantic_feature = torch.zeros(fused_point_cloud.shape[0], semantic_feature_size, 1).float().cuda()
+        self._score_feature = torch.zeros(fused_point_cloud.shape[0], 1, 1).float().cuda()
+
+
         print("Number of points at initialisation : ", fused_point_cloud.shape[0])
 
         dist2 = torch.clamp_min(distCUDA2(torch.from_numpy(np.asarray(pcd.points)).float().cuda()), 0.0000001)
@@ -159,7 +173,10 @@ class GaussianModel:
         self._opacity = nn.Parameter(opacities.requires_grad_(True))
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
         self._semantic_feature = nn.Parameter(self._semantic_feature.transpose(1, 2).contiguous().requires_grad_(True))
-        
+        self._score_feature = nn.Parameter(self._score_feature.transpose(1, 2).contiguous().requires_grad_(True))
+
+
+
 
     def training_setup(self, training_args):
         self.percent_dense = training_args.percent_dense
@@ -174,6 +191,7 @@ class GaussianModel:
             {'params': [self._scaling], 'lr': training_args.scaling_lr, "name": "scaling"},
             {'params': [self._rotation], 'lr': training_args.rotation_lr, "name": "rotation"},
             {'params': [self._semantic_feature], 'lr':training_args.semantic_feature_lr, "name": "semantic_feature"},
+            {'params': [self._score_feature], 'lr':training_args.semantic_feature_lr, "name": "score_feature"},
         ]
 
         self.optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
@@ -203,10 +221,19 @@ class GaussianModel:
             l.append('scale_{}'.format(i))
         for i in range(self._rotation.shape[1]):
             l.append('rot_{}'.format(i))
+        
         # Add semantic features
         for i in range(self._semantic_feature.shape[1]*self._semantic_feature.shape[2]):  
             l.append('semantic_{}'.format(i))
+        
+        # Add score features
+        for i in range(self._score_feature.shape[1]*self._score_feature.shape[2]):  
+            l.append('score_{}'.format(i))
+
         return l
+
+
+
 
     def save_ply(self, path):
         mkdir_p(os.path.dirname(path))
@@ -219,12 +246,13 @@ class GaussianModel:
         scale = self._scaling.detach().cpu().numpy()
         rotation = self._rotation.detach().cpu().numpy()
 
-        semantic_feature = self._semantic_feature.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy() 
+        semantic_feature = self._semantic_feature.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
+        score_feature = self._score_feature.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
 
         dtype_full = [(attribute, 'f4') for attribute in self.construct_list_of_attributes()]
 
         elements = np.empty(xyz.shape[0], dtype=dtype_full)
-        attributes = np.concatenate((xyz, normals, f_dc, f_rest, opacities, scale, rotation, semantic_feature), axis=1) 
+        attributes = np.concatenate((xyz, normals, f_dc, f_rest, opacities, scale, rotation, semantic_feature, score_feature), axis=1)
         elements[:] = list(map(tuple, attributes))
         el = PlyElement.describe(elements, 'vertex')
         PlyData([el]).write(path)
@@ -247,9 +275,17 @@ class GaussianModel:
         features_dc[:, 1, 0] = np.asarray(plydata.elements[0]["f_dc_1"])
         features_dc[:, 2, 0] = np.asarray(plydata.elements[0]["f_dc_2"])
 
+
+        ### semantic
         count = sum(1 for name in plydata.elements[0].data.dtype.names if name.startswith("semantic_"))
         semantic_feature = np.stack([np.asarray(plydata.elements[0][f"semantic_{i}"]) for i in range(count)], axis=1) 
         semantic_feature = np.expand_dims(semantic_feature, axis=-1) 
+
+        ### score 
+        count = sum(1 for name in plydata.elements[0].data.dtype.names if name.startswith("score_"))
+        score_feature = np.stack([np.asarray(plydata.elements[0][f"score_{i}"]) for i in range(count)], axis=1) 
+        score_feature = np.expand_dims(score_feature, axis=-1)
+
 
         extra_f_names = [p.name for p in plydata.elements[0].properties if p.name.startswith("f_rest_")]
         extra_f_names = sorted(extra_f_names, key = lambda x: int(x.split('_')[-1]))
@@ -279,6 +315,7 @@ class GaussianModel:
         self._scaling = nn.Parameter(torch.tensor(scales, dtype=torch.float, device="cuda").requires_grad_(True))
         self._rotation = nn.Parameter(torch.tensor(rots, dtype=torch.float, device="cuda").requires_grad_(True))
         self._semantic_feature = nn.Parameter(torch.tensor(semantic_feature, dtype=torch.float, device="cuda").transpose(1, 2).contiguous().requires_grad_(True))
+        self._score_feature = nn.Parameter(torch.tensor(score_feature, dtype=torch.float, device="cuda").transpose(1, 2).contiguous().requires_grad_(True))
         self.active_sh_degree = self.max_sh_degree
 
 
@@ -327,6 +364,7 @@ class GaussianModel:
         self._scaling = optimizable_tensors["scaling"]
         self._rotation = optimizable_tensors["rotation"]
         self._semantic_feature = optimizable_tensors["semantic_feature"]
+        self._score_feature = optimizable_tensors["score_feature"]
 
         self.xyz_gradient_accum = self.xyz_gradient_accum[valid_points_mask]
 
@@ -355,14 +393,16 @@ class GaussianModel:
 
         return optimizable_tensors
 
-    def densification_postfix(self, new_xyz, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation, new_semantic_feature):
+
+    def densification_postfix(self, new_xyz, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation, new_semantic_feature, new_score_feature):
         d = {"xyz": new_xyz,
         "f_dc": new_features_dc,
         "f_rest": new_features_rest,
         "opacity": new_opacities,
         "scaling" : new_scaling,
         "rotation" : new_rotation,
-        "semantic_feature": new_semantic_feature} 
+        "semantic_feature": new_semantic_feature,
+        "score_feature": new_score_feature,} 
 
         optimizable_tensors = self.cat_tensors_to_optimizer(d)
         self._xyz = optimizable_tensors["xyz"]
@@ -372,6 +412,7 @@ class GaussianModel:
         self._scaling = optimizable_tensors["scaling"]
         self._rotation = optimizable_tensors["rotation"]
         self._semantic_feature = optimizable_tensors["semantic_feature"] 
+        self._score_feature = optimizable_tensors['score_feature']
 
         self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
         self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
@@ -397,8 +438,10 @@ class GaussianModel:
         new_features_rest = self._features_rest[selected_pts_mask].repeat(N,1,1)
         new_opacity = self._opacity[selected_pts_mask].repeat(N,1)
         new_semantic_feature = self._semantic_feature[selected_pts_mask].repeat(N,1,1) 
+        new_score_feature = self._score_feature[selected_pts_mask].repeat(N,1,1)
 
-        self.densification_postfix(new_xyz, new_features_dc, new_features_rest, new_opacity, new_scaling, new_rotation, new_semantic_feature) 
+
+        self.densification_postfix(new_xyz, new_features_dc, new_features_rest, new_opacity, new_scaling, new_rotation, new_semantic_feature, new_score_feature) 
         prune_filter = torch.cat((selected_pts_mask, torch.zeros(N * selected_pts_mask.sum(), device="cuda", dtype=bool)))
         self.prune_points(prune_filter)
 
@@ -414,9 +457,10 @@ class GaussianModel:
         new_opacities = self._opacity[selected_pts_mask]
         new_scaling = self._scaling[selected_pts_mask]
         new_rotation = self._rotation[selected_pts_mask]
-        new_semantic_feature = self._semantic_feature[selected_pts_mask] 
+        new_semantic_feature = self._semantic_feature[selected_pts_mask]
+        new_score_feature = self._score_feature[selected_pts_mask]
 
-        self.densification_postfix(new_xyz, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation, new_semantic_feature) 
+        self.densification_postfix(new_xyz, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation, new_semantic_feature, new_score_feature) 
 
     def densify_and_prune(self, max_grad, min_opacity, extent, max_screen_size):
         grads = self.xyz_gradient_accum / self.denom
@@ -434,6 +478,17 @@ class GaussianModel:
 
         torch.cuda.empty_cache()
 
+
+
+
+
+
+
+
     def add_densification_stats(self, viewspace_point_tensor, update_filter):
         self.xyz_gradient_accum[update_filter] += torch.norm(viewspace_point_tensor.grad[update_filter,:2], dim=-1, keepdim=True)
         self.denom[update_filter] += 1
+
+
+
+

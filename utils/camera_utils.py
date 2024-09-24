@@ -54,12 +54,18 @@ def loadCam(args, id, cam_info, resolution_scale):
 
     if resized_image_rgb.shape[1] == 4:
         loaded_mask = resized_image_rgb[3:4, ...]
+    
+    
+    ###
+    gt_score_feature = cam_info.score_feature
+    
 
 
     return Camera(colmap_id=cam_info.uid, R=cam_info.R, T=cam_info.T, 
                   FoVx=cam_info.FovX, FoVy=cam_info.FovY, 
                   image=gt_image, gt_alpha_mask=loaded_mask,
                   image_name=cam_info.image_name, uid=id, semantic_feature = gt_semantic_feature,
+                  score_feature = gt_score_feature, #
                   data_device=args.data_device) 
 
 

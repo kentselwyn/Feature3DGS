@@ -24,6 +24,8 @@ from utils.sh_utils import SH2RGB
 from scene.gaussian_model import BasicPointCloud
 import torch
 
+
+
 class CameraInfo(NamedTuple):
     uid: int
     R: np.array
@@ -36,13 +38,11 @@ class CameraInfo(NamedTuple):
     width: int
     height: int
     semantic_feature: torch.tensor 
-    semantic_feature_path: str 
+    semantic_feature_path: str
     semantic_feature_name: str 
-
-
-
-
-
+    score_feature: torch.tensor
+    score_feature_path: str
+    score_feature_name: str
 
 class SceneInfo(NamedTuple):
     point_cloud: BasicPointCloud
@@ -51,6 +51,9 @@ class SceneInfo(NamedTuple):
     nerf_normalization: dict
     ply_path: str
     semantic_feature_dim: int 
+
+
+
 
 def getNerfppNorm(cam_info):
     def get_center_and_diag(cam_centers):
@@ -114,15 +117,35 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
         image_name = os.path.basename(image_path).split(".")[0]
         image = Image.open(image_path) 
 
-        semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap_CxHxW.pt' 
-        semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
-        semantic_feature = torch.load(semantic_feature_path) 
+        feature_name = os.path.basename(semantic_feature_folder)
 
-        cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-                              image_path=image_path, image_name=image_name, width=width, height=height,
-                              semantic_feature=semantic_feature,
-                              semantic_feature_path=semantic_feature_path,
-                              semantic_feature_name=semantic_feature_name) 
+        if feature_name != "superpoint_feature":
+            semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap_CxHxW.pt' 
+            semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
+            semantic_feature = torch.load(semantic_feature_path)
+            cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+                                image_path=image_path, image_name=image_name, width=width, height=height,
+                                semantic_feature=semantic_feature,            score_feature = None,
+                                semantic_feature_path=semantic_feature_path,  score_feature_path = None, 
+                                semantic_feature_name=semantic_feature_name,   score_feature_name = None) 
+        ###
+        else:
+            semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap_CxHxW.pt'
+            semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
+            semantic_feature = torch.load(semantic_feature_path)
+
+            score_feature_path = os.path.join(semantic_feature_folder, image_name) + '_smap_CxH8xW8.pt'
+            score_feature_name = os.path.basename(score_feature_path).split(".")[0]
+            score_feature = torch.load(score_feature_path)
+
+            cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+                                image_path=image_path, image_name=image_name, width=width, height=height,
+                                semantic_feature=semantic_feature,           score_feature = score_feature,
+                                semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
+                                semantic_feature_name=semantic_feature_name, score_feature_name = score_feature_name)
+
+
+        
         cam_infos.append(cam_info)
     sys.stdout.write('\n')
     return cam_infos
@@ -179,7 +202,11 @@ def readColmapSceneInfo(path, foundation_model, images, eval, llffhold=8):
     if foundation_model =='sam':
         semantic_feature_dir = "sam_embeddings" 
     elif foundation_model =='lseg':
-        semantic_feature_dir = "rgb_feature_langseg" 
+        semantic_feature_dir = "rgb_feature_langseg"
+    elif foundation_model == "sp":
+        semantic_feature_dir = "superpoint_feature"
+
+
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, 
                                            images_folder=os.path.join(path, reading_dir), semantic_feature_folder=os.path.join(path, semantic_feature_dir))
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
