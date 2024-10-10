@@ -11,6 +11,7 @@
 
 #include "backward.h"
 #include "auxiliary.h"
+// #include <__clang_cuda_intrinsics.h>
 #include <cooperative_groups.h>
 #include <cooperative_groups/reduce.h>
 namespace cg = cooperative_groups;
@@ -421,7 +422,7 @@ __global__ void preprocessCUDA(
 	// of cov2D and following SH conversion also affects it.
 	dL_dmeans[idx] += dL_dmean;
 
-	// Compute gradient updates due to computing colors from SHs
+	// Compute gradient updates due to computing color from SHs
 	if (shs)
 		computeColorFromSH(idx, D, M, (glm::vec3*)means, *campos, shs, clamped, (glm::vec3*)dL_dcolor, (glm::vec3*)dL_dmeans, (glm::vec3*)dL_dsh);
 
@@ -448,17 +449,20 @@ renderCUDA(
 	const float4* __restrict__ conic_opacity,
 	const float* __restrict__ colors,
 	const float* __restrict__ semantic_feature,
+	const float* __restrict__ score_feature,  ////// score
 	const float* __restrict__ depths,
 	const float* __restrict__ final_Ts,  // imgState.accum_alpha
 	const uint32_t* __restrict__ n_contrib, // 紀錄每個pixel經過了幾個gaussian
 	const float* __restrict__ dL_dpixels,    // input
 	const float* __restrict__ dL_dfeaturepixels,  // input
+	const float* __restrict__ dL_dscorepixels, ////// score
 	const float* __restrict__ dL_depths,   // input
 	float3* __restrict__ dL_dmean2D,
 	float4* __restrict__ dL_dconic2D,
 	float* __restrict__ dL_dopacity,
 	float* __restrict__ dL_dcolors,  // color output
 	float* __restrict__ dL_dsemantic_feature,  // semantic output
+	float* __restrict__ dL_dscore_feature, ////// score
 	float* __restrict__ dL_dz,       // depth output
 	float* collected_semantic_feature) 
 {
@@ -503,16 +507,21 @@ renderCUDA(
 
 	float dL_dpixel[C];
 	float dL_dfeaturepixel[NUM_SEMANTIC_CHANNELS];
-	float dL_depth;
+	float dL_depth = 0;
+	float dL_dscore;
 	float accum_depth_rec = 0;
 
 
-	if (inside)
+	if (inside){
 		for (int i = 0; i < C; i++)
 			dL_dpixel[i] = dL_dpixels[i * H * W + pix_id];
-			dL_depth = dL_depths[pix_id];
+			// dL_depth = dL_depths[pix_id];
 		for (int i = 0; i < NUM_SEMANTIC_CHANNELS; i++) 
 			dL_dfeaturepixel[i] = dL_dfeaturepixels[i * H * W + pix_id];
+		dL_dscore = dL_dscorepixels[pix_id];
+	}
+		
+		
 
 
 	float last_alpha = 0;
@@ -540,7 +549,7 @@ renderCUDA(
 			collected_conic_opacity[block.thread_rank()] = conic_opacity[coll_id];
 			for (int i = 0; i < C; i++)
 				collected_colors[i * BLOCK_SIZE + block.thread_rank()] = colors[coll_id * C + i];
-			    collected_depths[block.thread_rank()] = depths[coll_id];
+			collected_depths[block.thread_rank()] = depths[coll_id];
 		}
 		block.sync();
 
@@ -649,6 +658,7 @@ renderCUDA(
 			// Update gradients w.r.t. opacity of the Gaussian
 			atomicAdd(&(dL_dopacity[global_id]), G * dL_dalpha);
 			atomicAdd(&(dL_dz[global_id]),  alpha * T * dL_depth);
+			atomicAdd(&(dL_dscore_feature[global_id]), alpha * T * dL_dscore);
 		}
 	}
 }
@@ -744,17 +754,20 @@ void BACKWARD::render(
 	const float4* conic_opacity,
 	const float* colors,
 	const float* semantic_feature,
+	const float* score_feature,
 	const float* depths, 
 	const float* final_Ts, // imgState.accum_alpha
 	const uint32_t* n_contrib, // 紀錄每個pixel經過了幾個gaussian
 	const float* dL_dpixels,    // input
 	const float* dL_dfeaturepixels, // input
+	const float* dL_dscorepixels, // input
 	const float* dL_depths,  // input
 	float3* dL_dmean2D,
 	float4* dL_dconic2D,
 	float* dL_dopacity,
 	float* dL_dcolors,  // precomputed color
 	float* dL_dsemantic_feature, // semantic
+	float* dL_dscore_feature, // score
 	float* dL_dz, // depth
 	float* collected_semantic_feature) 
 	
@@ -768,17 +781,20 @@ void BACKWARD::render(
 		conic_opacity,
 		colors,
 		semantic_feature,
+		score_feature, ////
 		depths, 
 		final_Ts,
 		n_contrib,
 		dL_dpixels,
 		dL_dfeaturepixels,
+		dL_dscorepixels, ////
 		dL_depths, 
 		dL_dmean2D,
 		dL_dconic2D,
 		dL_dopacity,
 		dL_dcolors,
 		dL_dsemantic_feature,
+		dL_dscore_feature, ////
 		dL_dz,
 		collected_semantic_feature 
 		);

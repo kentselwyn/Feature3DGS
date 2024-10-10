@@ -1,0 +1,13 @@
+
+match image pipeline 整合過的
+evaluation for a dataset 整合過的
+speed comparision with gaussian+img+sp+LG
+
+different dim comparision
+
+
+lofter match
+sp match
+
+
+

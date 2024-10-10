@@ -12,7 +12,7 @@
 import os
 import torch
 from random import randint
-from utils.loss_utils import l1_loss, ssim, tv_loss 
+from utils.loss_utils import l1_loss, ssim, tv_loss, l2_loss
 from gaussian_renderer import render, network_gui
 import sys
 from scene import Scene, GaussianModel
@@ -32,8 +32,8 @@ import torch.nn.functional as F
 from models.networks import CNN_decoder
 from models.semantic_dataloader import VariableSizeDataset
 from torch.utils.data import DataLoader
-
-
+from datetime import datetime
+from utils.loss_utils import weighted_l2
 
 
 def prepare_output_and_logger(args):    
@@ -51,9 +51,10 @@ def prepare_output_and_logger(args):
         cfg_log_f.write(str(Namespace(**vars(args))))
 
     # Create Tensorboard writer
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     tb_writer = None
     if TENSORBOARD_FOUND:
-        tb_writer = SummaryWriter(args.model_path)
+        tb_writer = SummaryWriter(log_dir=args.model_path + f"/runs/{timestamp}")
     else:
         print("Tensorboard not available: not logging progress")
     return tb_writer
@@ -61,10 +62,11 @@ def prepare_output_and_logger(args):
 
 
 
-def training_report(tb_writer, iteration, Ll1, Ll1_feature, loss, l1_loss, elapsed, testing_iterations, scene : Scene, renderFunc, renderArgs):
+def training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_loss, elapsed, testing_iterations, scene : Scene, renderFunc, renderArgs):
     if tb_writer:
-        tb_writer.add_scalar('train_loss_patches/l1_loss', Ll1.item(), iteration)
-        tb_writer.add_scalar('train_loss_patches/l1_loss_feature', Ll1_feature.item(), iteration) 
+        tb_writer.add_scalar('train_loss_patches/l1_loss_RGB', Ll1.item(), iteration)
+        tb_writer.add_scalar('train_loss_patches/l1_loss_feature', Ll1_feature.item(), iteration)
+        tb_writer.add_scalar('train_loss_patches/loss_score', Ll1_score.item(), iteration)
         tb_writer.add_scalar('train_loss_patches/total_loss', loss.item(), iteration)
         tb_writer.add_scalar('iter_time', elapsed, iteration)
 
@@ -118,12 +120,11 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
     feature_out_dim = gt_feature_map.shape[0]
 
 
-    ###
-    gt_score_map = viewpoint_cam.score_feature
+    gt_score_map = viewpoint_cam.score_feature.cuda()
 
     
     # speed up
-    if dataset.speedup and (gt_score_map is None):
+    if dataset.speedup:
         feature_in_dim = int(feature_out_dim/4)
         cnn_decoder = CNN_decoder(feature_in_dim, feature_out_dim)
         cnn_decoder_optimizer = torch.optim.Adam(cnn_decoder.parameters(), lr=0.0001)
@@ -166,23 +167,37 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         render_pkg = render(viewpoint_cam, gaussians, pipe, background)
         
 
-        feature_map, image, viewspace_point_tensor, visibility_filter, radii = render_pkg["feature_map"], render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
+        feature_map, score_map, image, viewspace_point_tensor, visibility_filter, radii = render_pkg["feature_map"], render_pkg["score_map"], render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
 
         
         # Loss
         gt_image = viewpoint_cam.original_image.cuda()
-        Ll1 = l1_loss(image, gt_image)
-        gt_feature_map = viewpoint_cam.semantic_feature.cuda()
+        gt_feature_map = viewpoint_cam.semantic_feature.cuda().detach()
+        # ### score
+        gt_score_map = viewpoint_cam.score_feature
+        gt_score_map = gt_score_map.cuda().detach()
+        
 
+        # adjust_gt_feature = F.interpolate(gt_image.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
         feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
+        score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], gt_score_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
+
+        # adjust_gt_feature = adjust_gt_feature.sum(0)
+        # gt_feature_mask = (adjust_gt_feature>0).unsqueeze(0).expand(16, -1, -1)
+
+        # gt_feature_map = gt_feature_map * gt_feature_mask
 
 
         if dataset.speedup:
             feature_map = cnn_decoder(feature_map)
             
-
         Ll1_feature = l1_loss(feature_map, gt_feature_map)
-        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) + 1.0 * Ll1_feature 
+        Ll1_score = l2_loss(score_map, gt_score_map)
+        # L_score = l1_loss(score_map, gt_score_map)
+
+
+        Ll1 = l1_loss(image, gt_image)
+        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) + 1.0 * Ll1_feature + 1.0*Ll1_score
 
         loss.backward()
         iter_end.record()
@@ -197,7 +212,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                 progress_bar.close()
 
             # Log and save
-            training_report(tb_writer, iteration, Ll1, Ll1_feature, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background)) 
+            training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background)) 
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
                 scene.save(iteration)
@@ -261,8 +276,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
 
 
-# python train.py -s /home/koki/code/feature_3dgs/scene000000_B -m /home/koki/code/feature_3dgs/scene000000_B/output_sam_speedup -f sp --speedup --iterations 7000
-# python train.py -s /home/koki/code/feature_3dgs/scene000000_B -m /home/koki/code/feature_3dgs/scene000000_B/output_sam_speedup -f sam --speedup --iterations 7000
+# python train.py -s /home/koki/code/cc/feature_3dgs_2/all_data/scene0000_01/A -m /home/koki/code/cc/feature_3dgs_2/all_data/scene0000_01/A/outputs/1 -f imrate:2_th:0.01_mlpdim:16 --iterations 7000
 if __name__ == "__main__":
     # Set up command line argument parser
     parser = ArgumentParser(description="Training script parameters")
@@ -274,10 +288,11 @@ if __name__ == "__main__":
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
     parser.add_argument("--test_iterations", nargs="+", type=int, default=[7_000, 30_000])
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[7_000, 30_000])
+    parser.add_argument("--save_iterations", nargs="+", type=int, default=[7_000, 15_000, 30_000])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
     parser.add_argument("--start_checkpoint", type=str, default = None)
+
     args = parser.parse_args(sys.argv[1:])
     
     args.save_iterations.append(args.iterations)
@@ -294,3 +309,4 @@ if __name__ == "__main__":
 
     # All done
     print("\nTraining complete.")
+

@@ -97,7 +97,7 @@ def load_image(path: Path, grayscale=False) -> torch.Tensor:
 
 
 
-def resize_image(image: torch.tensor, size: list):
+def resize_image(image: torch.Tensor, size: list):
     image = kornia.geometry.transform.resize(
                 image,
                 size,

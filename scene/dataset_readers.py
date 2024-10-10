@@ -43,6 +43,7 @@ class CameraInfo(NamedTuple):
     score_feature: torch.tensor
     score_feature_path: str
     score_feature_name: str
+    intrinsic_params: np.array
 
 class SceneInfo(NamedTuple):
     point_cloud: BasicPointCloud
@@ -119,33 +120,33 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
 
         feature_name = os.path.basename(semantic_feature_folder)
 
-        if feature_name != "superpoint_feature":
-            semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap_CxHxW.pt' 
-            semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
-            semantic_feature = torch.load(semantic_feature_path)
-            cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-                                image_path=image_path, image_name=image_name, width=width, height=height,
-                                semantic_feature=semantic_feature,            score_feature = None,
-                                semantic_feature_path=semantic_feature_path,  score_feature_path = None, 
-                                semantic_feature_name=semantic_feature_name,   score_feature_name = None) 
-        ###
-        else:
-            semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap_CxHxW.pt'
-            semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
-            semantic_feature = torch.load(semantic_feature_path)
+        # if feature_name != SP_FEATURE_NAME:
+        #     semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap_CxHxW.pt' 
+        #     semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
+        #     semantic_feature = torch.load(semantic_feature_path)
+        #     cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+        #                         image_path=image_path, image_name=image_name, width=width, height=height,
+        #                         semantic_feature=semantic_feature,            score_feature = None,
+        #                         semantic_feature_path=semantic_feature_path,  score_feature_path = None, 
+        #                         semantic_feature_name=semantic_feature_name,   score_feature_name = None) 
+        # ###
+        # else:
+        semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap_CxHxW.pt'
+        semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
+        semantic_feature = torch.load(semantic_feature_path)
 
-            score_feature_path = os.path.join(semantic_feature_folder, image_name) + '_smap_CxH8xW8.pt'
-            score_feature_name = os.path.basename(score_feature_path).split(".")[0]
-            score_feature = torch.load(score_feature_path)
+        score_feature_path = os.path.join(semantic_feature_folder, image_name) + '_smap_CxHxW.pt'
+        score_feature_name = os.path.basename(score_feature_path).split(".")[0]
+        score_feature = torch.load(score_feature_path)
 
-            cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-                                image_path=image_path, image_name=image_name, width=width, height=height,
-                                semantic_feature=semantic_feature,           score_feature = score_feature,
-                                semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
-                                semantic_feature_name=semantic_feature_name, score_feature_name = score_feature_name)
+        cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+                            image_path=image_path, image_name=image_name,
+                            intrinsic_params=intr.params,
+                            width=width, height=height,
+                            semantic_feature=semantic_feature,           score_feature = score_feature,
+                            semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
+                            semantic_feature_name=semantic_feature_name, score_feature_name = score_feature_name)
 
-
-        
         cam_infos.append(cam_info)
     sys.stdout.write('\n')
     return cam_infos
@@ -185,7 +186,7 @@ def storePly(path, xyz, rgb):
 
 
 
-def readColmapSceneInfo(path, foundation_model, images, eval, llffhold=8):
+def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=None, llffhold=8):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.bin")
@@ -197,19 +198,20 @@ def readColmapSceneInfo(path, foundation_model, images, eval, llffhold=8):
         cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
     
-    reading_dir = "images" if images == None else images
+    image_dir = f"all_images/{foundation_model}" if images is None else images
+    
 
-    if foundation_model =='sam':
-        semantic_feature_dir = "sam_embeddings" 
-    elif foundation_model =='lseg':
-        semantic_feature_dir = "rgb_feature_langseg"
-    elif foundation_model == "sp":
-        semantic_feature_dir = "superpoint_feature"
-
+    # if foundation_model =='sam':
+    #     semantic_feature_dir = "sam_embeddings" 
+    # elif foundation_model =='lseg':
+    #     semantic_feature_dir = "rgb_feature_langseg"
+    # elif foundation_model == "sp":
+    semantic_feature_dir = f"features/{foundation_model}"
 
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, 
-                                           images_folder=os.path.join(path, reading_dir), semantic_feature_folder=os.path.join(path, semantic_feature_dir))
+                                           images_folder=os.path.join(path, image_dir), semantic_feature_folder=os.path.join(path, semantic_feature_dir))
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
+
     ###cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : int(x.image_name.split('.')[0])) ### if img name is number
     # cam_infos =cam_infos[:30] ###: for scannet only
     # print(cam_infos)
@@ -353,3 +355,4 @@ sceneLoadTypeCallbacks = {
     "Colmap": readColmapSceneInfo,
     "Blender" : readNerfSyntheticInfo
 }
+

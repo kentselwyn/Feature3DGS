@@ -3,7 +3,7 @@ CompileFlags:
     - --cuda-path=/home/koki/anaconda3/envs/pts/pkgs/cuda-toolkit/
     - -I/home/koki/anaconda3/envs/pts/include/python3.8/
     - -I/home/koki/anaconda3/envs/pts/lib/python3.8/
-    - -I/home/koki/code/gaussian/submodules/diff-gaussian-rasterization/third_party/glm/
+    - -I/home/koki/code/cc/feature_3dgs_2/submodules/diff-gaussian-rasterization-feature/third_party/glm
     # - -I/home/koki/anaconda3/envs/pts/lib/python3.8/site-packages/torch/include/torch/csrc/api/include/
     # - -I/home/koki/anaconda3/envs/pts/lib/python3.8/site-packages/torch/include/
     # - -I/home/koki/anaconda3/envs/pts/include/python3.8/

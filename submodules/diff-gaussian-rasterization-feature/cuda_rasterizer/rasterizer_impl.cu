@@ -183,6 +183,7 @@ CudaRasterizer::GeometryState CudaRasterizer::GeometryState::fromChunk(char*& ch
 	obtain(chunk, geom.conic_opacity, P, 128);
 	obtain(chunk, geom.rgb, P * 3, 128);
 	obtain(chunk, geom.semantic_feature, P * NUM_SEMANTIC_CHANNELS, 128);
+	obtain(chunk, geom.score_feature, P , 128);
 	obtain(chunk, geom.tiles_touched, P, 128); // record the touched tiles for each gaussian
 	cub::DeviceScan::InclusiveSum(nullptr, geom.scan_size, geom.tiles_touched, geom.tiles_touched, P);
 	obtain(chunk, geom.scanning_space, geom.scan_size, 128); // tmp for Inclusivesum
@@ -234,6 +235,7 @@ int CudaRasterizer::Rasterizer::forward(
 	const float* shs,
 	const float* colors_precomp,
 	const float* semantic_feature, 
+	const float* score_feature, ////
 	const float* opacities,
 	const float* scales,
 	const float scale_modifier,
@@ -246,6 +248,7 @@ int CudaRasterizer::Rasterizer::forward(
 	const bool prefiltered,
 	float* out_color, // output 
 	float* out_feature_map, // output 
+	float* out_score_map, // output 
 	float* out_depth, // output 
 	int* radii, // output 
 	bool debug)
@@ -387,6 +390,7 @@ int CudaRasterizer::Rasterizer::forward(
 		geomState.means2D,
 		feature_ptr, // rgb
 		semantic_feature, // semantic
+		score_feature, // score
 		geomState.depths, // depth
 		geomState.conic_opacity, // conic + opacity
 		imgState.accum_alpha, // output
@@ -394,6 +398,7 @@ int CudaRasterizer::Rasterizer::forward(
 		background,
 		out_color, // output
 		out_feature_map, // output
+		out_score_map, 
 		out_depth // output
 	), debug)
 
@@ -419,6 +424,7 @@ void CudaRasterizer::Rasterizer::backward(
 	const float* shs,
 	const float* colors_precomp,
 	const float* semantic_feature, 
+	const float* score_feature, // score
 	const float* scales,
 	const float scale_modifier,
 	const float* rotations,
@@ -432,13 +438,15 @@ void CudaRasterizer::Rasterizer::backward(
 	char* binning_buffer,
 	char* img_buffer,
 	const float* dL_dpix, // input color
-	const float* dL_dfeaturepix, //input semantic
+	const float* dL_dfeaturepix, // input semantic
+	const float* dL_dscorepix, // input score
 	const float* dL_depths, // input
 	float* dL_dmean2D,
 	float* dL_dconic,  // not in final output
 	float* dL_dopacity,
 	float* dL_dcolor,  // precompute color
 	float* dL_dsemantic_feature, // semantic
+	float* dL_dscore_feature, // score
 	float* dL_dmean3D,
 	float* dL_dcov3D,
 	float* dL_dsh,
@@ -486,17 +494,20 @@ void CudaRasterizer::Rasterizer::backward(
 		geomState.conic_opacity,
 		color_ptr,
 		semantic_feature,
+		score_feature,
 		depth_ptr, 
 		imgState.accum_alpha,
 		imgState.n_contrib,
 		dL_dpix,               // input
 		dL_dfeaturepix, // input
+		dL_dscorepix, // input
 		dL_depths,                        // input
 		(float3*)dL_dmean2D,
 		(float4*)dL_dconic,
 		dL_dopacity,
 		dL_dcolor, // color
 		dL_dsemantic_feature,  // semantic
+		dL_dscore_feature, // score
 		dL_dz, 				   // depth
 		collected_semantic_feature
 		), debug) 

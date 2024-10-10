@@ -39,6 +39,7 @@ namespace CudaRasterizer
 		float4* conic_opacity;
 		float* rgb;
 		float* semantic_feature;
+		float* score_feature;
 		uint32_t* point_offsets;
 		uint32_t* tiles_touched;
 

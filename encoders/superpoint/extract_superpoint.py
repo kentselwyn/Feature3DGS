@@ -1,12 +1,10 @@
-import cv2
 import torch
 import argparse
 import os
 from .superpoint import SuperPoint
 from .utils import load_image, resize_image
-import numpy as np
 from .mlp import get_module_ckptpath
-
+from torchvision.transforms import ToPILImage
 
 
 
@@ -28,12 +26,12 @@ parser.add_argument(
         "of .pt per image or a single .pt representing image embeddings."
     ),
 )
-
+parser.add_argument("--resize", type=int, default=None, help="if resize image.")
 parser.add_argument("--device", type=str, default="cuda", help="The device to run generation on.")
 
 
-from torchvision.transforms import ToPILImage
-def saveimage_from_torch(image: torch, img_name = "image"):
+
+def saveimage_from_torch(image: torch.Tensor, img_name = "image"):
     to_pil = ToPILImage()
     image_pil = to_pil(image)
     image_pil.save(f"{img_name}.png")
@@ -63,10 +61,12 @@ def main(args):
         img_name = t.split(os.sep)[-1].split(".")[0]
         image = load_image(t).to(args.device)
 
-        h, w = image.shape[1:]
-        ratio = h/w
-        size = [int(1024*ratio), 1024]
-        image = resize_image(image, size)
+        if args.resize is not None:
+            resize = args.resize
+            h, w = image.shape[1:]
+            ratio = h/w
+            size = [int(resize*ratio), resize]
+            image = resize_image(image, size)
 
 
         image = image.unsqueeze(0)
@@ -85,6 +85,7 @@ def main(args):
         print("descriptors shape: ", desc_mlp.shape)
         print("scores shape: ", scores.shape)
 
+
         torch.save(desc_mlp, os.path.join(args.output, f"{img_name}_fmap_CxHxW.pt"))
         torch.save(scores, os.path.join(args.output, f"{img_name}_smap_CxH8xW8.pt"))
 
@@ -95,7 +96,7 @@ def main(args):
 
 
 
-# python -m encoders.superpoint.extract_superpoint --input /home/koki/code/feature_3dgs/scene000000_B/images --output /home/koki/code/feature_3dgs/scene000000_B/superpoint_feature
+# python -m encoders.superpoint.extract_superpoint --input /home/koki/code/cc/feature_3dgs_2/all_data/scene0000_00/A/images --output /home/koki/code/cc/feature_3dgs_2/all_data/scene0000_00/A/sp_feature --resize 1024
 if __name__=="__main__":
     args = parser.parse_args()
     main(args)

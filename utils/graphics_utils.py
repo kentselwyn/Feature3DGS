@@ -82,3 +82,19 @@ def fov2focal(fov, pixels):
 
 def focal2fov(focal, pixels):
     return 2*math.atan(pixels/(2*focal))
+
+
+def getIntrinsicMatrix(params):
+    focal_length_x = params[0]
+    focal_length_y = params[1]
+    p_x = params[2]
+    p_y = params[3]
+
+    K = np.zeros((3,3))
+    K[0, 0] = focal_length_x
+    K[1, 1] = focal_length_y
+    K[0, 2] = p_x
+    K[1, 2] = p_y
+    K[2, 2] = 1.
+
+    return K

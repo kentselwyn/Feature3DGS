@@ -49,6 +49,7 @@ def loadCam(args, id, cam_info, resolution_scale):
 
     resized_image_rgb = PILtoTorch(cam_info.image, resolution)
 
+
     gt_image = resized_image_rgb[:3, ...]
     loaded_mask = None
 
@@ -58,7 +59,7 @@ def loadCam(args, id, cam_info, resolution_scale):
     
     ###
     gt_score_feature = cam_info.score_feature
-    
+    intrinsic_params = cam_info.intrinsic_params
 
 
     return Camera(colmap_id=cam_info.uid, R=cam_info.R, T=cam_info.T, 
@@ -66,6 +67,7 @@ def loadCam(args, id, cam_info, resolution_scale):
                   image=gt_image, gt_alpha_mask=loaded_mask,
                   image_name=cam_info.image_name, uid=id, semantic_feature = gt_semantic_feature,
                   score_feature = gt_score_feature, #
+                  intrinsic_params = intrinsic_params,
                   data_device=args.data_device) 
 
 

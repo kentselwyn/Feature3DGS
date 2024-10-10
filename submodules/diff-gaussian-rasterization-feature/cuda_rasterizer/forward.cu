@@ -310,6 +310,7 @@ renderCUDA(
 	const float2* __restrict__ points_xy_image, // xy means on the image
 	const float* __restrict__ features, // rgb 
 	const float* __restrict__ semantics, // semantics
+	const float* __restrict__ scores,   ////////
 	const float* __restrict__ depths, // depth
 	const float4* __restrict__ conic_opacity,
 	float* __restrict__ final_T,
@@ -317,6 +318,7 @@ renderCUDA(
 	const float* __restrict__ bg_color,
 	float* __restrict__ out_color,
 	float* __restrict__ out_feature_map,
+	float* __restrict__ out_score_map,  ////////
 	float* __restrict__ out_depth) 
 {
 	// Identify current tile and associated min/max pixel range.
@@ -363,6 +365,7 @@ renderCUDA(
 	// C: color, SF: semantic feature, D: depth
 	float C[CHANNELS] = { 0 };
 	float SF[NUM_SEMANTIC_CHANNELS] = { 0 };
+	float SCORE = { 0 };
 	float D = { 0 };
 
 	// Iterate over batches until all done or range is complete
@@ -429,6 +432,8 @@ renderCUDA(
 				SF[ch] += semantics[collected_id[j] * NUM_SEMANTIC_CHANNELS + ch] * alpha * T; 
 			}
 
+			SCORE += scores[collected_id[j]]*w;
+
 			T = test_T;
 			// Keep track of last range entry to update this
 			// pixel.
@@ -448,10 +453,14 @@ renderCUDA(
 			out_color[ch * H * W + pix_id] = C[ch] + T * bg_color[ch];
 		// depth
 		out_depth[pix_id] = D;
+
+		out_score_map[pix_id] = SCORE;
 		
 		// feature
 		for (int ch = 0; ch < NUM_SEMANTIC_CHANNELS; ch++)                 
 			out_feature_map[ch * H * W + pix_id] = SF[ch] + T * bg_color[ch];
+
+
 	}
 }
 
@@ -469,6 +478,7 @@ void FORWARD::render(
 	const float2* means2D,
 	const float* colors,
 	const float* semantic_feature,
+	const float* score_feature, ///////
 	const float* depths, 
 	const float4* conic_opacity,
 	float* final_T,
@@ -476,6 +486,7 @@ void FORWARD::render(
 	const float* bg_color,
 	float* out_color,
 	float* out_feature_map,
+	float* out_score_map, ///////
 	float* out_depth) 
 {
 	renderCUDA<NUM_CHANNELS> <<<grid, block >>> (
@@ -485,6 +496,7 @@ void FORWARD::render(
 		means2D,
 		colors,
 		semantic_feature,
+		score_feature,
 		depths, 
 		conic_opacity,
 		final_T,
@@ -492,6 +504,7 @@ void FORWARD::render(
 		bg_color,
 		out_color,
 		out_feature_map,
+		out_score_map,
 		out_depth);
 }
 

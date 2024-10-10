@@ -191,7 +191,7 @@ class GaussianModel:
             {'params': [self._scaling], 'lr': training_args.scaling_lr, "name": "scaling"},
             {'params': [self._rotation], 'lr': training_args.rotation_lr, "name": "rotation"},
             {'params': [self._semantic_feature], 'lr':training_args.semantic_feature_lr, "name": "semantic_feature"},
-            {'params': [self._score_feature], 'lr':training_args.semantic_feature_lr, "name": "score_feature"},
+            {'params': [self._score_feature], 'lr':training_args.score_lr, "name": "score_feature"},
         ]
 
         self.optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
@@ -231,6 +231,7 @@ class GaussianModel:
             l.append('score_{}'.format(i))
 
         return l
+
 
 
 
@@ -320,6 +321,8 @@ class GaussianModel:
 
 
 
+
+
     def replace_tensor_to_optimizer(self, tensor, name):
         optimizable_tensors = {}
         for group in self.optimizer.param_groups:
@@ -392,6 +395,9 @@ class GaussianModel:
                 optimizable_tensors[group["name"]] = group["params"][0]
 
         return optimizable_tensors
+
+
+
 
 
     def densification_postfix(self, new_xyz, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation, new_semantic_feature, new_score_feature):

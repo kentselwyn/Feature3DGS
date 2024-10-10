@@ -151,7 +151,7 @@ class SuperPoint(nn.Module):
         "has_descriptor": True,
         "descriptor_dim": 256,
         # Inference
-        "sparse_outputs": False,
+        "sparse_outputs": True,
         "dense_outputs": True,
         "nms_radius": 4,
         "refinement_radius": 0,
@@ -202,8 +202,8 @@ class SuperPoint(nn.Module):
 
 
     def forward(self, data):
-        # image = data["image"]
-        image = data
+        image = data["image"]
+        # image = data
         if image.shape[1] == 3:  # RGB
             scale = image.new_tensor([0.299, 0.587, 0.114]).view(1, 3, 1, 1)
             image = (image * scale).sum(1, keepdim=True)
@@ -226,7 +226,9 @@ class SuperPoint(nn.Module):
             # Compute the dense keypoint scores
             cPa = self.relu(self.convPa(x))
             scores = self.convPb(cPa)
+
             scores = torch.nn.functional.softmax(scores, 1)[:, :-1]
+
             b, c, h, w = scores.shape
             scores = scores.permute(0, 2, 3, 1).reshape(b, h, w, 8, 8)
             scores = scores.permute(0, 1, 3, 2, 4).reshape(b, h * 8, w * 8)
@@ -241,6 +243,7 @@ class SuperPoint(nn.Module):
             pred["descriptors"] = dense_desc
 
         if self.conf.sparse_outputs:
+
             assert self.conf.has_detector and self.conf.has_descriptor
 
             scores = simple_nms(scores, self.conf.nms_radius)
@@ -329,17 +332,21 @@ class SuperPoint(nn.Module):
 
 
 
-
+from PIL import Image
+from torchvision import transforms
 
 
 # python -m encoders.superpoint.superpoint
 from pprint import pprint
 if __name__=="__main__":
-    model = SuperPoint({}).to('cuda')
-    data = {}
-    data["image"] = torch.load('/home/koki/code/feature_3dgs/image.pt').unsqueeze(0).to('cuda')
+    model = SuperPoint({"sparse_outputs":True}).to('cuda')
+    image = Image.open("/home/koki/code/cc/feature_3dgs_2/all_data/scene0000_00/A/images/3309.jpg")
 
-    breakpoint()
+    transform = transforms.ToTensor()
+    image_tensor = transform(image).unsqueeze(0).to('cuda')
+
+    data = {}
+    data["image"] = image_tensor
 
     pred = model(data)
 
