@@ -15,29 +15,29 @@ import os
 os.path.dirname(os.path.abspath(__file__))
 
 setup(
-    name="diff_gaussian_rasterization",
-    packages=['diff_gaussian_rasterization'],
+    name="diff_gaussian_rasterization_feature",
+    packages=['diff_gaussian_rasterization_feature'],
     ext_modules=[
         CUDAExtension(
-            name="diff_gaussian_rasterization._C",
+            name="diff_gaussian_rasterization_feature._C",
             sources=[
             "cuda_rasterizer/rasterizer_impl.cu",
             "cuda_rasterizer/forward.cu",
             "cuda_rasterizer/backward.cu",
             "rasterize_points.cu",
             "ext.cpp"],
-            #extra_compile_args={"nvcc": ["-I" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "third_party/glm/")]})
+            extra_compile_args={"nvcc": ["-I" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "third_party/glm/")]})
             ### To fix illegal memory issue
-            extra_compile_args={"nvcc": [
-                "-Xcompiler", 
-                "-fno-gnu-unique",
-                "-I" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "third_party/glm/")]})
+            # extra_compile_args={"nvcc": [
+            #     "-Xcompiler", 
+            #     "-fno-gnu-unique",
+            #     "-I" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "third_party/glm/")]})
     ],
     cmdclass={'build_ext': BuildExtension}
 )
 
 
-
+# pip install submodules\diff-gaussian-rasterization-feature
 ###
             # extra_compile_args={"nvcc": ["-O0", "-Xcompiler", "-fPIC", "-G", "-g", 
             #                              "-I" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "third_party/glm/")],
