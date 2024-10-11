@@ -14,7 +14,7 @@ from scene import Scene
 import os
 from tqdm import tqdm
 from os import makedirs
-from gaussian_renderer import render, render_edit 
+from gaussian_renderer import render
 import torchvision
 from utils.general_utils import safe_state
 from argparse import ArgumentParser
@@ -30,9 +30,8 @@ import numpy as np
 from PIL import Image
 import torch.nn as nn
 import torch.nn.functional as F
-from utils.clip_utils import CLIPEditor
-import yaml
-from models.networks import CNN_decoder, MLP_encoder
+from codes.used_codes.vis_scoremap import one_channel_vis
+from models.networks import CNN_decoder
 
 
 def feature_visualize_saving(feature):
@@ -51,181 +50,6 @@ def feature_visualize_saving(feature):
     vis_feature = (vis_feature - feature_pca_postprocess_sub) / feature_pca_postprocess_div
     vis_feature = vis_feature.clamp(0.0, 1.0).float().reshape((fmap.shape[2], fmap.shape[3], 3)).cpu()
     return vis_feature
-
-
-def parse_edit_config_and_text_encoding(edit_config):
-    edit_dict = {}
-    if edit_config is not None:
-        with open(edit_config, 'r') as f:
-            edit_config = yaml.safe_load(f)
-            print(edit_config)
-        objects = edit_config["edit"]["objects"]
-        targets = edit_config["edit"]["targets"].split(",")
-        edit_dict["positive_ids"] = [objects.index(t) for t in targets if t in objects]
-        edit_dict["score_threshold"] = edit_config["edit"]["threshold"]
-        
-        # text encoding
-        clip_editor = CLIPEditor()
-        text_feature = clip_editor.encode_text([obj.replace("_", " ") for obj in objects])
-
-        # setup editing
-        op_dict = {}
-        for operation in edit_config["edit"]["operations"].split(","):
-            if operation == "extraction":
-                op_dict["extraction"] = True
-            elif operation == "deletion":
-                op_dict["deletion"] = True
-            elif operation == "color_func":
-                op_dict["color_func"] = eval(edit_config["edit"]["colorFunc"])
-            else:
-                raise NotImplementedError
-        edit_dict["operations"] = op_dict
-
-        idx = edit_dict["positive_ids"][0]
-
-    return edit_dict, text_feature, targets[idx]
-        
-
-
-def one_channel_vis(score):
-    scale_nor = score.max().item()
-    score_nor = score / scale_nor
-    depth_tensor_squeezed = score_nor.squeeze()  # Remove the channel dimension
-    colormap = plt.get_cmap('jet')
-    depth_colored = colormap(depth_tensor_squeezed.cpu().numpy())
-    depth_colored_rgb = depth_colored[:, :, :3]
-    depth_image = Image.fromarray((depth_colored_rgb * 255).astype(np.uint8))
-
-    return depth_image
-
-
-
-def render_set(model_path, name, iteration, views, gaussians, pipeline, background, edit_config, speedup):
-    if edit_config != "no editing":
-        edit_dict, text_feature, target = parse_edit_config_and_text_encoding(edit_config)
-
-        edit_render_path = os.path.join(model_path, name, "ours_{}_{}_{}".format(iteration, next(iter(edit_dict["operations"])), target), "renders")
-        edit_gts_path = os.path.join(model_path, name, "ours_{}_{}_{}".format(iteration, next(iter(edit_dict["operations"])), target), "gt")
-        edit_feature_map_path = os.path.join(model_path, name, "ours_{}_{}_{}".format(iteration, next(iter(edit_dict["operations"])), target), "feature_map")
-        edit_gt_feature_map_path = os.path.join(model_path, name, "ours_{}_{}_{}".format(iteration, next(iter(edit_dict["operations"])), target), "gt_feature_map")
-
-        makedirs(edit_render_path, exist_ok=True)
-        makedirs(edit_gts_path, exist_ok=True)
-        makedirs(edit_feature_map_path, exist_ok=True)
-        makedirs(edit_gt_feature_map_path, exist_ok=True)
-    
-    else:
-        render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "image_renders")
-        gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "image_gt")
-        
-        feature_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "feature_renders")
-        gt_feature_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "feature_gt")
-        saved_feature_path = os.path.join(model_path, name, "ours_{}".format(iteration), "feature_tensors")
-        #encoder_ckpt_path = os.path.join(model_path, "encoder_chkpnt{}.pth".format(iteration))
-        score_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_renders")
-        gt_score_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_gt")
-        saved_score_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_tensors")
-        
-        decoder_ckpt_path = os.path.join(model_path, "decoder_chkpnt{}.pth".format(iteration))
-        
-        depth_path = os.path.join(model_path, name, "ours_{}".format(iteration), "depth") ###
-        
-        if speedup:
-            gt_feature_map = views[0].semantic_feature.cuda()
-            feature_out_dim = gt_feature_map.shape[0]
-            feature_in_dim = int(feature_out_dim/4)
-            cnn_decoder = CNN_decoder(feature_in_dim, feature_out_dim)
-            cnn_decoder.load_state_dict(torch.load(decoder_ckpt_path))
-        
-        makedirs(render_path, exist_ok=True)
-        makedirs(gts_path, exist_ok=True)
-
-        makedirs(feature_map_path, exist_ok=True)
-        makedirs(gt_feature_map_path, exist_ok=True)
-        makedirs(saved_feature_path, exist_ok=True)
-
-        makedirs(score_map_path, exist_ok=True)
-        makedirs(gt_score_map_path, exist_ok=True)
-        makedirs(saved_score_path, exist_ok=True)
-
-
-        # makedirs(depth_path, exist_ok=True) ###
-
-    for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
-        if edit_config != "no editing":
-            render_pkg = render_edit(view, gaussians, pipeline, background, text_feature, edit_dict) 
-            gt = view.original_image[0:3, :, :]
-            gt_feature_map = view.semantic_feature.cuda() 
-            torchvision.utils.save_image(render_pkg["render"], os.path.join(edit_render_path, '{0:05d}'.format(idx) + ".png")) 
-            torchvision.utils.save_image(gt, os.path.join(edit_gts_path, '{0:05d}'.format(idx) + ".png"))
-            # visualize feature map
-            feature_map = render_pkg["feature_map"]
-            feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
-            if speedup:
-                feature_map = cnn_decoder(feature_map)
-
-            feature_map_vis = feature_visualize_saving(feature_map)
-            Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(edit_feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
-            gt_feature_map_vis = feature_visualize_saving(gt_feature_map)
-            Image.fromarray((gt_feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(edit_gt_feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
-
-        else:
-            render_pkg = render(view, gaussians, pipeline, background) 
-
-            gt = view.original_image[0:3, :, :]
-            gt_feature_map = view.semantic_feature.cuda() 
-            torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, '{0:05d}'.format(idx) + ".png")) 
-            torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
-            
-            # ############## depth
-            # depth = render_pkg["depth"]
-            # scale_nor = depth.max().item()
-            # depth_nor = depth / scale_nor
-            # depth_tensor_squeezed = depth_nor.squeeze()  # Remove the channel dimension
-            # colormap = plt.get_cmap('jet')
-            # depth_colored = colormap(depth_tensor_squeezed.cpu().numpy())
-            # depth_colored_rgb = depth_colored[:, :, :3]
-            # depth_image = Image.fromarray((depth_colored_rgb * 255).astype(np.uint8))
-            # output_path = os.path.join(depth_path, '{0:05d}'.format(idx) + ".png")
-            # depth_image.save(output_path)
-            # ##############
-
-
-            ############## visualize feature map
-            feature_map = render_pkg["feature_map"][:16]
-
-            feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
-            if speedup:
-                feature_map = cnn_decoder(feature_map)
-
-            feature_map_vis = feature_visualize_saving(feature_map)
-            Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
-            
-            gt_feature_map_vis = feature_visualize_saving(gt_feature_map)
-            Image.fromarray((gt_feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(gt_feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
-
-            # save feature map
-            feature_map = feature_map.cpu().numpy().astype(np.float16)
-            torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, '{0:05d}'.format(idx) + "_fmap_CxHxW.pt"))
-            #############
-
-
-            ############# score map
-            score_map = render_pkg['score_map']
-
-            gt_score_map = view.score_feature.cuda()
-            score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], gt_score_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
-            
-            score_map_vis = one_channel_vis(score_map)
-            score_map_vis.save(os.path.join(score_map_path, '{0:05d}'.format(idx) + "_score_vis.png"))
-            
-            gt_score_map_vis = one_channel_vis(gt_score_map)
-            gt_score_map_vis.save(os.path.join(gt_score_map_path, '{0:05d}'.format(idx) + "_score_vis.png"))
-            
-            # save feature map
-            score_map = score_map.cpu().numpy().astype(np.float16)
-            torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, '{0:05d}'.format(idx) + "_smap_CxHxW.pt"))
-            #############
 
 
 
@@ -254,45 +78,134 @@ def multi_interpolate_matrices(matrix, num_interpolations):
 
 
 
+
+
+
+def render_set(model_path, name, iteration, views, gaussians, pipe_param, background, speedup):
+    render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "image_renders")
+    gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "image_gt")
+    
+    feature_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "feature_renders")
+    gt_feature_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "feature_gt")
+    saved_feature_path = os.path.join(model_path, name, "ours_{}".format(iteration), "feature_tensors")
+    #encoder_ckpt_path = os.path.join(model_path, "encoder_chkpnt{}.pth".format(iteration))
+    score_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_renders")
+    gt_score_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_gt")
+    saved_score_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_tensors")
+    
+    decoder_ckpt_path = os.path.join(model_path, "decoder_chkpnt{}.pth".format(iteration))
+    
+    depth_path = os.path.join(model_path, name, "ours_{}".format(iteration), "depth") ###
+    
+    if speedup:
+        gt_feature_map = views[0].semantic_feature.cuda()
+        feature_out_dim = gt_feature_map.shape[0]
+        feature_in_dim = int(feature_out_dim/4)
+        cnn_decoder = CNN_decoder(feature_in_dim, feature_out_dim)
+        cnn_decoder.load_state_dict(torch.load(decoder_ckpt_path))
+    
+    makedirs(render_path, exist_ok=True)
+    makedirs(gts_path, exist_ok=True)
+
+    makedirs(feature_map_path, exist_ok=True)
+    makedirs(gt_feature_map_path, exist_ok=True)
+    makedirs(saved_feature_path, exist_ok=True)
+
+    makedirs(score_map_path, exist_ok=True)
+    makedirs(gt_score_map_path, exist_ok=True)
+    makedirs(saved_score_path, exist_ok=True)
+
+
+    # makedirs(depth_path, exist_ok=True) ###
+
+    for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
+        render_pkg = render(view, gaussians, pipe_param, background) 
+
+        gt = view.original_image[0:3, :, :]
+        gt_feature_map = view.semantic_feature.cuda() 
+        torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, '{0:05d}'.format(idx) + ".png")) 
+        torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+        
+        # ############## depth
+        # depth = render_pkg["depth"]
+        # scale_nor = depth.max().item()
+        # depth_nor = depth / scale_nor
+        # depth_tensor_squeezed = depth_nor.squeeze()  # Remove the channel dimension
+        # colormap = plt.get_cmap('jet')
+        # depth_colored = colormap(depth_tensor_squeezed.cpu().numpy())
+        # depth_colored_rgb = depth_colored[:, :, :3]
+        # depth_image = Image.fromarray((depth_colored_rgb * 255).astype(np.uint8))
+        # output_path = os.path.join(depth_path, '{0:05d}'.format(idx) + ".png")
+        # depth_image.save(output_path)
+        # ##############
+
+
+        ############## visualize feature map
+        feature_map = render_pkg["feature_map"][:16]
+
+        feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
+        if speedup:
+            feature_map = cnn_decoder(feature_map)
+
+        feature_map_vis = feature_visualize_saving(feature_map)
+        Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
+        
+        gt_feature_map_vis = feature_visualize_saving(gt_feature_map)
+        Image.fromarray((gt_feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(gt_feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
+
+        # save feature map
+        feature_map = feature_map.cpu().numpy().astype(np.float16)
+        torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, '{0:05d}'.format(idx) + "_fmap_CxHxW.pt"))
+        #############
+
+
+        ############# score map
+        score_map = render_pkg['score_map']
+
+        gt_score_map = view.score_feature.cuda()
+        score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], gt_score_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
+        
+        score_map_vis = one_channel_vis(score_map)
+        score_map_vis.save(os.path.join(score_map_path, '{0:05d}'.format(idx) + "_score_vis.png"))
+        
+        gt_score_map_vis = one_channel_vis(gt_score_map)
+        gt_score_map_vis.save(os.path.join(gt_score_map_path, '{0:05d}'.format(idx) + "_score_vis.png"))
+        
+        # save feature map
+        score_map = score_map.cpu().numpy().astype(np.float16)
+        torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, '{0:05d}'.format(idx) + "_smap_CxHxW.pt"))
+        #############
+
+
+
 ###
-def render_novel_views(model_path, name, iteration, views, gaussians, pipeline, background, 
-                       edit_config, speedup, multi_interpolate, num_views):
+def render_novel_views(model_path, name, iteration, views, gaussians, pipe_param, background, 
+                       speedup, multi_interpolate, num_views):
     if multi_interpolate:
         name = name + "_multi_interpolate"
     # make dirs
-    if edit_config != "no editing":
-        edit_dict, text_feature, target = parse_edit_config_and_text_encoding(edit_config)
-        
-        # edit
-        edit_render_path = os.path.join(model_path, name, "ours_{}_{}_{}".format(iteration, next(iter(edit_dict["operations"])), target), "renders")
-        edit_feature_map_path = os.path.join(model_path, name, "ours_{}_{}_{}".format(iteration, next(iter(edit_dict["operations"])), target), "feature_map")
+    render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "image_renders")
+    feature_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "feature_renders")
+    saved_feature_path = os.path.join(model_path, name, "ours_{}".format(iteration), "feature_tensors")
+    #encoder_ckpt_path = os.path.join(model_path, "encoder_chkpnt{}.pth".format(iteration))
+    decoder_ckpt_path = os.path.join(model_path, "decoder_chkpnt{}.pth".format(iteration))
+    
+    score_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_renders")
+    saved_score_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_tensors")
 
-        makedirs(edit_render_path, exist_ok=True)
-        makedirs(edit_feature_map_path, exist_ok=True)
-    else:
-        # non-edit
-        render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "image_renders")
-        feature_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "feature_renders")
-        saved_feature_path = os.path.join(model_path, name, "ours_{}".format(iteration), "feature_tensors")
-        #encoder_ckpt_path = os.path.join(model_path, "encoder_chkpnt{}.pth".format(iteration))
-        decoder_ckpt_path = os.path.join(model_path, "decoder_chkpnt{}.pth".format(iteration))
-        
-        score_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_renders")
-        saved_score_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_tensors")
+    if speedup:
+        gt_feature_map = views[0].semantic_feature.cuda()
+        feature_out_dim = gt_feature_map.shape[0]
+        feature_in_dim = int(feature_out_dim/4)
+        cnn_decoder = CNN_decoder(feature_in_dim, feature_out_dim)
+        cnn_decoder.load_state_dict(torch.load(decoder_ckpt_path))
+    
+    makedirs(render_path, exist_ok=True)
+    makedirs(feature_map_path, exist_ok=True)
+    makedirs(saved_feature_path, exist_ok=True)
 
-        if speedup:
-            gt_feature_map = views[0].semantic_feature.cuda()
-            feature_out_dim = gt_feature_map.shape[0]
-            feature_in_dim = int(feature_out_dim/4)
-            cnn_decoder = CNN_decoder(feature_in_dim, feature_out_dim)
-            cnn_decoder.load_state_dict(torch.load(decoder_ckpt_path))
-        
-        makedirs(render_path, exist_ok=True)
-        makedirs(feature_map_path, exist_ok=True)
-        makedirs(saved_feature_path, exist_ok=True)
-
-        makedirs(score_map_path, exist_ok=True)
-        makedirs(saved_score_path, exist_ok=True)
+    makedirs(score_map_path, exist_ok=True)
+    makedirs(saved_score_path, exist_ok=True)
 
     view = views[0]
     
@@ -312,99 +225,82 @@ def render_novel_views(model_path, name, iteration, views, gaussians, pipeline, 
         view.full_proj_transform = (view.world_view_transform.unsqueeze(0).bmm(view.projection_matrix.unsqueeze(0))).squeeze(0)
         view.camera_center = view.world_view_transform.inverse()[3, :3]
 
-        if edit_config != "no editing":
-            render_pkg = render_edit(view, gaussians, pipeline, background, text_feature, edit_dict)
-            gt = view.original_image[0:3, :, :]
-            gt_feature_map = view.semantic_feature.cuda()
-            torchvision.utils.save_image(render_pkg["render"], os.path.join(edit_render_path, '{0:05d}'.format(idx) + ".png")) 
-            # visualize feature map
-            feature_map = render_pkg["feature_map"] 
-            feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
-            if speedup:
-                feature_map = cnn_decoder(feature_map)
+        render_pkg = render(view, gaussians, pipe_param, background) 
 
-            feature_map_vis = feature_visualize_saving(feature_map)
-            Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(edit_feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
-        else:
-            render_pkg = render(view, gaussians, pipeline, background) 
+        
+        torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, '{0:05d}'.format(idx) + ".png")) 
+        
+        
+        ########## visualize feature map
+        gt_feature_map = view.semantic_feature.cuda() 
+        feature_map = render_pkg["feature_map"]
+        feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
+        if speedup:
+            feature_map = cnn_decoder(feature_map)
 
-            
-            torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, '{0:05d}'.format(idx) + ".png")) 
-            
-            
-            ########## visualize feature map
-            gt_feature_map = view.semantic_feature.cuda() 
-            feature_map = render_pkg["feature_map"]
-            feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
-            if speedup:
-                feature_map = cnn_decoder(feature_map)
+        feature_map_vis = feature_visualize_saving(feature_map)
+        Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
 
-            feature_map_vis = feature_visualize_saving(feature_map)
-            Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
-
-            # save feature map
-            feature_map = feature_map.cpu().numpy().astype(np.float16)
-            torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, '{0:05d}'.format(idx) + "_fmap_CxHxW.pt"))
-            ##########
+        # save feature map
+        feature_map = feature_map.cpu().numpy().astype(np.float16)
+        torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, '{0:05d}'.format(idx) + "_fmap_CxHxW.pt"))
+        ##########
 
 
-            ########## visualize score map
-            gt_score_map = view.score_feature.cuda()
-            score_map = render_pkg['score_map']
-            score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], gt_score_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
-            score_map_vis = one_channel_vis(score_map)
-            score_map_vis.save(os.path.join(score_map_path, '{0:05d}'.format(idx) + "_score_vis.png"))
-           
-            score_map = score_map.cpu().numpy().astype(np.float16)
-            torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, '{0:05d}'.format(idx) + "_smap_CxHxW.pt"))
+        ########## visualize score map
+        gt_score_map = view.score_feature.cuda()
+        score_map = render_pkg['score_map']
+        score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], gt_score_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
+        score_map_vis = one_channel_vis(score_map)
+        score_map_vis.save(os.path.join(score_map_path, '{0:05d}'.format(idx) + "_score_vis.png"))
+        
+        score_map = score_map.cpu().numpy().astype(np.float16)
+        torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, '{0:05d}'.format(idx) + "_smap_CxHxW.pt"))
 
 
 
 
-def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParams, skip_train : bool, skip_test : bool, novel_view : bool, 
-                video : bool , edit_config: str, novel_video : bool, multi_interpolate : bool, num_views : int): 
+def render_sets(model_param : ModelParams, iteration : int, pipe_param : PipelineParams, skip_train : bool, skip_test : bool, 
+                novel_view : bool, multi_interpolate : bool, num_views : int): 
     with torch.no_grad():
-        gaussians = GaussianModel(dataset.sh_degree)
-        scene = Scene(dataset, gaussians, load_iteration=iteration, shuffle=False)
+        gaussians = GaussianModel(model_param.sh_degree)
+        scene = Scene(model_param, gaussians, load_iteration=iteration, shuffle=False)
 
-        bg_color = [1,1,1] if dataset.white_background else [0, 0, 0]
+        bg_color = [1,1,1] if model_param.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
         if not skip_train:
-             render_set(dataset.model_path, "rendering/trains", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, edit_config, dataset.speedup)
+             render_set(model_param.model_path, "rendering/trains", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipe_param, background, model_param.speedup)
 
         if not skip_test:
-             render_set(dataset.model_path, "rendering/test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, edit_config, dataset.speedup)
+             render_set(model_param.model_path, "rendering/test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipe_param, background, model_param.speedup)
 
         if novel_view:
-             render_novel_views(dataset.model_path, "rendering/novel_views", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, 
-                                edit_config, dataset.speedup, multi_interpolate, num_views)
+             render_novel_views(model_param.model_path, "rendering/novel_views", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipe_param, background, model_param.speedup, 
+                                multi_interpolate, num_views)
 
 
 
-# python render.py -s /home/koki/code/cc/feature_3dgs_2/all_data/scene0000_01/A -m /home/koki/code/cc/feature_3dgs_2/all_data/scene0000_01/A/outputs/imrate:2_th:0.01_mlpdim:16 -f sp_feature_imrate:2_th:0.01_mlpdim:16 --iteration 7000 --images all_images/image_kpts_imrate:2_th:0.01_mlpdim:16 --novel_view --skip_test --multi_interpolate
+
 if __name__ == "__main__":
     # Set up command line argument parser
     parser = ArgumentParser(description="Testing script parameters")
-    model = ModelParams(parser, sentinel=True)
-    pipeline = PipelineParams(parser)
+    Model_param = ModelParams(parser, sentinel=True)
+    Pipe_param = PipelineParams(parser)
     parser.add_argument("--iteration", default=-1, type=int)
     parser.add_argument("--skip_train", action="store_true")
     parser.add_argument("--skip_test", action="store_true")
     parser.add_argument("--novel_view", action="store_true") ###
     parser.add_argument("--quiet", action="store_true")
-    parser.add_argument("--video", action="store_true") ###
-    parser.add_argument("--novel_video", action="store_true") ###
-    parser.add_argument('--edit_config', default="no editing", type=str)
     parser.add_argument("--multi_interpolate", action="store_true") ###
     parser.add_argument("--num_views", default=100, type=int)
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
-
     # Initialize system state (RNG)
     safe_state(args.quiet)
 
-    render_sets(model.extract(args), args.iteration, pipeline.extract(args), args.skip_train, args.skip_test, args.novel_view, 
-                args.video, args.edit_config, args.novel_video, args.multi_interpolate, args.num_views) ###
+    render_sets(Model_param.extract(args), args.iteration, Pipe_param.extract(args), 
+                args.skip_train, args.skip_test, args.novel_view,
+                args.multi_interpolate, args.num_views)
     
     

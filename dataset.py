@@ -98,8 +98,8 @@ def main(args):
     mlp = mlp.to("cuda").eval()
 
     img_folder = f"{args.input}/all_images/images"
-    kptimg_folder = f"{args.input}/all_images/image_kpts_imrate:{args.resize_num}_th:{args.th}_mlpdim:{args.mlp_dim}"
-    sp_folder = f"{args.input}/features/sp_feature_imrate:{args.resize_num}_th:{args.th}_mlpdim:{args.mlp_dim}"
+    kptimg_folder = f"{args.input}/all_images/imrate:{args.resize_num}_th:{args.th}_mlpdim:{args.mlp_dim}"
+    sp_folder = f"{args.input}/features/imrate:{args.resize_num}_th:{args.th}_mlpdim:{args.mlp_dim}"
     
 
     target_images = [f for f in os.listdir(img_folder) if not os.path.isdir(os.path.join(img_folder, f))]
@@ -133,7 +133,7 @@ def main(args):
 
 
         
-# python -m codes.dataset_build --resize_num 2 --mlp_dim 16 --input /home/koki/code/cc/feature_3dgs_2/all_data/scene0000_01/A --th 0.01
+# python dataset_build.py --input /home/koki/code/cc/feature_3dgs_2/all_data/scene0755_00/A --resize_num 2 --mlp_dim 16 --th 0.01
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(

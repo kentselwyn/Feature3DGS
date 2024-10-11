@@ -6,9 +6,9 @@ from PIL import Image
 from tqdm import tqdm
 from scene import Scene
 import matplotlib.pyplot as plt
-from gt_generation import GroupParams
+from eval_single import GroupParams
 from scene.gaussian_model import GaussianModel
-from match_images import img_match, score_feature_match
+from utils.match_img import img_match, score_feature_match
 from codes.used_codes.viz2d import plot_image_grid, plot_keypoints, plot_matches
 from copy import deepcopy
 from codes.metrics_match import compute_metrics

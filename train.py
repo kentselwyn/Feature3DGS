@@ -30,8 +30,6 @@ except ImportError:
 
 import torch.nn.functional as F
 from models.networks import CNN_decoder
-from models.semantic_dataloader import VariableSizeDataset
-from torch.utils.data import DataLoader
 from datetime import datetime
 from utils.loss_utils import weighted_l2
 
@@ -107,11 +105,11 @@ def training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_
 
 
 
-def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
+def training(model_param, opt_param, pipe_param, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
     first_iter = 0
-    tb_writer = prepare_output_and_logger(dataset)
-    gaussians = GaussianModel(dataset.sh_degree)
-    scene = Scene(dataset, gaussians)
+    tb_writer = prepare_output_and_logger(model_param)
+    gaussians = GaussianModel(model_param.sh_degree)
+    scene = Scene(model_param, gaussians)
 
     # 2D semantic feature map CNN decoder
     viewpoint_stack = scene.getTrainCameras().copy()
@@ -124,18 +122,18 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
     
     # speed up
-    if dataset.speedup:
+    if model_param.speedup:
         feature_in_dim = int(feature_out_dim/4)
         cnn_decoder = CNN_decoder(feature_in_dim, feature_out_dim)
         cnn_decoder_optimizer = torch.optim.Adam(cnn_decoder.parameters(), lr=0.0001)
 
 
-    gaussians.training_setup(opt)
+    gaussians.training_setup(opt_param)
     if checkpoint:
         (model_params, first_iter) = torch.load(checkpoint)
-        gaussians.restore(model_params, opt)
+        gaussians.restore(model_params, opt_param)
 
-    bg_color = [1, 1, 1] if dataset.white_background else [0, 0, 0]
+    bg_color = [1, 1, 1] if model_param.white_background else [0, 0, 0]
     background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
     iter_start = torch.cuda.Event(enable_timing = True)
@@ -143,10 +141,10 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
     viewpoint_stack = None
     ema_loss_for_log = 0.0
-    progress_bar = tqdm(range(first_iter, opt.iterations), desc="Training progress")
+    progress_bar = tqdm(range(first_iter, opt_param.iterations), desc="Training progress")
     first_iter += 1
 
-    for iteration in range(first_iter, opt.iterations + 1):
+    for iteration in range(first_iter, opt_param.iterations + 1):
 
         iter_start.record()
 
@@ -163,8 +161,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
         # Render
         if (iteration - 1) == debug_from:
-            pipe.debug = True
-        render_pkg = render(viewpoint_cam, gaussians, pipe, background)
+            pipe_param.debug = True
+        render_pkg = render(viewpoint_cam, gaussians, pipe_param, background)
         
 
         feature_map, score_map, image, viewspace_point_tensor, visibility_filter, radii = render_pkg["feature_map"], render_pkg["score_map"], render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
@@ -188,7 +186,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         # gt_feature_map = gt_feature_map * gt_feature_mask
 
 
-        if dataset.speedup:
+        if model_param.speedup:
             feature_map = cnn_decoder(feature_map)
             
         Ll1_feature = l1_loss(feature_map, gt_feature_map)
@@ -197,7 +195,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
 
         Ll1 = l1_loss(image, gt_image)
-        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image)) + 1.0 * Ll1_feature + 1.0*Ll1_score
+        loss = (1.0 - opt_param.lambda_dssim) * Ll1 + opt_param.lambda_dssim * (1.0 - ssim(image, gt_image)) + 1.0 * Ll1_feature + 1.0*Ll1_score
 
         loss.backward()
         iter_end.record()
@@ -208,38 +206,38 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             if iteration % 10 == 0:
                 progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}"})
                 progress_bar.update(10)
-            if iteration == opt.iterations:
+            if iteration == opt_param.iterations:
                 progress_bar.close()
 
             # Log and save
-            training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background)) 
+            training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe_param, background)) 
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
                 scene.save(iteration)
                 print("\n[ITER {}] Saving feature decoder ckpt".format(iteration))
-                if dataset.speedup:
+                if model_param.speedup:
                     torch.save(cnn_decoder.state_dict(), scene.model_path + "/decoder_chkpnt" + str(iteration) + ".pth")
   
 
             # Densification
-            if iteration < opt.densify_until_iter:
+            if iteration < opt_param.densify_until_iter:
                 # Keep track of max radii in image-space for pruning
                 gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
                 gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
 
-                if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
-                    size_threshold = 20 if iteration > opt.opacity_reset_interval else None
-                    gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold)
+                if iteration > opt_param.densify_from_iter and iteration % opt_param.densification_interval == 0:
+                    size_threshold = 20 if iteration > opt_param.opacity_reset_interval else None
+                    gaussians.densify_and_prune(opt_param.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold)
                 
-                if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
+                if iteration % opt_param.opacity_reset_interval == 0 or (model_param.white_background and iteration == opt_param.densify_from_iter):
                     gaussians.reset_opacity()
             
 
             # Optimizer step
-            if iteration < opt.iterations:
+            if iteration < opt_param.iterations:
                 gaussians.optimizer.step()
                 gaussians.optimizer.zero_grad(set_to_none = True)
-                if dataset.speedup:
+                if model_param.speedup:
                     cnn_decoder_optimizer.step()
                     cnn_decoder_optimizer.zero_grad(set_to_none = True)
 
@@ -249,14 +247,14 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
 
         with torch.no_grad():        
             if network_gui.conn == None:
-                network_gui.try_connect(dataset.render_items)
+                network_gui.try_connect(model_param.render_items)
             while network_gui.conn != None:
                 try:
                     net_image_bytes = None
                     custom_cam, do_training, keep_alive, scaling_modifer, render_mode = network_gui.receive()
                     if custom_cam != None:
-                        render_pkg = render(custom_cam, gaussians, pipe, background, scaling_modifer)   
-                        net_image = render_net_image(render_pkg, dataset.render_items, render_mode, custom_cam)
+                        render_pkg = render(custom_cam, gaussians, pipe_param, background, scaling_modifer)   
+                        net_image = render_net_image(render_pkg, model_param.render_items, render_mode, custom_cam)
                         net_image_bytes = memoryview((torch.clamp(net_image, min=0, max=1.0) * 255).byte().permute(1, 2, 0).contiguous().cpu().numpy())
                     metrics_dict = {
                         "#": gaussians.get_opacity.shape[0],
@@ -264,8 +262,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                         # Add more metrics as needed
                     }
                     # Send the data
-                    network_gui.send(net_image_bytes, dataset.source_path, metrics_dict)
-                    if do_training and ((iteration < int(opt.iterations)) or not keep_alive):
+                    network_gui.send(net_image_bytes, model_param.source_path, metrics_dict)
+                    if do_training and ((iteration < int(opt_param.iterations)) or not keep_alive):
                         break
                 except Exception as e:
                     # raise e
@@ -273,22 +271,18 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
             
 
 
-
-
-
-# python train.py -s /home/koki/code/cc/feature_3dgs_2/all_data/scene0000_01/A -m /home/koki/code/cc/feature_3dgs_2/all_data/scene0000_01/A/outputs/1 -f imrate:2_th:0.01_mlpdim:16 --iterations 7000
 if __name__ == "__main__":
     # Set up command line argument parser
     parser = ArgumentParser(description="Training script parameters")
-    lp = ModelParams(parser)
-    op = OptimizationParams(parser)
-    pp = PipelineParams(parser)
+    Model_param = ModelParams(parser)
+    Opt_param = OptimizationParams(parser)
+    Pipe_param = PipelineParams(parser)
     parser.add_argument('--ip', type=str, default="127.0.0.1")
     parser.add_argument('--port', type=int, default=6009)
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
-    parser.add_argument("--test_iterations", nargs="+", type=int, default=[7_000, 30_000])
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[7_000, 15_000, 30_000])
+    parser.add_argument("--test_iterations", nargs="+", type=int, default=[5_000, 7_000, 10_000])
+    parser.add_argument("--save_iterations", nargs="+", type=int, default=[5_000, 7_000, 10_000])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
     parser.add_argument("--start_checkpoint", type=str, default = None)
@@ -305,7 +299,7 @@ if __name__ == "__main__":
     # Start GUI server, configure and run training
     network_gui.init(args.ip, args.port)
     torch.autograd.set_detect_anomaly(args.detect_anomaly)
-    training(lp.extract(args), op.extract(args), pp.extract(args), args.test_iterations, args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from)
+    training(Model_param.extract(args), Opt_param.extract(args), Pipe_param.extract(args), args.test_iterations, args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from)
 
     # All done
     print("\nTraining complete.")

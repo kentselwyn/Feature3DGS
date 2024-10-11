@@ -113,7 +113,6 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
         else:
             assert False, "Colmap camera model not handled: only undistorted datasets (PINHOLE or SIMPLE_PINHOLE cameras) supported!"
 
-
         image_path = os.path.join(images_folder, os.path.basename(extr.name))
         image_name = os.path.basename(image_path).split(".")[0]
         image = Image.open(image_path) 
@@ -197,15 +196,9 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.txt")
         cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
-    
-    image_dir = f"all_images/{foundation_model}" if images is None else images
-    
 
-    # if foundation_model =='sam':
-    #     semantic_feature_dir = "sam_embeddings" 
-    # elif foundation_model =='lseg':
-    #     semantic_feature_dir = "rgb_feature_langseg"
-    # elif foundation_model == "sp":
+    
+    image_dir = f"all_images/{images}"
     semantic_feature_dir = f"features/{foundation_model}"
 
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, 
@@ -219,7 +212,7 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
 
     if eval:
         train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 2] # avoid 1st to be test view
-        test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 2] 
+        test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 2]
         # for i, item in enumerate(test_cam_infos): ### check test set
         #     print('test image:', item[7])
     else:

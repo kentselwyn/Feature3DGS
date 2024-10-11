@@ -37,14 +37,7 @@ setup(
 )
 
 
-# pip install submodules\diff-gaussian-rasterization-feature
-###
-            # extra_compile_args={"nvcc": ["-O0", "-Xcompiler", "-fPIC", "-G", "-g", 
-            #                              "-I" + os.path.join(os.path.dirname(os.path.abspath(__file__)), "third_party/glm/")],
-            #     "cxx": ["-g"]  # Generate debug info for C++ code
-            
-            # extra_link_args=["-shared"]
-
+# pip install submodules/diff-gaussian-rasterization-feature
 
 # /home/koki/code/cc/feature_3dgs/submodules/diff-gaussian-rasterization-feature/setup.py
 # /home/koki/code/cc/feature_3dgs/submodules/diff-gaussian-rasterization-feature/setup.py

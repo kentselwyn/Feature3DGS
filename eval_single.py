@@ -5,9 +5,11 @@ from scene.dataset_readers import readColmapSceneInfo
 from scene.colmap_loader import read_extrinsics_binary, read_intrinsics_binary
 from scene import Scene
 from scene.gaussian_model import GaussianModel
-from match_images import matchimg2
+from utils.match_img import matchimg2
 from PIL import Image
 from codes.metrics_match import compute_metrics
+from encoders.utils import GroupParams
+
 
 def test():
     path = "/home/koki/code/cc/feature_3dgs_2/all_data/scene0755_00/A"
@@ -30,22 +32,6 @@ def test():
     cam_extrinsics = read_extrinsics_binary(cameras_extrinsic_file)
     cam_intrinsics = read_intrinsics_binary(cameras_intrinsic_file)
 
-
-
-
-class GroupParams():
-    def __init__(self):
-        self.sh_degree = 3
-        self.source_path = ""
-        self.foundation_model = "" ###
-        self.model_path = ""
-        self.images = None
-        self.resolution = -1
-        self.white_background = False
-        self.data_device = "cuda"
-        self.eval = False
-        self.speedup = False ###
-        self.render_items = ['RGB', 'Depth', 'Edge', 'Normal', 'Curvature', 'Feature Map', 'Score Map']
 
 
 

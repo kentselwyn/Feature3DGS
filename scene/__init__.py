@@ -42,9 +42,6 @@ class Scene:
         self.train_cameras = {}
         self.test_cameras = {}
 
-
-
-
         if os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = sceneLoadTypeCallbacks["Colmap"](path=args.source_path, foundation_model=args.foundation_model, 
                                                           eval=args.eval, images=args.images)

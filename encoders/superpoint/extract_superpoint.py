@@ -3,7 +3,7 @@ import argparse
 import os
 from .superpoint import SuperPoint
 from .utils import load_image, resize_image
-from .mlp import get_module_ckptpath
+from .mlp import get_mlp_model
 from torchvision.transforms import ToPILImage
 
 
@@ -44,7 +44,7 @@ def saveimage_from_torch(image: torch.Tensor, img_name = "image"):
 def main(args):
     print("Loading model...")
     model = SuperPoint({}).to(args.device)
-    mlp, ckpt_path = get_module_ckptpath()
+    mlp, ckpt_path = get_mlp_model()
     mlp = mlp()
     ckpt = torch.load(ckpt_path)
     mlp.load_state_dict(ckpt)

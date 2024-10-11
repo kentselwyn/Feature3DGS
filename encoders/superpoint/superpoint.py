@@ -332,23 +332,43 @@ class SuperPoint(nn.Module):
 
 
 
-from PIL import Image
-from torchvision import transforms
+
 
 
 # python -m encoders.superpoint.superpoint
-from pprint import pprint
 if __name__=="__main__":
-    model = SuperPoint({"sparse_outputs":True}).to('cuda')
-    image = Image.open("/home/koki/code/cc/feature_3dgs_2/all_data/scene0000_00/A/images/3309.jpg")
+    from PIL import Image
+    from torchvision import transforms
+    import time
+
+    path = "/home/koki/code/cc/feature_3dgs_2/all_data/scene0000_00/A/all_images/images/3310.jpg"
+
+    model = SuperPoint({
+                "sparse_outputs": True,
+                "max_num_keypoints": 1024,
+            }).to('cuda')
+    image = Image.open(path)
 
     transform = transforms.ToTensor()
-    image_tensor = transform(image).unsqueeze(0).to('cuda')
+    image_tensor = transform(image).unsqueeze(0).to("cuda")
 
     data = {}
     data["image"] = image_tensor
 
-    pred = model(data)
+    print("start heat preperation")
+    for i in range(500):
+        print(i)
+        pred = model(data)
+
+    print("start time computation")
+    start = time.time()
+
+    for i in range(500):
+        pred = model(data)
+
+    end = time.time()
+
+    print("elapsed time:", end-start)
 
     breakpoint()
 
