@@ -2,23 +2,17 @@ import torch
 import numpy as np
 from PIL import Image
 from torchvision import transforms
-from pathlib import Path
 import torch.nn.functional as F
 from skimage.measure import label, regionprops
 import matplotlib.pyplot as plt
-from encoders.superpoint.utils import load_image
-from codes.used_codes.vis_scoremap import one_channel_vis
-from encoders.superpoint.lightglue import LightGlue
-from encoders.superpoint.superpoint import SuperPoint
 from encoders.superpoint.mlp import get_mlp_model
 from codes.used_codes.viz2d import plot_image_grid, plot_keypoints, plot_matches
 import time
 from typing import Tuple
 
 
-def extract_kpt(score: torch.Tensor):
+def extract_kpt(score: torch.Tensor, threshold = 0.3):
     score = score[0]
-    threshold = 0.3
     mask = (score > threshold).cpu().numpy()
     start = time.time()
     labels = label(mask)
@@ -32,7 +26,28 @@ def extract_kpt(score: torch.Tensor):
     return centroids
 
 
+def find_small_circle_centers(score_map, threshold, kernel_size=3):
+    """
+    Find the centers of small circles (2-3 pixels in diameter) in a score map using GPU acceleration.
 
+    Args:
+        score_map (torch.Tensor): The input score map tensor of shape [1, H, W] on GPU.
+        threshold (float): The minimum value to consider a point as a potential center.
+
+    Returns:
+        torch.Tensor: Tensor containing the coordinates of the circle centers.
+    """
+    # Ensure the score map is on the GPU
+    score_map = score_map.cuda()
+
+    # Apply max pooling with a small kernel to find local maxima
+    pooled = F.max_pool2d(score_map, kernel_size=kernel_size, stride=1, padding=kernel_size // 2)
+
+    maxima = (score_map == pooled) & (score_map > threshold)
+
+    positions = torch.nonzero(maxima[0], as_tuple=False)
+
+    return positions
 
 
 def sample_descriptors_fix_sampling(kpt, desc, scale):
@@ -47,23 +62,12 @@ def sample_descriptors_fix_sampling(kpt, desc, scale):
     return desc
 
 
-matcher = LightGlue({
-            "filter_threshold": 0.01,
-        }).to("cuda").eval()
-
-conf = {
-    "sparse_outputs": True,
-    "dense_outputs": True,
-    "max_num_keypoints": 512,
-    "detection_threshold": 0.01,
-}
-encoder = SuperPoint(conf).to("cuda").eval()
 
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def match_image(img0, img1, kpt0, kpt1, desc0, desc1, mlp_dim):
+def match_image(img0, img1, kpt0, kpt1, desc0, desc1, mlp_dim, matcher):
     
     mlp = get_mlp_model(mlp_dim).to("cuda")
     data = {}
@@ -123,7 +127,7 @@ def load_kpt_desc(name, folder_path):
 
 
 
-def matchimg2(img0, img1, s0, s1, f0, f1, mlp_dim=16, draw_name=None) -> Tuple[torch.Tensor, torch.Tensor]:
+def matchimg2(img0, img1, s0, s1, f0, f1, matcher, mlp_dim=16, draw_name=None) -> Tuple[torch.Tensor, torch.Tensor]:
     kpt0 = extract_kpt(s0)
     kpt1 = extract_kpt(s1)
 
@@ -170,19 +174,44 @@ def matchimg2(img0, img1, s0, s1, f0, f1, mlp_dim=16, draw_name=None) -> Tuple[t
     return m_kpts0, m_kpts1
 
 
-def score_feature_match(data, mlp_dim):
-    
-    kpt0 = extract_kpt(data['s0'])
-    kpt1 = extract_kpt(data['s1'])
 
-    kpt0 = kpt0.clone().detach()[:, [1, 0]]
-    kpt1 = kpt1.clone().detach()[:, [1, 0]]
+
+
+
+
+def score_feature_match(data, args, matcher, mlp_dim=16):
+    
+    st = time.time()
+    # if data['experi_index']=='5' or data['experi_index']=='4':
+    #     kpt0 = extract_kpt(data['s0'], threshold=args.score_kpt_th_low)
+    #     kpt1 = extract_kpt(data['s1'], threshold=args.score_kpt_th_low)
+    # else:
+    #     kpt0 = extract_kpt(data['s0'], threshold=args.score_kpt_th_high)
+    #     kpt1 = extract_kpt(data['s1'], threshold=args.score_kpt_th_high)
+    if data['experi_index']=='5' or data['experi_index']=='4':
+        kpt0 = find_small_circle_centers(data['s0'], threshold=args.score_kpt_th_low, kernel_size=args.kernel_size_low)
+        kpt1 = find_small_circle_centers(data['s1'], threshold=args.score_kpt_th_low, kernel_size=args.kernel_size_low)
+    else:
+        kpt0 = find_small_circle_centers(data['s0'], threshold=args.score_kpt_th_high, kernel_size=args.kernel_size_high)
+        kpt1 = find_small_circle_centers(data['s1'], threshold=args.score_kpt_th_high, kernel_size=args.kernel_size_high)
+    en = time.time()
+    # print("first: ",en-st)
+
+    if kpt0.dim()<2:
+        return False
+
+    st = time.time()
+    kpt0 = kpt0.clone().detach()[:, [1, 0]].to(data['ft0'])
+    kpt1 = kpt1.clone().detach()[:, [1, 0]].to(data['ft0'])
     _, h, w = data['s0'].shape
-    scale = torch.tensor([w, h])
+    scale = torch.tensor([w, h]).to(kpt0)
     desc0 = sample_descriptors_fix_sampling(kpt0, data['ft0'], scale)
     desc1 = sample_descriptors_fix_sampling(kpt1, data['ft1'], scale)
     mlp = get_mlp_model(mlp_dim).to("cuda")
+    en = time.time()
+    # print("second: ",en-st)
 
+    st = time.time()
     tmp = {}
     tmp["keypoints0"] = kpt0.to(device).unsqueeze(0).float()
     tmp["keypoints1"] = kpt1.to(device).unsqueeze(0).float()
@@ -192,6 +221,9 @@ def score_feature_match(data, mlp_dim):
     tmp["image_size"] = data['s0'].shape[1:]
 
     pred = matcher(tmp)
+    en = time.time()
+    # print("third: ",en-st)
+
     m0 = pred['m0']
     valid = (m0[0] > -1)
 
@@ -201,18 +233,17 @@ def score_feature_match(data, mlp_dim):
     data['mkpt1'] = m1
     data['kpt0'] = kpt0
     data['kpt1'] = kpt1
+
+    return True
     
 
 
-
-
-
-def img_match(data) -> Tuple[torch.Tensor, torch.Tensor]:
+def img_match(data: dict, encoder, matcher) -> Tuple[torch.Tensor, torch.Tensor]:
     d0 = {}
     d1 = {}
     transfrom = transforms.ToTensor()
-    d0['image'] = transfrom(data['img_orig0']).to("cuda").unsqueeze(0)
-    d1['image'] = transfrom(data['img_orig1']).to("cuda").unsqueeze(0)
+    d0['image'] = transfrom(data['img0']).to("cuda").unsqueeze(0)
+    d1['image'] = transfrom(data['img1']).to("cuda").unsqueeze(0)
 
     p0 = encoder(d0)
     p1 = encoder(d1)
@@ -222,7 +253,7 @@ def img_match(data) -> Tuple[torch.Tensor, torch.Tensor]:
     tmp["keypoints1"] = p1['keypoints']
     tmp["descriptors0"] = p0['descriptors']
     tmp["descriptors1"] = p1['descriptors']
-    tmp["image_size"] = data['s0'].shape[1:]
+    tmp["image_size"] = d0['image'][0].shape[1:]
 
     pred = matcher(tmp)
     m0 = pred['m0']
@@ -236,7 +267,32 @@ def img_match(data) -> Tuple[torch.Tensor, torch.Tensor]:
     data['kpt1'] = kpt1
 
 
+def img_match2(data: dict, encoder, matcher) -> Tuple[torch.Tensor, torch.Tensor]:
+    d0 = {}
+    d1 = {}
+    d0['image'] = data['img0'].unsqueeze(0)
+    d1['image'] = data['img1'].unsqueeze(0)
 
+    p0 = encoder(d0)
+    p1 = encoder(d1)
+
+    tmp = {}
+    tmp["keypoints0"] = p0['keypoints']
+    tmp["keypoints1"] = p1['keypoints']
+    tmp["descriptors0"] = p0['descriptors']
+    tmp["descriptors1"] = p1['descriptors']
+    tmp["image_size"] = d0['image'][0].shape[1:]
+
+    pred = matcher(tmp)
+    m0 = pred['m0']
+    valid = (m0[0] > -1)
+    m0, m1 = tmp["keypoints0"][0][valid].cpu(), tmp["keypoints1"][0][m0[0][valid]].cpu()
+    kpt0, kpt1 = tmp['keypoints0'][0].cpu(), tmp['keypoints1'][0].cpu()
+
+    data['mkpt0'] = m0
+    data['mkpt1'] = m1
+    data['kpt0'] = kpt0
+    data['kpt1'] = kpt1
 
 
 

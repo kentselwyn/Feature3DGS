@@ -137,6 +137,9 @@ def compute_metrics(data):
     compute_symmetrical_epipolar_errors(data)
     compute_pose_errors(data)
 
+    data['epi_errs'] = [data['epi_errs'].cpu().numpy()]
+
+
 
 
 

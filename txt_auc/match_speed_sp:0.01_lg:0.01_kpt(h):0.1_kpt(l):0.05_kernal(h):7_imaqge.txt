@@ -1,0 +1,12 @@
+2 speed
+elapsed time: 37.634411573410034
+view num: 945
+fps: 25.109998017550353
+
+
+6 speed
+elapsed time: 73.57681322097778
+view num: 945
+fps: 12.843720169856
+
+

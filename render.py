@@ -61,6 +61,7 @@ def interpolate_matrices(start_matrix, end_matrix, steps):
         for factor in interpolation_factors:
             interpolated_matrix = (1 - factor) * start_matrix + factor * end_matrix
             interpolated_matrices.append(interpolated_matrix)
+
         return np.array(interpolated_matrices)
 
 
@@ -95,8 +96,6 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
     
     decoder_ckpt_path = os.path.join(model_path, "decoder_chkpnt{}.pth".format(iteration))
     
-    depth_path = os.path.join(model_path, name, "ours_{}".format(iteration), "depth") ###
-    
     if speedup:
         gt_feature_map = views[0].semantic_feature.cuda()
         feature_out_dim = gt_feature_map.shape[0]
@@ -115,9 +114,6 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
     makedirs(gt_score_map_path, exist_ok=True)
     makedirs(saved_score_path, exist_ok=True)
 
-
-    # makedirs(depth_path, exist_ok=True) ###
-
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
         render_pkg = render(view, gaussians, pipe_param, background) 
 
@@ -125,19 +121,6 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         gt_feature_map = view.semantic_feature.cuda() 
         torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, '{0:05d}'.format(idx) + ".png")) 
         torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
-        
-        # ############## depth
-        # depth = render_pkg["depth"]
-        # scale_nor = depth.max().item()
-        # depth_nor = depth / scale_nor
-        # depth_tensor_squeezed = depth_nor.squeeze()  # Remove the channel dimension
-        # colormap = plt.get_cmap('jet')
-        # depth_colored = colormap(depth_tensor_squeezed.cpu().numpy())
-        # depth_colored_rgb = depth_colored[:, :, :3]
-        # depth_image = Image.fromarray((depth_colored_rgb * 255).astype(np.uint8))
-        # output_path = os.path.join(depth_path, '{0:05d}'.format(idx) + ".png")
-        # depth_image.save(output_path)
-        # ##############
 
 
         ############## visualize feature map
@@ -155,7 +138,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
 
         # save feature map
         feature_map = feature_map.cpu().numpy().astype(np.float16)
-        torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, '{0:05d}'.format(idx) + "_fmap_CxHxW.pt"))
+        torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, '{0:05d}'.format(idx) + "_fmap.pt"))
         #############
 
 
@@ -173,7 +156,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         
         # save feature map
         score_map = score_map.cpu().numpy().astype(np.float16)
-        torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, '{0:05d}'.format(idx) + "_smap_CxHxW.pt"))
+        torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, '{0:05d}'.format(idx) + "_smap.pt"))
         #############
 
 
@@ -213,7 +196,9 @@ def render_novel_views(model_path, name, iteration, views, gaussians, pipe_param
     render_poses = []
     for cam in views:
         pose = np.concatenate([cam.R, cam.T.reshape(3, 1)], 1)
-        render_poses.append(pose) 
+        render_poses.append(pose)
+
+
     if not multi_interpolate:
         poses = interpolate_matrices(render_poses[0], render_poses[-1], num_views)
     else:
@@ -282,6 +267,9 @@ def render_sets(model_param : ModelParams, iteration : int, pipe_param : Pipelin
 
 
 
+
+
+
 if __name__ == "__main__":
     # Set up command line argument parser
     parser = ArgumentParser(description="Testing script parameters")
@@ -296,8 +284,11 @@ if __name__ == "__main__":
     parser.add_argument("--num_views", default=100, type=int)
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
+    print(args.source_path)
     # Initialize system state (RNG)
     safe_state(args.quiet)
+    
+
 
     render_sets(Model_param.extract(args), args.iteration, Pipe_param.extract(args), 
                 args.skip_train, args.skip_test, args.novel_view,

@@ -13,16 +13,16 @@ import os
 import sys
 from PIL import Image
 from typing import NamedTuple
-from scene.colmap_loader import read_extrinsics_text, read_intrinsics_text, qvec2rotmat, \
+from scene_ori.colmap_loader import read_extrinsics_text, read_intrinsics_text, qvec2rotmat, \
     read_extrinsics_binary, read_intrinsics_binary, read_points3D_binary, read_points3D_text
-from utils.graphics_utils import getWorld2View2, focal2fov, fov2focal
+from utils_ori.graphics_utils import getWorld2View2, focal2fov, fov2focal
 import numpy as np
 import json
 from pathlib import Path
 from plyfile import PlyData, PlyElement
-from utils.sh_utils import SH2RGB
-from scene.gaussian_model import BasicPointCloud
-import torch
+from utils_ori.sh_utils import SH2RGB
+from scene_ori.gaussian_model import BasicPointCloud
+
 
 
 
@@ -37,13 +37,6 @@ class CameraInfo(NamedTuple):
     image_name: str
     width: int
     height: int
-    semantic_feature: torch.tensor 
-    semantic_feature_path: str
-    semantic_feature_name: str 
-    score_feature: torch.tensor
-    score_feature_path: str
-    score_feature_name: str
-    intrinsic_params: np.array
 
 class SceneInfo(NamedTuple):
     point_cloud: BasicPointCloud
@@ -51,7 +44,6 @@ class SceneInfo(NamedTuple):
     test_cameras: list
     nerf_normalization: dict
     ply_path: str
-    semantic_feature_dim: int 
 
 
 
@@ -83,7 +75,7 @@ def getNerfppNorm(cam_info):
 
 
 
-def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_feature_folder):
+def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
     cam_infos = []
     for idx, key in enumerate(cam_extrinsics):
         sys.stdout.write('\r')
@@ -100,12 +92,13 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
         R = np.transpose(qvec2rotmat(extr.qvec))
         T = np.array(extr.tvec)
 
-        if intr.model=="SIMPLE_PINHOLE" or intr.model=="SIMPLE_RADIAL":
+
+        # x, y focal length same, more simple
+        if intr.model=="SIMPLE_PINHOLE":
             focal_length_x = intr.params[0]
             FovY = focal2fov(focal_length_x, height)
             FovX = focal2fov(focal_length_x, width)
-        ### elif intr.model=="PINHOLE":
-        elif intr.model=="PINHOLE" or intr.model=="OPENCV":
+        elif intr.model=="PINHOLE":
             focal_length_x = intr.params[0]
             focal_length_y = intr.params[1]
             FovY = focal2fov(focal_length_y, height)
@@ -115,31 +108,13 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
 
         image_path = os.path.join(images_folder, os.path.basename(extr.name))
         image_name = os.path.basename(image_path).split(".")[0]
-        image = Image.open(image_path) 
-
-        feature_name = os.path.basename(semantic_feature_folder)
-
-        semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap.pt'
-        semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
-        semantic_feature = torch.load(semantic_feature_path)
-
-        score_feature_path = os.path.join(semantic_feature_folder, image_name) + '_smap.pt'
-        score_feature_name = os.path.basename(score_feature_path).split(".")[0]
-        score_feature = torch.load(score_feature_path)
+        image = Image.open(image_path)
 
         cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-                            image_path=image_path, image_name=image_name,
-                            intrinsic_params=intr.params,
-                            width=width, height=height,
-                            semantic_feature=semantic_feature,           score_feature = score_feature,
-                            semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
-                            semantic_feature_name=semantic_feature_name, score_feature_name = score_feature_name)
-
+                              image_path=image_path, image_name=image_name, width=width, height=height)
         cam_infos.append(cam_info)
     sys.stdout.write('\n')
     return cam_infos
-
-
 
 
 
@@ -173,8 +148,7 @@ def storePly(path, xyz, rgb):
 
 
 
-
-def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=None, llffhold=8):
+def readColmapSceneInfo(path, images, eval, llffhold=8):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.bin")
@@ -186,18 +160,12 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
         cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
 
-    
-    image_dir = f"all_images/{images}"
-    semantic_feature_dir = f"features/{foundation_model}"
-
-    cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, 
-                                           images_folder=os.path.join(path, image_dir), semantic_feature_folder=os.path.join(path, semantic_feature_dir))
+    reading_dir = f"all_images/{images}"
+    cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir))
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
 
-    semantic_feature_dim = cam_infos[0].semantic_feature.shape[0]
-
     if eval:
-        train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 2] # avoid 1st to be test view
+        train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 2] # avoid first image in test set
         test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 2]
     else:
         train_cam_infos = cam_infos
@@ -212,7 +180,6 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
         print("Converting point3d.bin to .ply, will happen only the first time you open the scene.")
         try:
             xyz, rgb, _ = read_points3D_binary(bin_path)
-            
         except:
             xyz, rgb, _ = read_points3D_text(txt_path)
         storePly(ply_path, xyz, rgb)
@@ -220,19 +187,17 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
         pcd = fetchPly(ply_path)
     except:
         pcd = None
+
     scene_info = SceneInfo(point_cloud=pcd,
                            train_cameras=train_cam_infos,
                            test_cameras=test_cam_infos,
                            nerf_normalization=nerf_normalization,
-                           ply_path=ply_path,
-                           semantic_feature_dim=semantic_feature_dim) 
+                           ply_path=ply_path)
     return scene_info
 
 
 
-
-
-def readCamerasFromTransforms(path, transformsfile, white_background, semantic_feature_folder, extension=".png"): 
+def readCamerasFromTransforms(path, transformsfile, white_background, extension=".png"):
     cam_infos = []
 
     with open(os.path.join(path, transformsfile)) as json_file:
@@ -269,30 +234,16 @@ def readCamerasFromTransforms(path, transformsfile, white_background, semantic_f
             FovY = fovy 
             FovX = fovx
 
-            
-            semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap_CxHxW.pt' 
-            semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
-            semantic_feature = torch.load(semantic_feature_path)
             cam_infos.append(CameraInfo(uid=idx, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-                              image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1],
-                              semantic_feature=semantic_feature,
-                              semantic_feature_path=semantic_feature_path,
-                              semantic_feature_name=semantic_feature_name)) 
+                            image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1]))
             
     return cam_infos
 
-
-
-def readNerfSyntheticInfo(path, foundation_model, white_background, eval, extension=".png"): 
-    if foundation_model =='sam':
-        semantic_feature_dir = "sam_embeddings" 
-    elif foundation_model =='lseg':
-        semantic_feature_dir = "rgb_feature_langseg" 
-
+def readNerfSyntheticInfo(path, white_background, eval, extension=".png"):
     print("Reading Training Transforms")
-    train_cam_infos = readCamerasFromTransforms(path, "transforms_train.json", white_background, semantic_feature_folder=os.path.join(path, semantic_feature_dir)) 
+    train_cam_infos = readCamerasFromTransforms(path, "transforms_train.json", white_background, extension)
     print("Reading Test Transforms")
-    test_cam_infos = readCamerasFromTransforms(path, "transforms_test.json", white_background, semantic_feature_folder=os.path.join(path, semantic_feature_dir)) 
+    test_cam_infos = readCamerasFromTransforms(path, "transforms_test.json", white_background, extension)
     
     if not eval:
         train_cam_infos.extend(test_cam_infos)
@@ -316,13 +267,12 @@ def readNerfSyntheticInfo(path, foundation_model, white_background, eval, extens
         pcd = fetchPly(ply_path)
     except:
         pcd = None
-    semantic_feature_dim = train_cam_infos[0].semantic_feature.shape[0] 
+
     scene_info = SceneInfo(point_cloud=pcd,
                            train_cameras=train_cam_infos,
                            test_cameras=test_cam_infos,
                            nerf_normalization=nerf_normalization,
-                           ply_path=ply_path,
-                           semantic_feature_dim=semantic_feature_dim) 
+                           ply_path=ply_path)
     return scene_info
 
 
@@ -334,4 +284,6 @@ sceneLoadTypeCallbacks = {
     "Colmap": readColmapSceneInfo,
     "Blender" : readNerfSyntheticInfo
 }
+
+
 

@@ -58,7 +58,7 @@ def plot_points(img: torch.Tensor, kpts: torch.Tensor):
 
 
 
-def Save_all(img: torch.Tensor, kpts: torch.Tensor, desc: torch.Tensor, 
+def save_all(img: torch.Tensor, kpts: torch.Tensor, desc: torch.Tensor, 
              img_path: str, sp_path: str):
     img = img[0]
     kpts = kpts[0]
@@ -76,8 +76,8 @@ def Save_all(img: torch.Tensor, kpts: torch.Tensor, desc: torch.Tensor,
     start = time.time()
     img = img.permute(1,2,0).cpu().numpy()
     plt.imsave(f'{img_path}.jpg', img)
-    torch.save(desc, f"{sp_path}_fmap_CxHxW.pt")
-    torch.save(score, f"{sp_path}_smap_CxHxW.pt")
+    torch.save(desc, f"{sp_path}_fmap.pt")
+    torch.save(score, f"{sp_path}_smap.pt")
     end = time.time()
     print(f"time2: {end-start}")
 
@@ -91,10 +91,10 @@ def main(args):
         "sparse_outputs": True,
         "dense_outputs": True,
         "max_num_keypoints": 512,
-        "detection_threshold": float(args.th),
+        "detection_threshold": args.th,
     }
     model = SuperPoint(conf).to("cuda").eval()
-    mlp = get_mlp_model(dim = int(args.mlp_dim))
+    mlp = get_mlp_model(dim = args.mlp_dim)
     mlp = mlp.to("cuda").eval()
 
     img_folder = f"{args.input}/all_images/images"
@@ -128,7 +128,7 @@ def main(args):
         img_path = f"{kptimg_folder}/{img_name}"
         sp_path = f"{sp_folder}/{img_name}"
 
-        Save_all(img_tensor, kpts, desc_mlp, img_path, sp_path)
+        save_all(img_tensor, kpts, desc_mlp, img_path, sp_path)
 
 
 

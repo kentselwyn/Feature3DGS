@@ -203,7 +203,7 @@ class SuperPoint(nn.Module):
 
     def forward(self, data):
         image = data["image"]
-        # image = data
+
         if image.shape[1] == 3:  # RGB
             scale = image.new_tensor([0.299, 0.587, 0.114]).view(1, 3, 1, 1)
             image = (image * scale).sum(1, keepdim=True)

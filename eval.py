@@ -6,7 +6,7 @@ from PIL import Image
 from tqdm import tqdm
 from scene import Scene
 import matplotlib.pyplot as plt
-from eval_single import GroupParams
+from utils.eval_single import GroupParams
 from scene.gaussian_model import GaussianModel
 from utils.match_img import img_match, score_feature_match
 from codes.used_codes.viz2d import plot_image_grid, plot_keypoints, plot_matches
@@ -25,7 +25,7 @@ from codes.metrics_match import compute_metrics
 
 
 
-def load_pair_data(train_cams, scene_name, n0, n1, gp: GroupParams, Render_type: str):
+def load_pair_data(train_cams, n0, n1, gp: GroupParams, Render_type: str):
     out0 = f"{n0:05d}"
     out1 = f"{n1:05d}"
 
@@ -37,10 +37,10 @@ def load_pair_data(train_cams, scene_name, n0, n1, gp: GroupParams, Render_type:
     img0 = np.array(img0)
     img1 = np.array(img1)
 
-    img_orig0 = Image.open(f"{gp.model_path}/{Render_type}/image_orig/{out0}.png")
-    img_orig1 = Image.open(f"{gp.model_path}/{Render_type}/image_orig/{out1}.png")
-    img_orig0 = np.array(img_orig0)
-    img_orig1 = np.array(img_orig1)
+    # img_orig0 = Image.open(f"{gp.model_path}/{Render_type}/image_orig/{out0}.png")
+    # img_orig1 = Image.open(f"{gp.model_path}/{Render_type}/image_orig/{out1}.png")
+    # img_orig0 = np.array(img_orig0)
+    # img_orig1 = np.array(img_orig1)
 
     H, W, _ = img0.shape
 
@@ -65,12 +65,12 @@ def load_pair_data(train_cams, scene_name, n0, n1, gp: GroupParams, Render_type:
     T_0to1 = torch.tensor(np.matmul(T1, np.linalg.inv(T0)), dtype=torch.float)
     T_1to0 = T_0to1.inverse()
 
-    draw_namw = f"{scene_name[:-2]}_n0_n1"
+
     data = {
         "img0": img0,
         "img1": img1,
-        "img_orig0": img_orig0,
-        "img_orig1": img_orig1,
+        # "img_orig0": img_orig0,
+        # "img_orig1": img_orig1,
         "s0": s0,
         "s1": s1,
         "ft0": f0,
@@ -79,7 +79,6 @@ def load_pair_data(train_cams, scene_name, n0, n1, gp: GroupParams, Render_type:
         "K1": K_1,
         "T_0to1": T_0to1,
         "T_1to0": T_1to0,
-        "name": draw_namw,
     }
     return data
 
@@ -101,19 +100,20 @@ def print_eval_to_file(data, name, threshold=5e-4, file_path='output.txt'):
         f.write(f"R_err: {data['R_errs'][0]}\n")
         f.write(f"t_err: {data['t_errs'][0]}\n")
         f.write(f"inlier ratio: {data['inliers'][0].sum()}/{len(data['inliers'][0])}\n")
-        f.write(f"epi_err max: {data['epi_errs'].max()}\n")
+        f.write(f"epi_err max: {data['epi_errs'][0].max()}\n")
         
-        epi_good = data['epi_errs'] < threshold
+        epi_good = data['epi_errs'][0] < threshold
         f.write(f"epi_err ratio: {epi_good.sum()/len(epi_good)}\n")
-        if name[:5]=="image":
-            f.write("\n\n")
+        f.write(f"epi_err ratio: {epi_good.sum()}/{len(epi_good)}\n")
+        
+        f.write("\n\n")
 
 
 
 
 def save_matchimg(data, path):
     all_images, all_keypoints, all_matches = [], [], []
-    all_images.append([data["img_orig0"], data["img_orig1"]])
+    all_images.append([data["img0"], data["img1"]])
     all_keypoints.append([data['kpt0'], data['kpt1']])
     all_matches.append((data['mkpt0'], data['mkpt1']))
     
@@ -126,16 +126,24 @@ def save_matchimg(data, path):
 
 
 
-# python evaluation.py
+# python eval.py
 if __name__=="__main__":
-    scene_name = "scene0000_01/A"
     gp = GroupParams()
-    gp.source_path = f"/home/koki/code/cc/feature_3dgs_2/all_data/{scene_name}"
-    gp.foundation_model = "imrate:2_th:0.01_mlpdim:16"
-    gp.model_path = f"{gp.source_path}/outputs/imrate:2_th:0.01_mlpdim:16"
+    gp.source_path = f"/home/koki/code/cc/feature_3dgs_2/all_data/scene0708_00/A"
+    gp.images = "img648x484_feature"
+    gp.foundation_model = "img648x484_feature"
+    gp.model_path = f"{gp.source_path}/outputs/0"
+    gp.eval=True
+
     num_pairs = 100
     mlp_dim = 16
-    Render_type = "rendering/trains/ours_7000"
+
+    TYPE = "trains"
+    iteration = 10000
+    Render_type = f"rendering/{TYPE}/ours_{iteration}"
+
+    parts = gp.source_path.split('/')
+    scene_name = '_'.join(parts[-2:])
 
 
     gaussians = GaussianModel(gp.sh_degree)
@@ -150,6 +158,7 @@ if __name__=="__main__":
     while len(pairs) < num_pairs:
         pair = random.sample(img_list, 2)
         pairs.append(tuple(pair))
+    
 
     match_img_path = f"{gp.model_path}/{Render_type}/w_match"
     txt_file = f"{match_img_path}/out.txt"
@@ -158,37 +167,37 @@ if __name__=="__main__":
 
     R_err_fm_total = 0.
     t_err_fm_total = 0.
-    R_err_im_total = 0.
-    t_err_im_total = 0.
+    # R_err_im_total = 0.
+    # t_err_im_total = 0.
     for idx, pair in enumerate(tqdm(pairs)):
         n0, n1 = pair
-        data = load_pair_data(train_cams, scene_name, n0 ,n1, gp, Render_type)
+        data = load_pair_data(train_cams, n0 ,n1, gp, Render_type)
 
-        d_fm = deepcopy(data)
-        d_im = deepcopy(data)
+        data_fm = deepcopy(data)
+        # data_im = deepcopy(data)
 
-        score_feature_match(d_fm, mlp_dim)
-        img_match(d_im)
+        score_feature_match(data_fm, mlp_dim)
+        # img_match(data_im)
 
-        compute_metrics(d_fm)
-        compute_metrics(d_im)
+        compute_metrics(data_fm)
+        # compute_metrics(data_im)
 
         fm_path = f"{match_img_path}/images/{idx}_score_feature_{n0}_{n1}.png"
-        im_path = f"{match_img_path}/images/{idx}_image_{n0}_{n1}.png"
-        fm_name = f"score_feature_{idx}_{n0}_{n1}"
-        im_name = f"image_{idx}_{n0}_{n1}"
+        # im_path = f"{match_img_path}/images/{idx}_image_{n0}_{n1}.png"
+        fm_name = f"{scene_name}_score_feature_{idx}_{n0}_{n1}"
+        # im_name = f"{scene_name}_image_{idx}_{n0}_{n1}"
 
-        print_eval_to_file(d_fm, fm_name, threshold=5e-4, file_path=txt_file)
-        print_eval_to_file(d_im, im_name, threshold=5e-4, file_path=txt_file)
+        print_eval_to_file(data_fm, fm_name, threshold=5e-4, file_path=txt_file)
+        # print_eval_to_file(data_im, im_name, threshold=5e-4, file_path=txt_file)
 
-        save_matchimg(d_fm, fm_path)
-        save_matchimg(d_im, im_path)
+        save_matchimg(data_fm, fm_path)
+        # save_matchimg(data_im, im_path)
 
-        R_err_fm_total+=d_fm['R_errs'][0]
-        t_err_fm_total+=d_fm['t_errs'][0]
+        R_err_fm_total+=data_fm['R_errs'][0]
+        t_err_fm_total+=data_fm['t_errs'][0]
 
-        R_err_im_total+=d_im['R_errs'][0]
-        t_err_im_total+=d_im['t_errs'][0]
+        # R_err_im_total+=data_im['R_errs'][0]
+        # t_err_im_total+=data_im['t_errs'][0]
 
 
 
@@ -197,16 +206,8 @@ if __name__=="__main__":
         f.write(f"average feature match R_err: {R_err_fm_total/len(pairs)}\n")
         f.write(f"average feature match t_err: {t_err_fm_total/len(pairs)}\n")
 
-        f.write(f"average image match R_err: {R_err_im_total/len(pairs)}\n")
-        f.write(f"average image match t_err: {t_err_im_total/len(pairs)}\n")
-
-
-
-
-
-
-
-
+        # f.write(f"average image match R_err: {R_err_im_total/len(pairs)}\n")
+        # f.write(f"average image match t_err: {t_err_im_total/len(pairs)}\n")
 
 
 
