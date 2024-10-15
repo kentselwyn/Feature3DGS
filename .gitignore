@@ -19,3 +19,5 @@ image.pt
 snapshot_bw.dump
 test_images/
 all_data/
+txt_auc/
+scannet/

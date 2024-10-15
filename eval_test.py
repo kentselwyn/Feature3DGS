@@ -21,13 +21,13 @@ from encoders.superpoint.superpoint import SuperPoint
 import pprint
 
 scenes = ['0708_00', '0713_00', '0724_00']
-outputs=[0, 1, 2, 4, 5, 6]
+# outputs=[0, 1, 2, 4, 5, 6]
 # scenes = ['0713_00', '0724_00']
-# outputs=[0]
+outputs=[2, 6]
 
 s_len = len(scenes)
 
-
+USED_IMAGE = "image_gt"
 
 def find_pairs(groups):
     all_pairs = []
@@ -41,8 +41,8 @@ def find_pairs(groups):
 def load_data(out_path, test_cams, n0, n1, im_name):
     cam0 = test_cams[int(n0)]
     cam1 = test_cams[int(n1)]
-    img0 = np.array(Image.open(f"{out_path}/image_renders/{n0}.png"))
-    img1 = np.array(Image.open(f"{out_path}/image_renders/{n1}.png"))
+    img0 = np.array(Image.open(f"{out_path}/{USED_IMAGE}/{n0}.png"))
+    img1 = np.array(Image.open(f"{out_path}/{USED_IMAGE}/{n1}.png"))
 
     H, W, _ = img0.shape
 
@@ -190,7 +190,7 @@ def feature_eval(args, group, out_path, m_path, test_cams, scene_num, aggregate_
 
 SP_THRESHOLD = 0.01
 LG_THRESHOLD = 0.01
-SCORE_KPT_THRESHOLD_HIGH = 0.1
+SCORE_KPT_THRESHOLD_HIGH = 0.3
 SCORE_KPT_THRESHOLD_LOW = 0.05
 KERNEL_SIZE_LOW = 3
 KERNEL_SIZE_HIGH = 7
@@ -209,7 +209,7 @@ conf = {
 encoder = SuperPoint(conf).to("cuda").eval()
 
 
-NAME = f"sp:{SP_THRESHOLD}_lg:{LG_THRESHOLD}_kpt(h):{SCORE_KPT_THRESHOLD_HIGH}_kpt(l):{SCORE_KPT_THRESHOLD_LOW}_kernal(h):{KERNEL_SIZE_HIGH}__kernal(L):{KERNEL_SIZE_LOW}_test_new_circle"
+NAME = f"sp:{SP_THRESHOLD}_lg:{LG_THRESHOLD}_kpt(h):{SCORE_KPT_THRESHOLD_HIGH}_kpt(l):{SCORE_KPT_THRESHOLD_LOW}_kernal(h):{KERNEL_SIZE_HIGH}__kernal(L):{KERNEL_SIZE_LOW}_output:{str(outputs)}_scene:{str(scenes)}"
 
 over_all_result = f'auc_{NAME}.txt'
 if os.path.exists(over_all_result):

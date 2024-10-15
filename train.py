@@ -12,7 +12,7 @@
 import os
 import torch
 from random import randint
-from utils.loss_utils import l1_loss, ssim, tv_loss, l2_loss
+from utils.loss_utils import l1_loss, ssim, tv_loss, l2_loss, weighted_l2
 from gaussian_renderer import render, network_gui
 import sys
 from scene import Scene, GaussianModel
@@ -190,8 +190,9 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
             feature_map = cnn_decoder(feature_map)
             
         Ll1_feature = l1_loss(feature_map, gt_feature_map)
-        Ll1_score = l2_loss(score_map, gt_score_map)
-        # L_score = l1_loss(score_map, gt_score_map)
+        # Ll1_score = l2_loss(score_map, gt_score_map)
+        Ll1_score = weighted_l2(score_map, gt_score_map)
+        
 
 
         Ll1 = l1_loss(image, gt_image)
