@@ -147,6 +147,7 @@ def sample_descriptors_fix_sampling(keypoints, descriptors, s: int = 8):
 
 class SuperPoint(nn.Module):
     default_conf = {
+        "name": "superpoint",
         "has_detector": True,
         "has_descriptor": True,
         "descriptor_dim": 256,

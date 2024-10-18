@@ -21,3 +21,8 @@ test_images/
 all_data/
 txt_auc/
 scannet/
+diff_gaussian_rasterization_feature_b4.egg-info/
+diff_gaussian_rasterization_feature.egg-info/
+diff_gaussian_rasterization.egg-info/
+simple_knn_b4.egg-info/
+simple_knn.egg-info/

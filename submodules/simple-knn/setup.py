@@ -8,6 +8,7 @@
 #
 # For inquiries contact  george.drettakis@inria.fr
 #
+# pip install submodules/simple-knn
 
 from setuptools import setup
 from torch.utils.cpp_extension import CUDAExtension, BuildExtension

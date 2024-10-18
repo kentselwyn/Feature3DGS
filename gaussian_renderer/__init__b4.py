@@ -11,8 +11,8 @@
 
 import torch
 import math
-from diff_gaussian_rasterization import GaussianRasterizationSettings, GaussianRasterizer
-from scene_ori.gaussian_model import GaussianModel
+from diff_gaussian_rasterization_feature_b4 import GaussianRasterizationSettings, GaussianRasterizer
+from scene.gaussian_model_b4 import GaussianModel
 from utils.sh_utils import eval_sh
 
 
@@ -33,8 +33,6 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     # Set up rasterization configuration
     tanfovx = math.tan(viewpoint_camera.FoVx * 0.5)
     tanfovy = math.tan(viewpoint_camera.FoVy * 0.5)
-
-
     raster_settings = GaussianRasterizationSettings(
         image_height=int(viewpoint_camera.image_height),
         image_width=int(viewpoint_camera.image_width),
@@ -55,6 +53,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     means3D = pc.get_xyz
     means2D = screenspace_points
     opacity = pc.get_opacity
+
 
 
     # If precomputed 3d covariance is provided, use it. If not, then it will be computed from
@@ -83,14 +82,21 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             shs = pc.get_features
     else:
         colors_precomp = override_color
+    semantic_feature = pc.get_semantic_feature
+    score_feature = pc.get_score_feature
 
-    # Rasterize visible Gaussians to image, obtain their radii (on screen).
-    
-    rendered_image, radii = rasterizer(
+    var_loss = torch.zeros(1,viewpoint_camera.image_height,viewpoint_camera.image_width) ###d
+
+
+
+    # Rasterize visible Gaussians to image, obtain their radii (on screen). 
+    rendered_image, feature_map, score_map, radii, depth = rasterizer(
         means3D = means3D,
         means2D = means2D,
         shs = shs,
         colors_precomp = colors_precomp,
+        semantic_feature = semantic_feature,
+        score_feature = score_feature,
         opacities = opacity,
         scales = scales,
         rotations = rotations,
@@ -101,4 +107,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     return {"render": rendered_image,
             "viewspace_points": screenspace_points,
             "visibility_filter" : radii > 0,
-            "radii": radii}
+            "radii": radii,
+            'feature_map': feature_map,
+            'score_map': score_map,
+            "depth": depth} ###d
+

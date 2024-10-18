@@ -66,20 +66,15 @@ def save_all(img: torch.Tensor, kpts: torch.Tensor, desc: torch.Tensor,
     _ , H, W = img.shape
     score = torch.zeros((1, H, W), dtype=torch.float32)
 
-    start = time.time()
     plot_points(img, kpts)
     plot_points(score, kpts)
-    end = time.time()
 
-    print(f"time: {end-start}")
-
-    start = time.time()
     img = img.permute(1,2,0).cpu().numpy()
     plt.imsave(f'{img_path}.jpg', img)
     torch.save(desc, f"{sp_path}_fmap.pt")
     torch.save(score, f"{sp_path}_smap.pt")
-    end = time.time()
-    print(f"time2: {end-start}")
+    
+    
 
     
 

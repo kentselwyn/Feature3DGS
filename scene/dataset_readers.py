@@ -187,8 +187,8 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
 
     
-    image_dir = f"all_images/{images}"
-    semantic_feature_dir = f"features/{foundation_model}"
+    image_dir = f"{images}"
+    semantic_feature_dir = f"{foundation_model}"
 
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, 
                                            images_folder=os.path.join(path, image_dir), semantic_feature_folder=os.path.join(path, semantic_feature_dir))
