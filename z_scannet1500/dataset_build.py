@@ -1,7 +1,7 @@
 import os
 import argparse
 import torch
-from codes.used_codes.utils import load_image2
+from utils.utils import load_image2
 from encoders.superpoint.superpoint import SuperPoint
 from encoders.disk_kornia import DISK
 from encoders.aliked import ALIKED

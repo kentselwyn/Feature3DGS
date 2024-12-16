@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 from copy import deepcopy
 from dataclasses import dataclass
-from codes.metrics_match import compute_metrics
+from utils.metrics_match import compute_metrics
 from scene.colmap_loader import read_intrinsics_binary
 from eval.eval import save_matchimg, read_scannet_gray
 from encoders.superpoint.lightglue import LightGlue

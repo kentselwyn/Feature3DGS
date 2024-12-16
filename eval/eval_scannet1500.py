@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from matchers.superglue import SuperGlue
 from utils.metrics import aggregate_metrics
 from matchers.MNN import NearestNeighborMatcher
-from codes.metrics_match import compute_metrics
+from utils.metrics_match import compute_metrics
 from encoders.superpoint.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from eval.eval import print_eval_to_file, save_matchimg

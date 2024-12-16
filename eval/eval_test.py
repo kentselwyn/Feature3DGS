@@ -8,7 +8,7 @@ import numpy as np
 from copy import deepcopy
 from eval import print_eval_to_file, save_matchimg
 from argparse import ArgumentParser, Namespace
-from codes.metrics_match import compute_metrics
+from utils.metrics_match import compute_metrics
 from utils.match_img import img_match, score_feature_match
 from scene.gaussian_model import GaussianModel
 from utils.comm import gather

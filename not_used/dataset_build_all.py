@@ -10,7 +10,7 @@ from scene.gaussian_model import GaussianModel
 from dataset_build import save_all
 from encoders.superpoint.superpoint import SuperPoint
 from encoders.superpoint.mlp import get_mlp_model
-from codes.used_codes.utils import load_image2
+from utils.utils import load_image2
 
 
 

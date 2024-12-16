@@ -15,7 +15,7 @@ from skimage.measure import label, regionprops
 from encoders.superpoint.mlp import get_mlp_model
 from encoders.superpoint.lightglue import LightGlue
 import matchers.ASpanFormer.demo_utils as demo_utils
-from codes.used_codes.viz2d import plot_image_grid, plot_keypoints, plot_matches
+from utils.viz2d import plot_image_grid, plot_keypoints, plot_matches
 
 
 

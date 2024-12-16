@@ -10,11 +10,11 @@ from tqdm import tqdm
 from scene import Scene
 from copy import deepcopy
 import matplotlib.pyplot as plt
-from scripts.eval_single import GroupParams
+from eval.eval_single import GroupParams
 from scene.gaussian_model import GaussianModel
-from codes.metrics_match import compute_metrics
+from utils.metrics_match import compute_metrics
 from utils.match_img import encoder_img_match, score_feature_match
-from codes.used_codes.viz2d import plot_image_grid, plot_keypoints, plot_matches, plot_matches2, plot_matches3
+from utils.viz2d import plot_image_grid, plot_keypoints, plot_matches, plot_matches2, plot_matches3
 
 
 # given a source path, feature path, model output path, compute some pairs of images for matching

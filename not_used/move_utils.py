@@ -1,7 +1,7 @@
 import os
 import shutil
 import argparse
-from codes.used_codes.utils import load_image2
+from utils.utils import load_image2
 from encoders.superpoint.superpoint import SuperPoint
 from encoders.superpoint.mlp import get_mlp_model
 from dataset_build import save_all
