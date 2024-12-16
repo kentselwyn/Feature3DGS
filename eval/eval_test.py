@@ -6,10 +6,10 @@ from scene import Scene
 from PIL import Image
 import numpy as np
 from copy import deepcopy
-from eval import print_eval_to_file, save_matchimg
+from eval.eval import print_eval_to_file, save_matchimg
 from argparse import ArgumentParser, Namespace
 from utils.metrics_match import compute_metrics
-from utils.match_img import img_match, score_feature_match
+from utils.match_img import img_match2, score_feature_match
 from scene.gaussian_model import GaussianModel
 from utils.comm import gather
 from utils.metrics import aggregate_metrics
@@ -127,7 +127,7 @@ def raw_eval(args, group, out_path, m_path, test_cams, scene_num, aggregate_list
         data = load_data(out_path, test_cams, n0, n1, im_name)
         data_im = deepcopy(data)
 
-        img_match(data_im, encoder=encoder, matcher=matcher)
+        img_match2(data_im, encoder=encoder, matcher=matcher)
         compute_metrics(data_im)
         im_path = f"{m_path}/images/{idx}_image_{n0}_{n1}.png"
         
@@ -202,7 +202,7 @@ def feature_eval(args, group, out_path, m_path, test_cams, scene_num, aggregate_
     
 
 matcher = LightGlue({
-            "filter_threshold": LG_THRESHOLD#0.01,
+            "filter_threshold": LG_THRESHOLD #0.01,
         }).to("cuda").eval()
 
 conf = {

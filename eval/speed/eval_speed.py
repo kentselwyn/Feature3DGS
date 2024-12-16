@@ -103,8 +103,10 @@ for out in outputs:
                 r_pkg1 = render(view1, gaussians, pipe_param, background)
                 f0 = r_pkg0["feature_map"]
                 f1 = r_pkg1['feature_map']
-                f0 = F.interpolate(f0.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
-                f1 = F.interpolate(f1.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
+                f0 = F.interpolate(f0.unsqueeze(0), 
+                                   size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
+                f1 = F.interpolate(f1.unsqueeze(0), 
+                                   size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
                 data['s0'] = r_pkg0['score_map']
                 data['ft0'] = f0
                 data['s1'] = r_pkg1['score_map']

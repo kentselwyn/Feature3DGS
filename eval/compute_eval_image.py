@@ -3,7 +3,7 @@ import json
 import pickle
 import pprint
 from pathlib import Path
-from compute_eval_feature import get_elapsed_time_for_tag
+from z_scannet1500.compute_eval_feature import get_elapsed_time_for_tag
 
 
 
