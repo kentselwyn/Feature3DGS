@@ -117,15 +117,23 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
         image_name = os.path.basename(image_path).split(".")[0]
         image = Image.open(image_path) 
 
-        feature_name = os.path.basename(semantic_feature_folder)
+        # feature_name = os.path.basename(semantic_feature_folder)
 
         semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap.pt'
         semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
-        semantic_feature = torch.load(semantic_feature_path)
+
+
+        if os.path.exists(semantic_feature_path):
+            semantic_feature = torch.load(semantic_feature_path)
+        else:
+            semantic_feature = None
 
         score_feature_path = os.path.join(semantic_feature_folder, image_name) + '_smap.pt'
         score_feature_name = os.path.basename(score_feature_path).split(".")[0]
-        score_feature = torch.load(score_feature_path)
+        if os.path.exists(score_feature_path):
+            score_feature = torch.load(score_feature_path)
+        else:
+            score_feature = None
 
         cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                             image_path=image_path, image_name=image_name,
@@ -194,7 +202,10 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
                                            images_folder=os.path.join(path, image_dir), semantic_feature_folder=os.path.join(path, semantic_feature_dir))
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
 
-    semantic_feature_dim = cam_infos[0].semantic_feature.shape[0]
+    if cam_infos[0].semantic_feature is not None:
+        semantic_feature_dim = cam_infos[0].semantic_feature.shape[0]
+    else:
+        semantic_feature_dim = 16
 
     if eval:
         train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 2] # avoid 1st to be test view

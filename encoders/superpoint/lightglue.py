@@ -349,6 +349,7 @@ class LightGlue(nn.Module):
     required_data_keys = ["keypoints0", "keypoints1", "descriptors0", "descriptors1"]
     # required_data_keys = ["keypoints0", "keypoints1", "descriptors_back0", "descriptors_back1"]
 
+    # url = "https://github.com/cvg/LightGlue/releases/download/{}/{}_lightglue.pth"
     url = "https://github.com/cvg/LightGlue/releases/download/{}/{}_lightglue.pth"
 
     def __init__(self, conf) -> None:
@@ -376,7 +377,7 @@ class LightGlue(nn.Module):
                 state_dict = torch.load(conf.weights, 
                                         map_location="cpu")
             else:
-                fname = (f"{conf.weights}_{conf.weights_from_version}".replace(".", "-") + ".pth")
+                fname = (f"{conf.weights}_{conf.weights_from_version}_lg".replace(".", "-") + ".pth")
                 state_dict = torch.hub.load_state_dict_from_url(
                                                         self.url.format(conf.weights_from_version, conf.weights), 
                                                         file_name=fname,)
@@ -388,6 +389,8 @@ class LightGlue(nn.Module):
                 pattern = f"cross_attn.{i}", f"transformers.{i}.cross_attn"
                 state_dict = {k.replace(*pattern): v for k, v in state_dict.items()}
             self.load_state_dict(state_dict, strict=False)
+            # print(state_dict)
+            print("loded! ")
 
     def compile(self, mode="reduce-overhead"):
         if self.conf.width_confidence != -1:

@@ -10,12 +10,12 @@ from encoders.superpoint.utils import load_image
 class DISK(BaseModel):
     default_conf = {
         "weights": "depth",
-        "dense_outputs": False,
+        "dense_outputs": True,
         "max_num_keypoints": None,
         "desc_dim": 128,
         "nms_window_size": 5,
         "detection_threshold": 0.0,
-        "force_num_keypoints": False,
+        "force_num_keypoints": True,
         "pad_if_not_divisible": True,
         "chunk": 4,  # for reduced VRAM in training
     }

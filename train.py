@@ -31,7 +31,7 @@ except ImportError:
 import torch.nn.functional as F
 from models.networks import CNN_decoder
 from datetime import datetime
-from utils.loss_utils import weighted_l2
+
 
 
 def prepare_output_and_logger(args):    
@@ -177,8 +177,10 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
         
 
         # adjust_gt_feature = F.interpolate(gt_image.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
-        feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
-        score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], gt_score_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
+        feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), 
+                                    mode='bilinear', align_corners=True).squeeze(0)
+        score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], gt_score_map.shape[2]), 
+                                  mode='bilinear', align_corners=True).squeeze(0)
 
         # adjust_gt_feature = adjust_gt_feature.sum(0)
         # gt_feature_mask = (adjust_gt_feature>0).unsqueeze(0).expand(16, -1, -1)
@@ -197,12 +199,15 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
             score_loss_comp = l2_loss
         elif model_param.score_loss=="weighted":
             score_loss_comp = weighted_l2
+        elif model_param.score_loss=="L1":
+            score_loss_comp = l1_loss
         
         Ll1_score = score_loss_comp(score_map, gt_score_map)
 
         Ll1 = l1_loss(image, gt_image)
-        Ll1 += Ll1_score
-        loss = (1.0 - opt_param.lambda_dssim) * Ll1 + opt_param.lambda_dssim * (1.0 - ssim(image, gt_image)) + 1.0 * Ll1_feature
+
+        loss = (1.0 - opt_param.lambda_dssim) * Ll1 + opt_param.lambda_dssim * (1.0 - ssim(image, gt_image)) +  1.0 * Ll1_feature + \
+                model_param.score_scale* Ll1_score
 
         loss.backward()
         iter_end.record()
@@ -217,7 +222,8 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
                 progress_bar.close()
 
             # Log and save
-            training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe_param, background)) 
+            training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_loss, 
+                            iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe_param, background)) 
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
                 scene.save(iteration)
@@ -253,30 +259,33 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))
                 torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
 
-        with torch.no_grad():        
-            if network_gui.conn == None:
-                network_gui.try_connect(model_param.render_items)
-            while network_gui.conn != None:
-                try:
-                    net_image_bytes = None
-                    custom_cam, do_training, keep_alive, scaling_modifer, render_mode = network_gui.receive()
-                    if custom_cam != None:
-                        render_pkg = render(custom_cam, gaussians, pipe_param, background, scaling_modifer)   
-                        net_image = render_net_image(render_pkg, model_param.render_items, render_mode, custom_cam)
-                        net_image_bytes = memoryview((torch.clamp(net_image, min=0, max=1.0) * 255).byte().permute(1, 2, 0).contiguous().cpu().numpy())
-                    metrics_dict = {
-                        "#": gaussians.get_opacity.shape[0],
-                        "loss": ema_loss_for_log
-                        # Add more metrics as needed
-                    }
-                    # Send the data
-                    network_gui.send(net_image_bytes, model_param.source_path, metrics_dict)
-                    if do_training and ((iteration < int(opt_param.iterations)) or not keep_alive):
-                        break
-                except Exception as e:
-                    # raise e
-                    network_gui.conn = None
+        # with torch.no_grad():        
+        #     if network_gui.conn == None:
+        #         network_gui.try_connect(model_param.render_items)
+        #     while network_gui.conn != None:
+        #         try:
+        #             net_image_bytes = None
+        #             custom_cam, do_training, keep_alive, scaling_modifer, render_mode = network_gui.receive()
+        #             if custom_cam != None:
+        #                 render_pkg = render(custom_cam, gaussians, pipe_param, background, scaling_modifer)   
+        #                 net_image = render_net_image(render_pkg, model_param.render_items, render_mode, custom_cam)
+        #                 net_image_bytes = memoryview((torch.clamp(net_image, min=0, max=1.0) * 255).byte().permute(1, 2, 0).contiguous().cpu().numpy())
+        #             metrics_dict = {
+        #                 "#": gaussians.get_opacity.shape[0],
+        #                 "loss": ema_loss_for_log
+        #                 # Add more metrics as needed
+        #             }
+        #             # Send the data
+        #             network_gui.send(net_image_bytes, model_param.source_path, metrics_dict)
+        #             if do_training and ((iteration < int(opt_param.iterations)) or not keep_alive):
+        #                 break
+        #         except Exception as e:
+        #             # raise e
+        #             network_gui.conn = None
             
+
+
+
 
 
 if __name__ == "__main__":
@@ -305,7 +314,7 @@ if __name__ == "__main__":
     safe_state(args.quiet)
 
     # Start GUI server, configure and run training
-    network_gui.init(args.ip, args.port)
+    # network_gui.init(args.ip, args.port)
     torch.autograd.set_detect_anomaly(args.detect_anomaly)
     training(Model_param.extract(args), Opt_param.extract(args), Pipe_param.extract(args), args.test_iterations, args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from)
 

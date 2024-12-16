@@ -12,10 +12,12 @@ def symmetric_epipolar_distance(pts0, pts1, E, K0, K1):
         pts0 (torch.Tensor): [N, 2]
         E (torch.Tensor): [3, 3]
     """
+
     pts0 = (pts0 - K0[[0, 1], [2, 2]][None]) / K0[[0, 1], [0, 1]][None]
     pts1 = (pts1 - K1[[0, 1], [2, 2]][None]) / K1[[0, 1], [0, 1]][None]
     pts0 = convert_points_to_homogeneous(pts0)
     pts1 = convert_points_to_homogeneous(pts1)
+
 
     Ep0 = pts0 @ E.T  # [N, 3]
     p1Ep0 = torch.sum(pts1 * Ep0, -1)  # [N,]
@@ -64,7 +66,6 @@ def estimate_pose(kpts0, kpts1, K0, K1, thresh, conf=0.99999):
     if E is None:
         print("\nE is None while trying to recover pose.\n")
         return None
-
     # recover pose from E
     best_num_inliers = 0
     ret = None

@@ -55,6 +55,7 @@ class ModelParams(ParamGroup):
         self._white_background = False
         self.data_device = "cuda"
         self.score_loss = "L2"
+        self.score_scale = 1.0
         self.eval = False
         self.speedup = False ###
         self.render_items = ['RGB', 'Depth', 'Edge', 'Normal', 'Curvature', 'Feature Map', 'Score Map']
@@ -120,4 +121,17 @@ def get_combined_args(parser : ArgumentParser):
     for k,v in vars(args_cmdline).items():
         if v != None:
             merged_dict[k] = v
+    return Namespace(**merged_dict)
+
+
+
+def get_args(parser):
+    cfgfilepath = os.path.join(parser._model_path, "cfg_args")
+    print("Looking for config file in", cfgfilepath)
+    with open(cfgfilepath) as cfg_file:
+        print("Config file found: {}".format(cfgfilepath))
+        cfgfile_string = cfg_file.read()
+    
+    args_cfgfile = eval(cfgfile_string)
+    merged_dict = vars(args_cfgfile).copy()
     return Namespace(**merged_dict)

@@ -5,7 +5,7 @@ from .modules.lpips import LPIPS
 
 def lpips(x: torch.Tensor,
           y: torch.Tensor,
-          net_type: str = 'alex',
+          net_type: str = 'vgg',
           version: str = '0.1'):
     r"""Function that measures
     Learned Perceptual Image Patch Similarity (LPIPS).

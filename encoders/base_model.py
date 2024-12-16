@@ -53,7 +53,7 @@ class BaseModel(nn.Module, metaclass=MetaModel):
 
     default_conf = {
         "name": None,
-        "trainable": True,  # if false: do not optimize this model parameters
+        "trainable": False,  # if false: do not optimize this model parameters
         "freeze_batch_normalization": False,  # use test-time statistics
         "timeit": False,  # time forward pass
     }

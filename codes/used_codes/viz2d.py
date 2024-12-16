@@ -207,6 +207,180 @@ def plot_matches(kpts0, kpts1, color=None, line_width=1.5, point_size=4, alpha=1
 
 
 
+def plot_matches2(kpts0, kpts1, color=None, line_width=1.5, point_size=4, alpha=1.0, labels=None, 
+                  axes=None, captions=None):
+    """Plot matches for a pair of existing images.
+    Args:
+        kpts0, kpts1: corresponding keypoints of size (N, 2).
+        color: color of each match, string or RGB tuple. Random if not given.
+        line_width: width of the lines.
+        point_size: size of the end points (no endpoint if point_size=0)
+        labels: labels for each match.
+        axes: matplotlib axes to plot on.
+        captions: list of strings for captions to display (e.g., ['AspanFormer', 'Matches: 97', ...]).
+    """
+    fig = plt.gcf()
+    if axes is None:
+        ax = fig.axes
+        ax0, ax1 = ax[0], ax[1]
+    else:
+        ax0, ax1 = axes
+
+    assert len(kpts0) == len(kpts1)
+    if color is None:
+        if labels is not None:
+            # Define colors for true and false matches
+            color = ['#32CD32' if label else 'red' for label in labels]
+        else:
+            color = sns.color_palette("husl", n_colors=len(kpts0))
+    elif len(color) > 0 and not isinstance(color[0], (tuple, list)):
+        color = [color] * len(kpts0)
+
+    if line_width > 0:
+        for i in range(len(kpts0)):
+            line = matplotlib.patches.ConnectionPatch(
+                xyA=(kpts0[i, 0], kpts0[i, 1]),
+                xyB=(kpts1[i, 0], kpts1[i, 1]),
+                coordsA=ax0.transData,
+                coordsB=ax1.transData,
+                axesA=ax0,
+                axesB=ax1,
+                zorder=1,
+                color=color[i],
+                linewidth=line_width,
+                clip_on=True,
+                alpha=alpha,
+            )
+            line.set_annotation_clip(True)
+            fig.add_artist(line)
+
+    # Freeze the axes to prevent the transform from changing
+    ax0.autoscale(enable=False)
+    ax1.autoscale(enable=False)
+
+    if point_size > 0:
+        ax0.scatter(
+            kpts0[:, 0],
+            kpts0[:, 1],
+            c=color,
+            s=point_size,
+        )
+        ax1.scatter(
+            kpts1[:, 0],
+            kpts1[:, 1],
+            c=color,
+            s=point_size,
+        )
+    if captions is not None:
+        formatted_captions = [f"{caption:.1f}" if isinstance(caption, float) else
+                               str(caption) for caption in captions]
+        caption_text = '\n'.join(formatted_captions)
+        ax0.text(
+            0.01, 0.99, caption_text, 
+            transform=ax0.transAxes, 
+            fontsize=6, 
+            verticalalignment='top', 
+            horizontalalignment='left', 
+            color='white', 
+            bbox=dict(facecolor='black', alpha=0.5, edgecolor='none'),
+            zorder=3  # Ensure captions are in front of all other elements
+        )
+
+
+
+
+
+
+
+def plot_matches3(kpts0, kpts1, color=None, line_width=1.5, point_size=4, alpha=1.0, labels=None, 
+                  axes=None, captions=None):
+    """Plot matches for a pair of existing images with captions in front of all other elements.
+    Args:
+        kpts0, kpts1: corresponding keypoints of size (N, 2).
+        color: color of each match, string or RGB tuple. Random if not given.
+        line_width: width of the lines.
+        point_size: size of the end points (no endpoint if point_size=0)
+        labels: labels for each match.
+        axes: matplotlib axes to plot on.
+        captions: list of strings for captions to display (e.g., ['AspanFormer', 'Matches: 97', ...]).
+    """
+    fig = plt.gcf()
+    if axes is None:
+        ax = fig.axes
+        ax0, ax1 = ax[0], ax[1]
+    else:
+        ax0, ax1 = axes
+
+    assert len(kpts0) == len(kpts1)
+    if color is None:
+        if labels is not None:
+            # Define colors for true and false matches
+            color = ['#32CD32' if label else 'red' for label in labels]
+        else:
+            color = sns.color_palette("husl", n_colors=len(kpts0))
+    elif len(color) > 0 and not isinstance(color[0], (tuple, list)):
+        color = [color] * len(kpts0)
+
+    # Plot captions first to ensure they are not covered by lines or points
+    if captions is not None:
+        formatted_captions = [f"{caption:.1f}" if isinstance(caption, float) else
+                               str(caption) for caption in captions]
+        caption_text = '\n'.join(formatted_captions)
+        ax0.text(
+            0.01, 0.99, caption_text, 
+            transform=ax0.transAxes, 
+            fontsize=6, 
+            verticalalignment='top', 
+            horizontalalignment='left', 
+            color='white', 
+            bbox=dict(facecolor='black', alpha=0.5, edgecolor='none'),
+            zorder=5  # Ensure captions are in front of all other elements
+        )
+
+    if line_width > 0:
+        for i in range(len(kpts0)):
+            line = matplotlib.patches.ConnectionPatch(
+                xyA=(kpts0[i, 0], kpts0[i, 1]),
+                xyB=(kpts1[i, 0], kpts1[i, 1]),
+                coordsA=ax0.transData,
+                coordsB=ax1.transData,
+                axesA=ax0,
+                axesB=ax1,
+                zorder=1,
+                color=color[i],
+                linewidth=line_width,
+                clip_on=True,
+                alpha=alpha,
+            )
+            line.set_annotation_clip(True)
+            fig.add_artist(line)
+
+    # Freeze the axes to prevent the transform from changing
+    ax0.autoscale(enable=False)
+    ax1.autoscale(enable=False)
+
+    if point_size > 0:
+        ax0.scatter(
+            kpts0[:, 0],
+            kpts0[:, 1],
+            c=color,
+            s=point_size,
+            zorder=2
+        )
+        ax1.scatter(
+            kpts1[:, 0],
+            kpts1[:, 1],
+            c=color,
+            s=point_size,
+            zorder=2
+        )
+
+
+
+
+
+
+
 
 
 

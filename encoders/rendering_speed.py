@@ -6,7 +6,7 @@ from random import randint
 from gaussian_renderer import render, GaussianModel
 from encoders.utils import GroupParams, OptimizationParams, PipelineParams
 import torchvision.transforms as transforms
-from codes.used_codes.vis_scoremap import one_channel_vis
+from utils.vis_scoremap import one_channel_vis
 
 
 model_param = GroupParams()
