@@ -9,7 +9,10 @@ tensorboard_3d
 screenshots
 *.ckpt
 *.pth
-data
+data/gsreg
+data/img_match
+data/mlpckpt
+data/vis_loc
 data_scannet
 scene000000_B/
 submodules/diff-gaussian-rasterization-feature/third_party

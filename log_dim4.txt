@@ -1,0 +1,3980 @@
+nohup: ignoring input
+start loading.....
+loaded!
+EPOCH 1:
+[E 0 | iter 49] loss 0.0036344346590340137
+[Validation] 0.007266014348715544
+Time taken for one EPOCH 1: 2.83 seconds
+new ckpt get! val_loss:0.007266014348715544
+
+EPOCH 2:
+[E 1 | iter 49] loss 0.0033267438411712646
+[Validation] 0.006674193311482668
+Time taken for one EPOCH 2: 1.92 seconds
+new ckpt get! val_loss:0.006674193311482668
+
+EPOCH 3:
+[E 2 | iter 49] loss 0.0031624305993318558
+[Validation] 0.0063129449263215065
+Time taken for one EPOCH 3: 1.87 seconds
+new ckpt get! val_loss:0.0063129449263215065
+
+EPOCH 4:
+[E 3 | iter 49] loss 0.003065102733671665
+[Validation] 0.0061542377807199955
+Time taken for one EPOCH 4: 1.86 seconds
+new ckpt get! val_loss:0.0061542377807199955
+
+EPOCH 5:
+[E 4 | iter 49] loss 0.00298139825463295
+[Validation] 0.005997826345264912
+Time taken for one EPOCH 5: 1.81 seconds
+new ckpt get! val_loss:0.005997826345264912
+
+EPOCH 6:
+[E 5 | iter 49] loss 0.0029564881697297096
+[Validation] 0.005978002678602934
+Time taken for one EPOCH 6: 1.85 seconds
+new ckpt get! val_loss:0.005978002678602934
+
+EPOCH 7:
+[E 6 | iter 49] loss 0.002959723584353924
+[Validation] 0.0059682950377464294
+Time taken for one EPOCH 7: 1.91 seconds
+new ckpt get! val_loss:0.0059682950377464294
+
+EPOCH 8:
+[E 7 | iter 49] loss 0.00293218856677413
+[Validation] 0.005961476359516382
+Time taken for one EPOCH 8: 1.84 seconds
+new ckpt get! val_loss:0.005961476359516382
+
+EPOCH 9:
+[E 8 | iter 49] loss 0.0029586199671030045
+[Validation] 0.005958268418908119
+Time taken for one EPOCH 9: 1.80 seconds
+new ckpt get! val_loss:0.005958268418908119
+
+EPOCH 10:
+[E 9 | iter 49] loss 0.002956963609904051
+[Validation] 0.005955979228019714
+Time taken for one EPOCH 10: 1.93 seconds
+new ckpt get! val_loss:0.005955979228019714
+
+EPOCH 11:
+[E 10 | iter 49] loss 0.002948456909507513
+[Validation] 0.005953343119472265
+Time taken for one EPOCH 11: 1.89 seconds
+new ckpt get! val_loss:0.005953343119472265
+
+EPOCH 12:
+[E 11 | iter 49] loss 0.002957850694656372
+[Validation] 0.0059530409052968025
+Time taken for one EPOCH 12: 1.90 seconds
+new ckpt get! val_loss:0.0059530409052968025
+
+EPOCH 13:
+[E 12 | iter 49] loss 0.00294883013702929
+[Validation] 0.0059522646479308605
+Time taken for one EPOCH 13: 2.18 seconds
+new ckpt get! val_loss:0.0059522646479308605
+
+EPOCH 14:
+[E 13 | iter 49] loss 0.002974055241793394
+[Validation] 0.005949268117547035
+Time taken for one EPOCH 14: 2.30 seconds
+new ckpt get! val_loss:0.005949268117547035
+
+EPOCH 15:
+[E 14 | iter 49] loss 0.0029609822668135166
+[Validation] 0.005939993541687727
+Time taken for one EPOCH 15: 2.26 seconds
+new ckpt get! val_loss:0.005939993541687727
+
+EPOCH 16:
+[E 15 | iter 49] loss 0.0029311105608940125
+[Validation] 0.0059198299422860146
+Time taken for one EPOCH 16: 2.29 seconds
+new ckpt get! val_loss:0.0059198299422860146
+
+EPOCH 17:
+[E 16 | iter 49] loss 0.002929427195340395
+[Validation] 0.005898774601519108
+Time taken for one EPOCH 17: 2.22 seconds
+new ckpt get! val_loss:0.005898774601519108
+
+EPOCH 18:
+[E 17 | iter 49] loss 0.0029197409749031067
+[Validation] 0.005876140668988228
+Time taken for one EPOCH 18: 2.30 seconds
+new ckpt get! val_loss:0.005876140668988228
+
+EPOCH 19:
+[E 18 | iter 49] loss 0.0028937526512891054
+[Validation] 0.005856065079569817
+Time taken for one EPOCH 19: 2.14 seconds
+new ckpt get! val_loss:0.005856065079569817
+
+EPOCH 20:
+[E 19 | iter 49] loss 0.0028633521869778633
+[Validation] 0.005821011494845152
+Time taken for one EPOCH 20: 2.00 seconds
+new ckpt get! val_loss:0.005821011494845152
+
+EPOCH 21:
+[E 20 | iter 49] loss 0.0028902781195938587
+[Validation] 0.005786527413874865
+Time taken for one EPOCH 21: 2.27 seconds
+new ckpt get! val_loss:0.005786527413874865
+
+EPOCH 22:
+[E 21 | iter 49] loss 0.002847714815288782
+[Validation] 0.005756666883826256
+Time taken for one EPOCH 22: 2.30 seconds
+new ckpt get! val_loss:0.005756666883826256
+
+EPOCH 23:
+[E 22 | iter 49] loss 0.002848491072654724
+[Validation] 0.005733771249651909
+Time taken for one EPOCH 23: 2.28 seconds
+new ckpt get! val_loss:0.005733771249651909
+
+EPOCH 24:
+[E 23 | iter 49] loss 0.0028365813195705414
+[Validation] 0.005707760341465473
+Time taken for one EPOCH 24: 2.29 seconds
+new ckpt get! val_loss:0.005707760341465473
+
+EPOCH 25:
+[E 24 | iter 49] loss 0.00279831001535058
+[Validation] 0.005693103652447462
+Time taken for one EPOCH 25: 2.19 seconds
+new ckpt get! val_loss:0.005693103652447462
+
+EPOCH 26:
+[E 25 | iter 49] loss 0.002810901030898094
+[Validation] 0.005680748727172613
+Time taken for one EPOCH 26: 2.26 seconds
+new ckpt get! val_loss:0.005680748727172613
+
+EPOCH 27:
+[E 26 | iter 49] loss 0.002814111765474081
+[Validation] 0.005667876917868853
+Time taken for one EPOCH 27: 2.28 seconds
+new ckpt get! val_loss:0.005667876917868853
+
+EPOCH 28:
+[E 27 | iter 49] loss 0.00279638497158885
+[Validation] 0.00565347308292985
+Time taken for one EPOCH 28: 2.29 seconds
+new ckpt get! val_loss:0.00565347308292985
+
+EPOCH 29:
+[E 28 | iter 49] loss 0.0027992494869977236
+[Validation] 0.005636908113956451
+Time taken for one EPOCH 29: 2.29 seconds
+new ckpt get! val_loss:0.005636908113956451
+
+EPOCH 30:
+[E 29 | iter 49] loss 0.002786546479910612
+[Validation] 0.0056177410297095776
+Time taken for one EPOCH 30: 2.28 seconds
+new ckpt get! val_loss:0.0056177410297095776
+
+EPOCH 31:
+[E 30 | iter 49] loss 0.0027526216581463814
+[Validation] 0.0055951327085494995
+Time taken for one EPOCH 31: 2.34 seconds
+new ckpt get! val_loss:0.0055951327085494995
+
+EPOCH 32:
+[E 31 | iter 49] loss 0.002755021443590522
+[Validation] 0.005570665933191776
+Time taken for one EPOCH 32: 2.07 seconds
+new ckpt get! val_loss:0.005570665933191776
+
+EPOCH 33:
+[E 32 | iter 49] loss 0.0027547948993742466
+[Validation] 0.005550791509449482
+Time taken for one EPOCH 33: 2.22 seconds
+new ckpt get! val_loss:0.005550791509449482
+
+EPOCH 34:
+[E 33 | iter 49] loss 0.0027439508121460676
+[Validation] 0.005526306107640266
+Time taken for one EPOCH 34: 2.36 seconds
+new ckpt get! val_loss:0.005526306107640266
+
+EPOCH 35:
+[E 34 | iter 49] loss 0.0027219767216593027
+[Validation] 0.005506036803126335
+Time taken for one EPOCH 35: 2.19 seconds
+new ckpt get! val_loss:0.005506036803126335
+
+EPOCH 36:
+[E 35 | iter 49] loss 0.0027205783408135176
+[Validation] 0.005489792674779892
+Time taken for one EPOCH 36: 1.97 seconds
+new ckpt get! val_loss:0.005489792674779892
+
+EPOCH 37:
+[E 36 | iter 49] loss 0.002710196189582348
+[Validation] 0.005462045315653086
+Time taken for one EPOCH 37: 2.32 seconds
+new ckpt get! val_loss:0.005462045315653086
+
+EPOCH 38:
+[E 37 | iter 49] loss 0.0027028562035411596
+[Validation] 0.005448608659207821
+Time taken for one EPOCH 38: 2.32 seconds
+new ckpt get! val_loss:0.005448608659207821
+
+EPOCH 39:
+[E 38 | iter 49] loss 0.0026782616041600704
+[Validation] 0.00543102016672492
+Time taken for one EPOCH 39: 2.37 seconds
+new ckpt get! val_loss:0.00543102016672492
+
+EPOCH 40:
+[E 39 | iter 49] loss 0.002690923400223255
+[Validation] 0.005415292456746101
+Time taken for one EPOCH 40: 2.00 seconds
+new ckpt get! val_loss:0.005415292456746101
+
+EPOCH 41:
+[E 40 | iter 49] loss 0.002672939095646143
+[Validation] 0.005395555403083563
+Time taken for one EPOCH 41: 2.11 seconds
+new ckpt get! val_loss:0.005395555403083563
+
+EPOCH 42:
+[E 41 | iter 49] loss 0.0026731782127171755
+[Validation] 0.005371177569031715
+Time taken for one EPOCH 42: 2.32 seconds
+new ckpt get! val_loss:0.005371177569031715
+
+EPOCH 43:
+[E 42 | iter 49] loss 0.0026528951711952686
+[Validation] 0.005353266838937998
+Time taken for one EPOCH 43: 2.38 seconds
+new ckpt get! val_loss:0.005353266838937998
+
+EPOCH 44:
+[E 43 | iter 49] loss 0.0026481864042580128
+[Validation] 0.005330049432814121
+Time taken for one EPOCH 44: 2.34 seconds
+new ckpt get! val_loss:0.005330049432814121
+
+EPOCH 45:
+[E 44 | iter 49] loss 0.0026195768732577562
+[Validation] 0.005309897009283304
+Time taken for one EPOCH 45: 2.31 seconds
+new ckpt get! val_loss:0.005309897009283304
+
+EPOCH 46:
+[E 45 | iter 49] loss 0.0026477870997041464
+[Validation] 0.005290962290018797
+Time taken for one EPOCH 46: 2.33 seconds
+new ckpt get! val_loss:0.005290962290018797
+
+EPOCH 47:
+[E 46 | iter 49] loss 0.0026100934483110905
+[Validation] 0.005267068278044462
+Time taken for one EPOCH 47: 2.35 seconds
+new ckpt get! val_loss:0.005267068278044462
+
+EPOCH 48:
+[E 47 | iter 49] loss 0.0025852578692138195
+[Validation] 0.0052505903877317905
+Time taken for one EPOCH 48: 2.37 seconds
+new ckpt get! val_loss:0.0052505903877317905
+
+EPOCH 49:
+[E 48 | iter 49] loss 0.0026123030111193657
+[Validation] 0.005231903400272131
+Time taken for one EPOCH 49: 2.33 seconds
+new ckpt get! val_loss:0.005231903400272131
+
+EPOCH 50:
+[E 49 | iter 49] loss 0.0025616325438022614
+[Validation] 0.0052134329453110695
+Time taken for one EPOCH 50: 2.32 seconds
+new ckpt get! val_loss:0.0052134329453110695
+
+EPOCH 51:
+[E 50 | iter 49] loss 0.0025951038114726543
+[Validation] 0.005196806974709034
+Time taken for one EPOCH 51: 2.31 seconds
+new ckpt get! val_loss:0.005196806974709034
+
+EPOCH 52:
+[E 51 | iter 49] loss 0.002576458267867565
+[Validation] 0.005179817322641611
+Time taken for one EPOCH 52: 2.35 seconds
+new ckpt get! val_loss:0.005179817322641611
+
+EPOCH 53:
+[E 52 | iter 49] loss 0.0025551796425133944
+[Validation] 0.00516538554802537
+Time taken for one EPOCH 53: 2.38 seconds
+new ckpt get! val_loss:0.00516538554802537
+
+EPOCH 54:
+[E 53 | iter 49] loss 0.0025535677559673786
+[Validation] 0.0051480745896697044
+Time taken for one EPOCH 54: 2.31 seconds
+new ckpt get! val_loss:0.0051480745896697044
+
+EPOCH 55:
+[E 54 | iter 49] loss 0.002544816816225648
+[Validation] 0.00513486796990037
+Time taken for one EPOCH 55: 2.32 seconds
+new ckpt get! val_loss:0.00513486796990037
+
+EPOCH 56:
+[E 55 | iter 49] loss 0.002531453501433134
+[Validation] 0.005122745409607887
+Time taken for one EPOCH 56: 2.31 seconds
+new ckpt get! val_loss:0.005122745409607887
+
+EPOCH 57:
+[E 56 | iter 49] loss 0.0025177854113280773
+[Validation] 0.005110690835863352
+Time taken for one EPOCH 57: 2.36 seconds
+new ckpt get! val_loss:0.005110690835863352
+
+EPOCH 58:
+[E 57 | iter 49] loss 0.002517158631235361
+[Validation] 0.005095391068607569
+Time taken for one EPOCH 58: 2.30 seconds
+new ckpt get! val_loss:0.005095391068607569
+
+EPOCH 59:
+[E 58 | iter 49] loss 0.0025185325648635626
+[Validation] 0.005088344216346741
+Time taken for one EPOCH 59: 1.91 seconds
+new ckpt get! val_loss:0.005088344216346741
+
+EPOCH 60:
+[E 59 | iter 49] loss 0.002519979141652584
+[Validation] 0.005074756219983101
+Time taken for one EPOCH 60: 2.32 seconds
+new ckpt get! val_loss:0.005074756219983101
+
+EPOCH 61:
+[E 60 | iter 49] loss 0.0024919072166085243
+[Validation] 0.0050674728117883205
+Time taken for one EPOCH 61: 2.38 seconds
+new ckpt get! val_loss:0.0050674728117883205
+
+EPOCH 62:
+[E 61 | iter 49] loss 0.0025014530401676893
+[Validation] 0.005058713257312775
+Time taken for one EPOCH 62: 2.34 seconds
+new ckpt get! val_loss:0.005058713257312775
+
+EPOCH 63:
+[E 62 | iter 49] loss 0.0025147655978798866
+[Validation] 0.005046175792813301
+Time taken for one EPOCH 63: 2.32 seconds
+new ckpt get! val_loss:0.005046175792813301
+
+EPOCH 64:
+[E 63 | iter 49] loss 0.0025107148103415966
+[Validation] 0.005042170640081167
+Time taken for one EPOCH 64: 2.32 seconds
+new ckpt get! val_loss:0.005042170640081167
+
+EPOCH 65:
+[E 64 | iter 49] loss 0.0024866529274731874
+[Validation] 0.005030145402997732
+Time taken for one EPOCH 65: 2.32 seconds
+new ckpt get! val_loss:0.005030145402997732
+
+EPOCH 66:
+[E 65 | iter 49] loss 0.0024913689121603966
+[Validation] 0.0050278278067708015
+Time taken for one EPOCH 66: 2.32 seconds
+new ckpt get! val_loss:0.0050278278067708015
+
+EPOCH 67:
+[E 66 | iter 49] loss 0.002482568845152855
+[Validation] 0.005022577475756407
+Time taken for one EPOCH 67: 2.34 seconds
+new ckpt get! val_loss:0.005022577475756407
+
+EPOCH 68:
+[E 67 | iter 49] loss 0.0024778852239251137
+[Validation] 0.005007177125662565
+Time taken for one EPOCH 68: 2.33 seconds
+new ckpt get! val_loss:0.005007177125662565
+
+EPOCH 69:
+[E 68 | iter 49] loss 0.002486515324562788
+[Validation] 0.005002911668270826
+Time taken for one EPOCH 69: 2.37 seconds
+new ckpt get! val_loss:0.005002911668270826
+
+EPOCH 70:
+[E 69 | iter 49] loss 0.002470055827870965
+[Validation] 0.004996641539037228
+Time taken for one EPOCH 70: 2.32 seconds
+new ckpt get! val_loss:0.004996641539037228
+
+EPOCH 71:
+[E 70 | iter 49] loss 0.0024627179373055696
+[Validation] 0.004991182591766119
+Time taken for one EPOCH 71: 2.32 seconds
+new ckpt get! val_loss:0.004991182591766119
+
+EPOCH 72:
+[E 71 | iter 49] loss 0.002465492347255349
+[Validation] 0.004982915241271257
+Time taken for one EPOCH 72: 2.31 seconds
+new ckpt get! val_loss:0.004982915241271257
+
+EPOCH 73:
+[E 72 | iter 49] loss 0.002487131394445896
+[Validation] 0.004976451396942139
+Time taken for one EPOCH 73: 2.33 seconds
+new ckpt get! val_loss:0.004976451396942139
+
+EPOCH 74:
+[E 73 | iter 49] loss 0.0024602599442005157
+[Validation] 0.0049710641615092754
+Time taken for one EPOCH 74: 2.38 seconds
+new ckpt get! val_loss:0.0049710641615092754
+
+EPOCH 75:
+[E 74 | iter 49] loss 0.002473661210387945
+[Validation] 0.0049659619107842445
+Time taken for one EPOCH 75: 2.28 seconds
+new ckpt get! val_loss:0.0049659619107842445
+
+EPOCH 76:
+[E 75 | iter 49] loss 0.0024519439321011305
+[Validation] 0.004960309248417616
+Time taken for one EPOCH 76: 2.34 seconds
+new ckpt get! val_loss:0.004960309248417616
+
+EPOCH 77:
+[E 76 | iter 49] loss 0.0024704448878765106
+[Validation] 0.004948783665895462
+Time taken for one EPOCH 77: 2.32 seconds
+new ckpt get! val_loss:0.004948783665895462
+
+EPOCH 78:
+[E 77 | iter 49] loss 0.002442263765260577
+[Validation] 0.004947194829583168
+Time taken for one EPOCH 78: 2.32 seconds
+new ckpt get! val_loss:0.004947194829583168
+
+EPOCH 79:
+[E 78 | iter 49] loss 0.0024265190586447716
+[Validation] 0.004937718156725168
+Time taken for one EPOCH 79: 2.39 seconds
+new ckpt get! val_loss:0.004937718156725168
+
+EPOCH 80:
+[E 79 | iter 49] loss 0.0024596541188657284
+[Validation] 0.004930160939693451
+Time taken for one EPOCH 80: 2.35 seconds
+new ckpt get! val_loss:0.004930160939693451
+
+EPOCH 81:
+[E 80 | iter 49] loss 0.002438565483316779
+[Validation] 0.004924011882394552
+Time taken for one EPOCH 81: 2.33 seconds
+new ckpt get! val_loss:0.004924011882394552
+
+EPOCH 82:
+[E 81 | iter 49] loss 0.0024293046444654465
+[Validation] 0.004918478429317474
+Time taken for one EPOCH 82: 2.31 seconds
+new ckpt get! val_loss:0.004918478429317474
+
+EPOCH 83:
+[E 82 | iter 49] loss 0.0024419506080448627
+[Validation] 0.004906516522169113
+Time taken for one EPOCH 83: 2.36 seconds
+new ckpt get! val_loss:0.004906516522169113
+
+EPOCH 84:
+[E 83 | iter 49] loss 0.0024092579260468483
+[Validation] 0.004897824954241514
+Time taken for one EPOCH 84: 2.38 seconds
+new ckpt get! val_loss:0.004897824954241514
+
+EPOCH 85:
+[E 84 | iter 49] loss 0.002429838292300701
+[Validation] 0.004890118725597858
+Time taken for one EPOCH 85: 2.33 seconds
+new ckpt get! val_loss:0.004890118725597858
+
+EPOCH 86:
+[E 85 | iter 49] loss 0.002397153526544571
+[Validation] 0.004887362010776997
+Time taken for one EPOCH 86: 2.32 seconds
+new ckpt get! val_loss:0.004887362010776997
+
+EPOCH 87:
+[E 86 | iter 49] loss 0.002373406430706382
+[Validation] 0.004876187536865473
+Time taken for one EPOCH 87: 2.32 seconds
+new ckpt get! val_loss:0.004876187536865473
+
+EPOCH 88:
+[E 87 | iter 49] loss 0.002409446518868208
+[Validation] 0.004866720177233219
+Time taken for one EPOCH 88: 2.33 seconds
+new ckpt get! val_loss:0.004866720177233219
+
+EPOCH 89:
+[E 88 | iter 49] loss 0.0023929206654429436
+[Validation] 0.0048658051528036594
+Time taken for one EPOCH 89: 2.36 seconds
+new ckpt get! val_loss:0.0048658051528036594
+
+EPOCH 90:
+[E 89 | iter 49] loss 0.0024010264314711094
+[Validation] 0.004856332670897245
+Time taken for one EPOCH 90: 2.35 seconds
+new ckpt get! val_loss:0.004856332670897245
+
+EPOCH 91:
+[E 90 | iter 49] loss 0.002396966563537717
+[Validation] 0.004842521622776985
+Time taken for one EPOCH 91: 2.33 seconds
+new ckpt get! val_loss:0.004842521622776985
+
+EPOCH 92:
+[E 91 | iter 49] loss 0.0024043023586273193
+[Validation] 0.004836490843445063
+Time taken for one EPOCH 92: 2.32 seconds
+new ckpt get! val_loss:0.004836490843445063
+
+EPOCH 93:
+[E 92 | iter 49] loss 0.002407028339803219
+[Validation] 0.004833383020013571
+Time taken for one EPOCH 93: 2.32 seconds
+new ckpt get! val_loss:0.004833383020013571
+
+EPOCH 94:
+[E 93 | iter 49] loss 0.002382431412115693
+[Validation] 0.004825878422707319
+Time taken for one EPOCH 94: 2.32 seconds
+new ckpt get! val_loss:0.004825878422707319
+
+EPOCH 95:
+[E 94 | iter 49] loss 0.002376981545239687
+[Validation] 0.004819247871637344
+Time taken for one EPOCH 95: 2.32 seconds
+new ckpt get! val_loss:0.004819247871637344
+
+EPOCH 96:
+[E 95 | iter 49] loss 0.0023978054523468018
+[Validation] 0.004816204309463501
+Time taken for one EPOCH 96: 2.32 seconds
+new ckpt get! val_loss:0.004816204309463501
+
+EPOCH 97:
+[E 96 | iter 49] loss 0.002396564232185483
+[Validation] 0.004807786084711552
+Time taken for one EPOCH 97: 2.32 seconds
+new ckpt get! val_loss:0.004807786084711552
+
+EPOCH 98:
+[E 97 | iter 49] loss 0.0023935926146805286
+[Validation] 0.00480406591668725
+Time taken for one EPOCH 98: 2.33 seconds
+new ckpt get! val_loss:0.00480406591668725
+
+EPOCH 99:
+[E 98 | iter 49] loss 0.002370010130107403
+[Validation] 0.004795923829078674
+Time taken for one EPOCH 99: 2.34 seconds
+new ckpt get! val_loss:0.004795923829078674
+
+EPOCH 100:
+[E 99 | iter 49] loss 0.0023697614669799805
+[Validation] 0.004794138949364424
+Time taken for one EPOCH 100: 2.32 seconds
+new ckpt get! val_loss:0.004794138949364424
+
+EPOCH 101:
+[E 100 | iter 49] loss 0.0023613618686795235
+[Validation] 0.004787839483469725
+Time taken for one EPOCH 101: 2.33 seconds
+new ckpt get! val_loss:0.004787839483469725
+
+EPOCH 102:
+[E 101 | iter 49] loss 0.002361456397920847
+[Validation] 0.004783885087817907
+Time taken for one EPOCH 102: 2.35 seconds
+new ckpt get! val_loss:0.004783885087817907
+
+EPOCH 103:
+[E 102 | iter 49] loss 0.002348339417949319
+[Validation] 0.0047776708379387856
+Time taken for one EPOCH 103: 2.33 seconds
+new ckpt get! val_loss:0.0047776708379387856
+
+EPOCH 104:
+[E 103 | iter 49] loss 0.0023736462462693453
+[Validation] 0.004772679414600134
+Time taken for one EPOCH 104: 2.10 seconds
+new ckpt get! val_loss:0.004772679414600134
+
+EPOCH 105:
+[E 104 | iter 49] loss 0.002358215395361185
+[Validation] 0.004769326187670231
+Time taken for one EPOCH 105: 1.95 seconds
+new ckpt get! val_loss:0.004769326187670231
+
+EPOCH 106:
+[E 105 | iter 49] loss 0.002356506884098053
+[Validation] 0.004764745943248272
+Time taken for one EPOCH 106: 1.94 seconds
+new ckpt get! val_loss:0.004764745943248272
+
+EPOCH 107:
+[E 106 | iter 49] loss 0.002345786429941654
+[Validation] 0.00476099131628871
+Time taken for one EPOCH 107: 1.98 seconds
+new ckpt get! val_loss:0.00476099131628871
+
+EPOCH 108:
+[E 107 | iter 49] loss 0.0023331576958298683
+[Validation] 0.004761141259223223
+Time taken for one EPOCH 108: 1.98 seconds
+EPOCH 109:
+[E 108 | iter 49] loss 0.0023552458733320236
+[Validation] 0.004751534666866064
+Time taken for one EPOCH 109: 1.94 seconds
+new ckpt get! val_loss:0.004751534666866064
+
+EPOCH 110:
+[E 109 | iter 49] loss 0.002342407125979662
+[Validation] 0.004749055951833725
+Time taken for one EPOCH 110: 1.95 seconds
+new ckpt get! val_loss:0.004749055951833725
+
+EPOCH 111:
+[E 110 | iter 49] loss 0.002326034940779209
+[Validation] 0.004747134633362293
+Time taken for one EPOCH 111: 1.94 seconds
+new ckpt get! val_loss:0.004747134633362293
+
+EPOCH 112:
+[E 111 | iter 49] loss 0.0023184707388281822
+[Validation] 0.004744886886328459
+Time taken for one EPOCH 112: 1.89 seconds
+new ckpt get! val_loss:0.004744886886328459
+
+EPOCH 113:
+[E 112 | iter 49] loss 0.0023626501206308603
+[Validation] 0.00473792664706707
+Time taken for one EPOCH 113: 1.97 seconds
+new ckpt get! val_loss:0.00473792664706707
+
+EPOCH 114:
+[E 113 | iter 49] loss 0.0023626822512596846
+[Validation] 0.004736681468784809
+Time taken for one EPOCH 114: 1.96 seconds
+new ckpt get! val_loss:0.004736681468784809
+
+EPOCH 115:
+[E 114 | iter 49] loss 0.0023132585920393467
+[Validation] 0.004731436260044575
+Time taken for one EPOCH 115: 1.92 seconds
+new ckpt get! val_loss:0.004731436260044575
+
+EPOCH 116:
+[E 115 | iter 49] loss 0.0023472984321415424
+[Validation] 0.00472837220877409
+Time taken for one EPOCH 116: 1.96 seconds
+new ckpt get! val_loss:0.00472837220877409
+
+EPOCH 117:
+[E 116 | iter 49] loss 0.002319010905921459
+[Validation] 0.00472620315849781
+Time taken for one EPOCH 117: 1.98 seconds
+new ckpt get! val_loss:0.00472620315849781
+
+EPOCH 118:
+[E 117 | iter 49] loss 0.0023468458093702793
+[Validation] 0.004721236880868673
+Time taken for one EPOCH 118: 1.96 seconds
+new ckpt get! val_loss:0.004721236880868673
+
+EPOCH 119:
+[E 118 | iter 49] loss 0.0023353518918156624
+[Validation] 0.004713975824415684
+Time taken for one EPOCH 119: 1.88 seconds
+new ckpt get! val_loss:0.004713975824415684
+
+EPOCH 120:
+[E 119 | iter 49] loss 0.002332164440304041
+[Validation] 0.0047121355310082436
+Time taken for one EPOCH 120: 1.88 seconds
+new ckpt get! val_loss:0.0047121355310082436
+
+EPOCH 121:
+[E 120 | iter 49] loss 0.0023402818478643894
+[Validation] 0.004709490574896336
+Time taken for one EPOCH 121: 1.94 seconds
+new ckpt get! val_loss:0.004709490574896336
+
+EPOCH 122:
+[E 121 | iter 49] loss 0.0023306263610720634
+[Validation] 0.004708493128418922
+Time taken for one EPOCH 122: 1.95 seconds
+new ckpt get! val_loss:0.004708493128418922
+
+EPOCH 123:
+[E 122 | iter 49] loss 0.0023410446010529995
+[Validation] 0.004699693527072668
+Time taken for one EPOCH 123: 1.92 seconds
+new ckpt get! val_loss:0.004699693527072668
+
+EPOCH 124:
+[E 123 | iter 49] loss 0.002321890089660883
+[Validation] 0.004697976168245077
+Time taken for one EPOCH 124: 1.91 seconds
+new ckpt get! val_loss:0.004697976168245077
+
+EPOCH 125:
+[E 124 | iter 49] loss 0.002327871974557638
+[Validation] 0.004694024566560984
+Time taken for one EPOCH 125: 1.92 seconds
+new ckpt get! val_loss:0.004694024566560984
+
+EPOCH 126:
+[E 125 | iter 49] loss 0.002306311158463359
+[Validation] 0.004691348411142826
+Time taken for one EPOCH 126: 1.88 seconds
+new ckpt get! val_loss:0.004691348411142826
+
+EPOCH 127:
+[E 126 | iter 49] loss 0.0023231839295476675
+[Validation] 0.004686387721449137
+Time taken for one EPOCH 127: 1.90 seconds
+new ckpt get! val_loss:0.004686387721449137
+
+EPOCH 128:
+[E 127 | iter 49] loss 0.002304881112650037
+[Validation] 0.004683931358158588
+Time taken for one EPOCH 128: 1.99 seconds
+new ckpt get! val_loss:0.004683931358158588
+
+EPOCH 129:
+[E 128 | iter 49] loss 0.002317998558282852
+[Validation] 0.004679892212152481
+Time taken for one EPOCH 129: 1.98 seconds
+new ckpt get! val_loss:0.004679892212152481
+
+EPOCH 130:
+[E 129 | iter 49] loss 0.002335598226636648
+[Validation] 0.004681045655161142
+Time taken for one EPOCH 130: 1.90 seconds
+EPOCH 131:
+[E 130 | iter 49] loss 0.002310587326064706
+[Validation] 0.004673818591982126
+Time taken for one EPOCH 131: 1.90 seconds
+new ckpt get! val_loss:0.004673818591982126
+
+EPOCH 132:
+[E 131 | iter 49] loss 0.002300751395523548
+[Validation] 0.004666291642934084
+Time taken for one EPOCH 132: 1.90 seconds
+new ckpt get! val_loss:0.004666291642934084
+
+EPOCH 133:
+[E 132 | iter 49] loss 0.002294889884069562
+[Validation] 0.004667495843023062
+Time taken for one EPOCH 133: 1.96 seconds
+EPOCH 134:
+[E 133 | iter 49] loss 0.0022932863794267178
+[Validation] 0.004666975233703852
+Time taken for one EPOCH 134: 1.89 seconds
+EPOCH 135:
+[E 134 | iter 49] loss 0.002322233747690916
+[Validation] 0.004659601952880621
+Time taken for one EPOCH 135: 1.96 seconds
+new ckpt get! val_loss:0.004659601952880621
+
+EPOCH 136:
+[E 135 | iter 49] loss 0.0023017495404928923
+[Validation] 0.004659540951251984
+Time taken for one EPOCH 136: 1.93 seconds
+new ckpt get! val_loss:0.004659540951251984
+
+EPOCH 137:
+[E 136 | iter 49] loss 0.002294243313372135
+[Validation] 0.0046555837616324425
+Time taken for one EPOCH 137: 1.96 seconds
+new ckpt get! val_loss:0.0046555837616324425
+
+EPOCH 138:
+[E 137 | iter 49] loss 0.002280525164678693
+[Validation] 0.004652297589927912
+Time taken for one EPOCH 138: 1.87 seconds
+new ckpt get! val_loss:0.004652297589927912
+
+EPOCH 139:
+[E 138 | iter 49] loss 0.0022980477660894394
+[Validation] 0.004655615426599979
+Time taken for one EPOCH 139: 1.88 seconds
+EPOCH 140:
+[E 139 | iter 49] loss 0.002286163391545415
+[Validation] 0.004644179251044989
+Time taken for one EPOCH 140: 1.89 seconds
+new ckpt get! val_loss:0.004644179251044989
+
+EPOCH 141:
+[E 140 | iter 49] loss 0.0023039989173412323
+[Validation] 0.004644396714866161
+Time taken for one EPOCH 141: 1.96 seconds
+EPOCH 142:
+[E 141 | iter 49] loss 0.0022710782941430807
+[Validation] 0.0046414523385465145
+Time taken for one EPOCH 142: 1.94 seconds
+new ckpt get! val_loss:0.0046414523385465145
+
+EPOCH 143:
+[E 142 | iter 49] loss 0.002307482995092869
+[Validation] 0.0046403841115534306
+Time taken for one EPOCH 143: 1.96 seconds
+new ckpt get! val_loss:0.0046403841115534306
+
+EPOCH 144:
+[E 143 | iter 49] loss 0.002295086160302162
+[Validation] 0.004634009674191475
+Time taken for one EPOCH 144: 1.93 seconds
+new ckpt get! val_loss:0.004634009674191475
+
+EPOCH 145:
+[E 144 | iter 49] loss 0.002290343400090933
+[Validation] 0.004630739334970713
+Time taken for one EPOCH 145: 1.89 seconds
+new ckpt get! val_loss:0.004630739334970713
+
+EPOCH 146:
+[E 145 | iter 49] loss 0.0022713704966008663
+[Validation] 0.004627567250281572
+Time taken for one EPOCH 146: 1.94 seconds
+new ckpt get! val_loss:0.004627567250281572
+
+EPOCH 147:
+[E 146 | iter 49] loss 0.002287113107740879
+[Validation] 0.004628926049917936
+Time taken for one EPOCH 147: 1.93 seconds
+EPOCH 148:
+[E 147 | iter 49] loss 0.0023196949623525143
+[Validation] 0.004621898289769888
+Time taken for one EPOCH 148: 1.94 seconds
+new ckpt get! val_loss:0.004621898289769888
+
+EPOCH 149:
+[E 148 | iter 49] loss 0.002280761022120714
+[Validation] 0.004621115047484636
+Time taken for one EPOCH 149: 1.93 seconds
+new ckpt get! val_loss:0.004621115047484636
+
+EPOCH 150:
+[E 149 | iter 49] loss 0.002269954886287451
+[Validation] 0.004617128521203995
+Time taken for one EPOCH 150: 1.91 seconds
+new ckpt get! val_loss:0.004617128521203995
+
+EPOCH 151:
+[E 150 | iter 49] loss 0.002271669916808605
+[Validation] 0.00461502093821764
+Time taken for one EPOCH 151: 1.96 seconds
+new ckpt get! val_loss:0.00461502093821764
+
+EPOCH 152:
+[E 151 | iter 49] loss 0.0022675967775285244
+[Validation] 0.0046116202138364315
+Time taken for one EPOCH 152: 1.94 seconds
+new ckpt get! val_loss:0.0046116202138364315
+
+EPOCH 153:
+[E 152 | iter 49] loss 0.002259512897580862
+[Validation] 0.004610237665474415
+Time taken for one EPOCH 153: 1.94 seconds
+new ckpt get! val_loss:0.004610237665474415
+
+EPOCH 154:
+[E 153 | iter 49] loss 0.0022768699564039707
+[Validation] 0.004611206706613302
+Time taken for one EPOCH 154: 1.92 seconds
+EPOCH 155:
+[E 154 | iter 49] loss 0.002282684901729226
+[Validation] 0.004604360554367304
+Time taken for one EPOCH 155: 1.97 seconds
+new ckpt get! val_loss:0.004604360554367304
+
+EPOCH 156:
+[E 155 | iter 49] loss 0.002288371091708541
+[Validation] 0.004603622946888208
+Time taken for one EPOCH 156: 1.89 seconds
+new ckpt get! val_loss:0.004603622946888208
+
+EPOCH 157:
+[E 156 | iter 49] loss 0.0022720107808709145
+[Validation] 0.0046060956083238125
+Time taken for one EPOCH 157: 1.94 seconds
+EPOCH 158:
+[E 157 | iter 49] loss 0.002250704215839505
+[Validation] 0.004598634783178568
+Time taken for one EPOCH 158: 1.90 seconds
+new ckpt get! val_loss:0.004598634783178568
+
+EPOCH 159:
+[E 158 | iter 49] loss 0.002239803783595562
+[Validation] 0.004597011487931013
+Time taken for one EPOCH 159: 1.92 seconds
+new ckpt get! val_loss:0.004597011487931013
+
+EPOCH 160:
+[E 159 | iter 49] loss 0.002255454659461975
+[Validation] 0.004588715266436338
+Time taken for one EPOCH 160: 1.90 seconds
+new ckpt get! val_loss:0.004588715266436338
+
+EPOCH 161:
+[E 160 | iter 49] loss 0.002280190121382475
+[Validation] 0.0045881690457463264
+Time taken for one EPOCH 161: 1.94 seconds
+new ckpt get! val_loss:0.0045881690457463264
+
+EPOCH 162:
+[E 161 | iter 49] loss 0.0022824129555374384
+[Validation] 0.004588272888213396
+Time taken for one EPOCH 162: 1.92 seconds
+EPOCH 163:
+[E 162 | iter 49] loss 0.0022909422405064106
+[Validation] 0.004588295705616474
+Time taken for one EPOCH 163: 1.88 seconds
+EPOCH 164:
+[E 163 | iter 49] loss 0.002265398157760501
+[Validation] 0.004581611603498459
+Time taken for one EPOCH 164: 1.96 seconds
+new ckpt get! val_loss:0.004581611603498459
+
+EPOCH 165:
+[E 164 | iter 49] loss 0.0022626714780926704
+[Validation] 0.0045765601098537445
+Time taken for one EPOCH 165: 1.90 seconds
+new ckpt get! val_loss:0.0045765601098537445
+
+EPOCH 166:
+[E 165 | iter 49] loss 0.0022479358594864607
+[Validation] 0.0045815641060471535
+Time taken for one EPOCH 166: 1.95 seconds
+EPOCH 167:
+[E 166 | iter 49] loss 0.0022372142411768436
+[Validation] 0.004573853686451912
+Time taken for one EPOCH 167: 1.95 seconds
+new ckpt get! val_loss:0.004573853686451912
+
+EPOCH 168:
+[E 167 | iter 49] loss 0.002264393726363778
+[Validation] 0.004579869564622641
+Time taken for one EPOCH 168: 1.94 seconds
+EPOCH 169:
+[E 168 | iter 49] loss 0.0022545228712260723
+[Validation] 0.004567988216876984
+Time taken for one EPOCH 169: 1.96 seconds
+new ckpt get! val_loss:0.004567988216876984
+
+EPOCH 170:
+[E 169 | iter 49] loss 0.002251272788271308
+[Validation] 0.00456903176382184
+Time taken for one EPOCH 170: 1.97 seconds
+EPOCH 171:
+[E 170 | iter 49] loss 0.002232207451015711
+[Validation] 0.0045663961209356785
+Time taken for one EPOCH 171: 1.92 seconds
+new ckpt get! val_loss:0.0045663961209356785
+
+EPOCH 172:
+[E 171 | iter 49] loss 0.0022482930216938257
+[Validation] 0.004563428461551666
+Time taken for one EPOCH 172: 1.98 seconds
+new ckpt get! val_loss:0.004563428461551666
+
+EPOCH 173:
+[E 172 | iter 49] loss 0.0022476091980934143
+[Validation] 0.004558478947728872
+Time taken for one EPOCH 173: 1.94 seconds
+new ckpt get! val_loss:0.004558478947728872
+
+EPOCH 174:
+[E 173 | iter 49] loss 0.0022417118307203054
+[Validation] 0.004557606764137745
+Time taken for one EPOCH 174: 1.89 seconds
+new ckpt get! val_loss:0.004557606764137745
+
+EPOCH 175:
+[E 174 | iter 49] loss 0.002255659317597747
+[Validation] 0.004557069856673479
+Time taken for one EPOCH 175: 1.95 seconds
+new ckpt get! val_loss:0.004557069856673479
+
+EPOCH 176:
+[E 175 | iter 49] loss 0.0022342463489621878
+[Validation] 0.004558699671179056
+Time taken for one EPOCH 176: 1.91 seconds
+EPOCH 177:
+[E 176 | iter 49] loss 0.0022618426010012627
+[Validation] 0.0045516337268054485
+Time taken for one EPOCH 177: 1.90 seconds
+new ckpt get! val_loss:0.0045516337268054485
+
+EPOCH 178:
+[E 177 | iter 49] loss 0.0022501666098833084
+[Validation] 0.004549426957964897
+Time taken for one EPOCH 178: 1.99 seconds
+new ckpt get! val_loss:0.004549426957964897
+
+EPOCH 179:
+[E 178 | iter 49] loss 0.002229506615549326
+[Validation] 0.004546407610177994
+Time taken for one EPOCH 179: 1.95 seconds
+new ckpt get! val_loss:0.004546407610177994
+
+EPOCH 180:
+[E 179 | iter 49] loss 0.0022472012788057327
+[Validation] 0.004544395953416824
+Time taken for one EPOCH 180: 1.95 seconds
+new ckpt get! val_loss:0.004544395953416824
+
+EPOCH 181:
+[E 180 | iter 49] loss 0.0022462105844169855
+[Validation] 0.004542672540992498
+Time taken for one EPOCH 181: 1.97 seconds
+new ckpt get! val_loss:0.004542672540992498
+
+EPOCH 182:
+[E 181 | iter 49] loss 0.0022516371682286263
+[Validation] 0.004538537468761206
+Time taken for one EPOCH 182: 1.96 seconds
+new ckpt get! val_loss:0.004538537468761206
+
+EPOCH 183:
+[E 182 | iter 49] loss 0.0022401302121579647
+[Validation] 0.004540670663118362
+Time taken for one EPOCH 183: 2.04 seconds
+EPOCH 184:
+[E 183 | iter 49] loss 0.0022591901943087578
+[Validation] 0.004540781956166029
+Time taken for one EPOCH 184: 2.32 seconds
+EPOCH 185:
+[E 184 | iter 49] loss 0.0022592060267925262
+[Validation] 0.004533848725259304
+Time taken for one EPOCH 185: 2.37 seconds
+new ckpt get! val_loss:0.004533848725259304
+
+EPOCH 186:
+[E 185 | iter 49] loss 0.0022270064800977707
+[Validation] 0.004532441031187773
+Time taken for one EPOCH 186: 2.32 seconds
+new ckpt get! val_loss:0.004532441031187773
+
+EPOCH 187:
+[E 186 | iter 49] loss 0.002244063653051853
+[Validation] 0.004526945296674967
+Time taken for one EPOCH 187: 2.34 seconds
+new ckpt get! val_loss:0.004526945296674967
+
+EPOCH 188:
+[E 187 | iter 49] loss 0.0022440175525844097
+[Validation] 0.004528646823018789
+Time taken for one EPOCH 188: 2.34 seconds
+EPOCH 189:
+[E 188 | iter 49] loss 0.00223473459482193
+[Validation] 0.004526046104729176
+Time taken for one EPOCH 189: 2.33 seconds
+new ckpt get! val_loss:0.004526046104729176
+
+EPOCH 190:
+[E 189 | iter 49] loss 0.002230484504252672
+[Validation] 0.0045232647098600864
+Time taken for one EPOCH 190: 2.37 seconds
+new ckpt get! val_loss:0.0045232647098600864
+
+EPOCH 191:
+[E 190 | iter 49] loss 0.002240067347884178
+[Validation] 0.004518803209066391
+Time taken for one EPOCH 191: 2.37 seconds
+new ckpt get! val_loss:0.004518803209066391
+
+EPOCH 192:
+[E 191 | iter 49] loss 0.0022360680159181356
+[Validation] 0.004514001309871674
+Time taken for one EPOCH 192: 2.34 seconds
+new ckpt get! val_loss:0.004514001309871674
+
+EPOCH 193:
+[E 192 | iter 49] loss 0.0022288328036665916
+[Validation] 0.004513587802648544
+Time taken for one EPOCH 193: 2.37 seconds
+new ckpt get! val_loss:0.004513587802648544
+
+EPOCH 194:
+[E 193 | iter 49] loss 0.0022021536715328693
+[Validation] 0.004514468368142843
+Time taken for one EPOCH 194: 2.35 seconds
+EPOCH 195:
+[E 194 | iter 49] loss 0.0022267592139542103
+[Validation] 0.004512948449701071
+Time taken for one EPOCH 195: 2.32 seconds
+new ckpt get! val_loss:0.004512948449701071
+
+EPOCH 196:
+[E 195 | iter 49] loss 0.0022353061940521
+[Validation] 0.0045084343291819096
+Time taken for one EPOCH 196: 2.14 seconds
+new ckpt get! val_loss:0.0045084343291819096
+
+EPOCH 197:
+[E 196 | iter 49] loss 0.0022125043906271458
+[Validation] 0.004510201513767242
+Time taken for one EPOCH 197: 1.94 seconds
+EPOCH 198:
+[E 197 | iter 49] loss 0.0022473158314824104
+[Validation] 0.004507485777139664
+Time taken for one EPOCH 198: 2.01 seconds
+new ckpt get! val_loss:0.004507485777139664
+
+EPOCH 199:
+[E 198 | iter 49] loss 0.0022194627672433853
+[Validation] 0.004504994954913855
+Time taken for one EPOCH 199: 2.16 seconds
+new ckpt get! val_loss:0.004504994954913855
+
+EPOCH 200:
+[E 199 | iter 49] loss 0.0022299387492239475
+[Validation] 0.004503063857555389
+Time taken for one EPOCH 200: 1.93 seconds
+new ckpt get! val_loss:0.004503063857555389
+
+EPOCH 201:
+[E 200 | iter 49] loss 0.002229842822998762
+[Validation] 0.004499898757785559
+Time taken for one EPOCH 201: 2.00 seconds
+new ckpt get! val_loss:0.004499898757785559
+
+EPOCH 202:
+[E 201 | iter 49] loss 0.0022056857123970985
+[Validation] 0.00449719000607729
+Time taken for one EPOCH 202: 1.97 seconds
+new ckpt get! val_loss:0.00449719000607729
+
+EPOCH 203:
+[E 202 | iter 49] loss 0.0022208946757018566
+[Validation] 0.0044980826787650585
+Time taken for one EPOCH 203: 1.95 seconds
+EPOCH 204:
+[E 203 | iter 49] loss 0.0021951370872557163
+[Validation] 0.0044956267811357975
+Time taken for one EPOCH 204: 2.00 seconds
+new ckpt get! val_loss:0.0044956267811357975
+
+EPOCH 205:
+[E 204 | iter 49] loss 0.0022040873300284147
+[Validation] 0.004494592547416687
+Time taken for one EPOCH 205: 1.98 seconds
+new ckpt get! val_loss:0.004494592547416687
+
+EPOCH 206:
+[E 205 | iter 49] loss 0.0022237845696508884
+[Validation] 0.004492113366723061
+Time taken for one EPOCH 206: 1.94 seconds
+new ckpt get! val_loss:0.004492113366723061
+
+EPOCH 207:
+[E 206 | iter 49] loss 0.002224820200353861
+[Validation] 0.004489304032176733
+Time taken for one EPOCH 207: 1.89 seconds
+new ckpt get! val_loss:0.004489304032176733
+
+EPOCH 208:
+[E 207 | iter 49] loss 0.0022496802266687155
+[Validation] 0.004485099110752344
+Time taken for one EPOCH 208: 1.97 seconds
+new ckpt get! val_loss:0.004485099110752344
+
+EPOCH 209:
+[E 208 | iter 49] loss 0.002213969361037016
+[Validation] 0.004484459757804871
+Time taken for one EPOCH 209: 1.95 seconds
+new ckpt get! val_loss:0.004484459757804871
+
+EPOCH 210:
+[E 209 | iter 49] loss 0.002197990193963051
+[Validation] 0.004482797812670469
+Time taken for one EPOCH 210: 1.94 seconds
+new ckpt get! val_loss:0.004482797812670469
+
+EPOCH 211:
+[E 210 | iter 49] loss 0.0022150231525301933
+[Validation] 0.004481364507228136
+Time taken for one EPOCH 211: 1.98 seconds
+new ckpt get! val_loss:0.004481364507228136
+
+EPOCH 212:
+[E 211 | iter 49] loss 0.002218176843598485
+[Validation] 0.004475668538361788
+Time taken for one EPOCH 212: 1.91 seconds
+new ckpt get! val_loss:0.004475668538361788
+
+EPOCH 213:
+[E 212 | iter 49] loss 0.002206713892519474
+[Validation] 0.004477756563574076
+Time taken for one EPOCH 213: 1.95 seconds
+EPOCH 214:
+[E 213 | iter 49] loss 0.002233085222542286
+[Validation] 0.004474070388823748
+Time taken for one EPOCH 214: 1.97 seconds
+new ckpt get! val_loss:0.004474070388823748
+
+EPOCH 215:
+[E 214 | iter 49] loss 0.002191526349633932
+[Validation] 0.004476404748857021
+Time taken for one EPOCH 215: 1.99 seconds
+EPOCH 216:
+[E 215 | iter 49] loss 0.0022029930260032415
+[Validation] 0.004468878265470266
+Time taken for one EPOCH 216: 1.96 seconds
+new ckpt get! val_loss:0.004468878265470266
+
+EPOCH 217:
+[E 216 | iter 49] loss 0.002214496023952961
+[Validation] 0.004466965328902006
+Time taken for one EPOCH 217: 1.90 seconds
+new ckpt get! val_loss:0.004466965328902006
+
+EPOCH 218:
+[E 217 | iter 49] loss 0.002186747035011649
+[Validation] 0.004470607731491327
+Time taken for one EPOCH 218: 1.92 seconds
+EPOCH 219:
+[E 218 | iter 49] loss 0.002205373253673315
+[Validation] 0.004466898273676634
+Time taken for one EPOCH 219: 1.92 seconds
+new ckpt get! val_loss:0.004466898273676634
+
+EPOCH 220:
+[E 219 | iter 49] loss 0.0021957941353321075
+[Validation] 0.004465657752007246
+Time taken for one EPOCH 220: 2.00 seconds
+new ckpt get! val_loss:0.004465657752007246
+
+EPOCH 221:
+[E 220 | iter 49] loss 0.002186951693147421
+[Validation] 0.004465933423489332
+Time taken for one EPOCH 221: 1.94 seconds
+EPOCH 222:
+[E 221 | iter 49] loss 0.002210271079093218
+[Validation] 0.004459794145077467
+Time taken for one EPOCH 222: 1.93 seconds
+new ckpt get! val_loss:0.004459794145077467
+
+EPOCH 223:
+[E 222 | iter 49] loss 0.0022036898881196976
+[Validation] 0.004454351961612701
+Time taken for one EPOCH 223: 1.96 seconds
+new ckpt get! val_loss:0.004454351961612701
+
+EPOCH 224:
+[E 223 | iter 49] loss 0.002191878855228424
+[Validation] 0.0044582197442650795
+Time taken for one EPOCH 224: 1.98 seconds
+EPOCH 225:
+[E 224 | iter 49] loss 0.0022220651153475046
+[Validation] 0.004460758063942194
+Time taken for one EPOCH 225: 1.96 seconds
+EPOCH 226:
+[E 225 | iter 49] loss 0.002213012659922242
+[Validation] 0.004454587586224079
+Time taken for one EPOCH 226: 1.94 seconds
+EPOCH 227:
+[E 226 | iter 49] loss 0.002211881335824728
+[Validation] 0.00445095868781209
+Time taken for one EPOCH 227: 1.94 seconds
+new ckpt get! val_loss:0.00445095868781209
+
+EPOCH 228:
+[E 227 | iter 49] loss 0.0022083770018070936
+[Validation] 0.004452254623174667
+Time taken for one EPOCH 228: 1.95 seconds
+EPOCH 229:
+[E 228 | iter 49] loss 0.002161652548238635
+[Validation] 0.004444713704288006
+Time taken for one EPOCH 229: 1.95 seconds
+new ckpt get! val_loss:0.004444713704288006
+
+EPOCH 230:
+[E 229 | iter 49] loss 0.0021986858919262886
+[Validation] 0.004447569604963064
+Time taken for one EPOCH 230: 1.91 seconds
+EPOCH 231:
+[E 230 | iter 49] loss 0.0021974483970552683
+[Validation] 0.004449752625077963
+Time taken for one EPOCH 231: 1.92 seconds
+EPOCH 232:
+[E 231 | iter 49] loss 0.002203495241701603
+[Validation] 0.00445469981059432
+Time taken for one EPOCH 232: 1.92 seconds
+EPOCH 233:
+[E 232 | iter 49] loss 0.002198772970587015
+[Validation] 0.004443942569196224
+Time taken for one EPOCH 233: 1.95 seconds
+new ckpt get! val_loss:0.004443942569196224
+
+EPOCH 234:
+[E 233 | iter 49] loss 0.002188195940107107
+[Validation] 0.004441581200808287
+Time taken for one EPOCH 234: 1.91 seconds
+new ckpt get! val_loss:0.004441581200808287
+
+EPOCH 235:
+[E 234 | iter 49] loss 0.0021669697016477585
+[Validation] 0.00444122776389122
+Time taken for one EPOCH 235: 1.99 seconds
+new ckpt get! val_loss:0.00444122776389122
+
+EPOCH 236:
+[E 235 | iter 49] loss 0.0021792559418827295
+[Validation] 0.004437316209077835
+Time taken for one EPOCH 236: 1.99 seconds
+new ckpt get! val_loss:0.004437316209077835
+
+EPOCH 237:
+[E 236 | iter 49] loss 0.0021941144950687885
+[Validation] 0.004435677547007799
+Time taken for one EPOCH 237: 1.95 seconds
+new ckpt get! val_loss:0.004435677547007799
+
+EPOCH 238:
+[E 237 | iter 49] loss 0.002181335585191846
+[Validation] 0.004435035865753889
+Time taken for one EPOCH 238: 1.93 seconds
+new ckpt get! val_loss:0.004435035865753889
+
+EPOCH 239:
+[E 238 | iter 49] loss 0.0021690051071345806
+[Validation] 0.004431286361068487
+Time taken for one EPOCH 239: 1.96 seconds
+new ckpt get! val_loss:0.004431286361068487
+
+EPOCH 240:
+[E 239 | iter 49] loss 0.0021605221554636955
+[Validation] 0.0044363415800035
+Time taken for one EPOCH 240: 1.89 seconds
+EPOCH 241:
+[E 240 | iter 49] loss 0.002207805635407567
+[Validation] 0.004426182713359594
+Time taken for one EPOCH 241: 1.97 seconds
+new ckpt get! val_loss:0.004426182713359594
+
+EPOCH 242:
+[E 241 | iter 49] loss 0.002188701881095767
+[Validation] 0.004427795764058828
+Time taken for one EPOCH 242: 1.98 seconds
+EPOCH 243:
+[E 242 | iter 49] loss 0.002184577751904726
+[Validation] 0.0044276416301727295
+Time taken for one EPOCH 243: 1.87 seconds
+EPOCH 244:
+[E 243 | iter 49] loss 0.002184907905757427
+[Validation] 0.004424141254276037
+Time taken for one EPOCH 244: 1.94 seconds
+new ckpt get! val_loss:0.004424141254276037
+
+EPOCH 245:
+[E 244 | iter 49] loss 0.002155337017029524
+[Validation] 0.0044284723699092865
+Time taken for one EPOCH 245: 1.94 seconds
+EPOCH 246:
+[E 245 | iter 49] loss 0.002145469421520829
+[Validation] 0.004423548933118582
+Time taken for one EPOCH 246: 1.94 seconds
+new ckpt get! val_loss:0.004423548933118582
+
+EPOCH 247:
+[E 246 | iter 49] loss 0.002190272556617856
+[Validation] 0.004421446472406387
+Time taken for one EPOCH 247: 1.86 seconds
+new ckpt get! val_loss:0.004421446472406387
+
+EPOCH 248:
+[E 247 | iter 49] loss 0.002177304122596979
+[Validation] 0.004420284181833267
+Time taken for one EPOCH 248: 1.97 seconds
+new ckpt get! val_loss:0.004420284181833267
+
+EPOCH 249:
+[E 248 | iter 49] loss 0.002163764089345932
+[Validation] 0.00441470742225647
+Time taken for one EPOCH 249: 1.98 seconds
+new ckpt get! val_loss:0.00441470742225647
+
+EPOCH 250:
+[E 249 | iter 49] loss 0.0021825656294822693
+[Validation] 0.0044141472317278385
+Time taken for one EPOCH 250: 1.99 seconds
+new ckpt get! val_loss:0.0044141472317278385
+
+EPOCH 251:
+[E 250 | iter 49] loss 0.00217056879773736
+[Validation] 0.004420598037540913
+Time taken for one EPOCH 251: 2.13 seconds
+EPOCH 252:
+[E 251 | iter 49] loss 0.0021854171063750982
+[Validation] 0.0044100419618189335
+Time taken for one EPOCH 252: 2.31 seconds
+new ckpt get! val_loss:0.0044100419618189335
+
+EPOCH 253:
+[E 252 | iter 49] loss 0.002209324622526765
+[Validation] 0.004413389600813389
+Time taken for one EPOCH 253: 2.29 seconds
+EPOCH 254:
+[E 253 | iter 49] loss 0.0021901652216911316
+[Validation] 0.004413156304508448
+Time taken for one EPOCH 254: 1.96 seconds
+EPOCH 255:
+[E 254 | iter 49] loss 0.0021609014365822077
+[Validation] 0.004410795401781797
+Time taken for one EPOCH 255: 1.95 seconds
+EPOCH 256:
+[E 255 | iter 49] loss 0.002150328829884529
+[Validation] 0.004406942054629326
+Time taken for one EPOCH 256: 2.01 seconds
+new ckpt get! val_loss:0.004406942054629326
+
+EPOCH 257:
+[E 256 | iter 49] loss 0.0021750223822891712
+[Validation] 0.0044037518091499805
+Time taken for one EPOCH 257: 2.33 seconds
+new ckpt get! val_loss:0.0044037518091499805
+
+EPOCH 258:
+[E 257 | iter 49] loss 0.002180930692702532
+[Validation] 0.004405786748975515
+Time taken for one EPOCH 258: 2.33 seconds
+EPOCH 259:
+[E 258 | iter 49] loss 0.002186776604503393
+[Validation] 0.004403826780617237
+Time taken for one EPOCH 259: 2.41 seconds
+EPOCH 260:
+[E 259 | iter 49] loss 0.0021839479450136423
+[Validation] 0.004405842628329992
+Time taken for one EPOCH 260: 2.32 seconds
+EPOCH 261:
+[E 260 | iter 49] loss 0.0021872087381780148
+[Validation] 0.004402846097946167
+Time taken for one EPOCH 261: 2.31 seconds
+new ckpt get! val_loss:0.004402846097946167
+
+EPOCH 262:
+[E 261 | iter 49] loss 0.0021644635125994682
+[Validation] 0.004400649107992649
+Time taken for one EPOCH 262: 2.34 seconds
+new ckpt get! val_loss:0.004400649107992649
+
+EPOCH 263:
+[E 262 | iter 49] loss 0.00216233660466969
+[Validation] 0.004395981319248676
+Time taken for one EPOCH 263: 2.32 seconds
+new ckpt get! val_loss:0.004395981319248676
+
+EPOCH 264:
+[E 263 | iter 49] loss 0.002205663826316595
+[Validation] 0.004395771771669388
+Time taken for one EPOCH 264: 2.32 seconds
+new ckpt get! val_loss:0.004395771771669388
+
+EPOCH 265:
+[E 264 | iter 49] loss 0.002163661178201437
+[Validation] 0.004400386940687895
+Time taken for one EPOCH 265: 2.35 seconds
+EPOCH 266:
+[E 265 | iter 49] loss 0.0021678502671420574
+[Validation] 0.004397410899400711
+Time taken for one EPOCH 266: 2.31 seconds
+EPOCH 267:
+[E 266 | iter 49] loss 0.0021544124465435743
+[Validation] 0.004393464419990778
+Time taken for one EPOCH 267: 2.31 seconds
+new ckpt get! val_loss:0.004393464419990778
+
+EPOCH 268:
+[E 267 | iter 49] loss 0.0021805400028824806
+[Validation] 0.004393184091895819
+Time taken for one EPOCH 268: 2.31 seconds
+new ckpt get! val_loss:0.004393184091895819
+
+EPOCH 269:
+[E 268 | iter 49] loss 0.0021533374674618244
+[Validation] 0.004393757786601782
+Time taken for one EPOCH 269: 2.37 seconds
+EPOCH 270:
+[E 269 | iter 49] loss 0.0021389233879745007
+[Validation] 0.004388859961181879
+Time taken for one EPOCH 270: 2.35 seconds
+new ckpt get! val_loss:0.004388859961181879
+
+EPOCH 271:
+[E 270 | iter 49] loss 0.002144817030057311
+[Validation] 0.004386485554277897
+Time taken for one EPOCH 271: 2.31 seconds
+new ckpt get! val_loss:0.004386485554277897
+
+EPOCH 272:
+[E 271 | iter 49] loss 0.0021769783925265074
+[Validation] 0.004387139342725277
+Time taken for one EPOCH 272: 2.00 seconds
+EPOCH 273:
+[E 272 | iter 49] loss 0.0021599612664431334
+[Validation] 0.0043807909823954105
+Time taken for one EPOCH 273: 1.90 seconds
+new ckpt get! val_loss:0.0043807909823954105
+
+EPOCH 274:
+[E 273 | iter 49] loss 0.0021794792264699936
+[Validation] 0.004390267189592123
+Time taken for one EPOCH 274: 1.92 seconds
+EPOCH 275:
+[E 274 | iter 49] loss 0.0021448435727506876
+[Validation] 0.0043861232697963715
+Time taken for one EPOCH 275: 1.95 seconds
+EPOCH 276:
+[E 275 | iter 49] loss 0.00216986914165318
+[Validation] 0.00438498193398118
+Time taken for one EPOCH 276: 1.95 seconds
+EPOCH 277:
+[E 276 | iter 49] loss 0.002169774379581213
+[Validation] 0.004379976540803909
+Time taken for one EPOCH 277: 1.88 seconds
+new ckpt get! val_loss:0.004379976540803909
+
+EPOCH 278:
+[E 277 | iter 49] loss 0.002162887481972575
+[Validation] 0.004380630329251289
+Time taken for one EPOCH 278: 1.94 seconds
+EPOCH 279:
+[E 278 | iter 49] loss 0.0021593058481812477
+[Validation] 0.004377433564513922
+Time taken for one EPOCH 279: 1.95 seconds
+new ckpt get! val_loss:0.004377433564513922
+
+EPOCH 280:
+[E 279 | iter 49] loss 0.002163971308618784
+[Validation] 0.004373188596218824
+Time taken for one EPOCH 280: 1.93 seconds
+new ckpt get! val_loss:0.004373188596218824
+
+EPOCH 281:
+[E 280 | iter 49] loss 0.0021453038789331913
+[Validation] 0.004369085188955069
+Time taken for one EPOCH 281: 1.97 seconds
+new ckpt get! val_loss:0.004369085188955069
+
+EPOCH 282:
+[E 281 | iter 49] loss 0.0021750433370471
+[Validation] 0.004378104582428932
+Time taken for one EPOCH 282: 1.97 seconds
+EPOCH 283:
+[E 282 | iter 49] loss 0.0021513374522328377
+[Validation] 0.004372091963887215
+Time taken for one EPOCH 283: 1.96 seconds
+EPOCH 284:
+[E 283 | iter 49] loss 0.0021652402356266975
+[Validation] 0.004373434465378523
+Time taken for one EPOCH 284: 1.96 seconds
+EPOCH 285:
+[E 284 | iter 49] loss 0.002169476356357336
+[Validation] 0.004380651284009218
+Time taken for one EPOCH 285: 1.95 seconds
+EPOCH 286:
+[E 285 | iter 49] loss 0.0021646334789693356
+[Validation] 0.004369039088487625
+Time taken for one EPOCH 286: 1.94 seconds
+new ckpt get! val_loss:0.004369039088487625
+
+EPOCH 287:
+[E 286 | iter 49] loss 0.0021780929528176785
+[Validation] 0.004374464508146048
+Time taken for one EPOCH 287: 1.99 seconds
+EPOCH 288:
+[E 287 | iter 49] loss 0.002137139905244112
+[Validation] 0.004370199050754309
+Time taken for one EPOCH 288: 1.96 seconds
+EPOCH 289:
+[E 288 | iter 49] loss 0.0021551111713051796
+[Validation] 0.004367468878626823
+Time taken for one EPOCH 289: 1.94 seconds
+new ckpt get! val_loss:0.004367468878626823
+
+EPOCH 290:
+[E 289 | iter 49] loss 0.002153268549591303
+[Validation] 0.0043641189113259315
+Time taken for one EPOCH 290: 1.96 seconds
+new ckpt get! val_loss:0.0043641189113259315
+
+EPOCH 291:
+[E 290 | iter 49] loss 0.002156354719772935
+[Validation] 0.004366785287857056
+Time taken for one EPOCH 291: 1.94 seconds
+EPOCH 292:
+[E 291 | iter 49] loss 0.0021455218084156513
+[Validation] 0.004364822059869766
+Time taken for one EPOCH 292: 1.86 seconds
+EPOCH 293:
+[E 292 | iter 49] loss 0.0021558073349297047
+[Validation] 0.004360117483884096
+Time taken for one EPOCH 293: 1.92 seconds
+new ckpt get! val_loss:0.004360117483884096
+
+EPOCH 294:
+[E 293 | iter 49] loss 0.0021484405733644962
+[Validation] 0.004360967315733433
+Time taken for one EPOCH 294: 1.94 seconds
+EPOCH 295:
+[E 294 | iter 49] loss 0.0021575577557086945
+[Validation] 0.004363636020570993
+Time taken for one EPOCH 295: 1.89 seconds
+EPOCH 296:
+[E 295 | iter 49] loss 0.0021483851596713066
+[Validation] 0.0043581887148320675
+Time taken for one EPOCH 296: 1.93 seconds
+new ckpt get! val_loss:0.0043581887148320675
+
+EPOCH 297:
+[E 296 | iter 49] loss 0.0021561607718467712
+[Validation] 0.004356690216809511
+Time taken for one EPOCH 297: 1.96 seconds
+new ckpt get! val_loss:0.004356690216809511
+
+EPOCH 298:
+[E 297 | iter 49] loss 0.00214253063313663
+[Validation] 0.004353565163910389
+Time taken for one EPOCH 298: 1.95 seconds
+new ckpt get! val_loss:0.004353565163910389
+
+EPOCH 299:
+[E 298 | iter 49] loss 0.00215221312828362
+[Validation] 0.0043485695496201515
+Time taken for one EPOCH 299: 1.90 seconds
+new ckpt get! val_loss:0.0043485695496201515
+
+EPOCH 300:
+[E 299 | iter 49] loss 0.0021426640450954437
+[Validation] 0.004353499040007591
+Time taken for one EPOCH 300: 1.90 seconds
+EPOCH 301:
+[E 300 | iter 49] loss 0.002155093941837549
+[Validation] 0.004354115109890699
+Time taken for one EPOCH 301: 1.93 seconds
+EPOCH 302:
+[E 301 | iter 49] loss 0.002134928945451975
+[Validation] 0.004352089483290911
+Time taken for one EPOCH 302: 1.93 seconds
+EPOCH 303:
+[E 302 | iter 49] loss 0.0021498207934200764
+[Validation] 0.004347323905676603
+Time taken for one EPOCH 303: 1.94 seconds
+new ckpt get! val_loss:0.004347323905676603
+
+EPOCH 304:
+[E 303 | iter 49] loss 0.002179830800741911
+[Validation] 0.004348441492766142
+Time taken for one EPOCH 304: 1.89 seconds
+EPOCH 305:
+[E 304 | iter 49] loss 0.00214445311576128
+[Validation] 0.004351156298071146
+Time taken for one EPOCH 305: 1.93 seconds
+EPOCH 306:
+[E 305 | iter 49] loss 0.0021337373182177544
+[Validation] 0.004340382758527994
+Time taken for one EPOCH 306: 1.94 seconds
+new ckpt get! val_loss:0.004340382758527994
+
+EPOCH 307:
+[E 306 | iter 49] loss 0.0021431592758744955
+[Validation] 0.00434454157948494
+Time taken for one EPOCH 307: 1.94 seconds
+EPOCH 308:
+[E 307 | iter 49] loss 0.0021523379255086184
+[Validation] 0.004343575332313776
+Time taken for one EPOCH 308: 1.94 seconds
+EPOCH 309:
+[E 308 | iter 49] loss 0.002134202513843775
+[Validation] 0.004346534144133329
+Time taken for one EPOCH 309: 1.91 seconds
+EPOCH 310:
+[E 309 | iter 49] loss 0.002160122385248542
+[Validation] 0.004347295965999365
+Time taken for one EPOCH 310: 1.95 seconds
+EPOCH 311:
+[E 310 | iter 49] loss 0.0021407539024949074
+[Validation] 0.004342270083725452
+Time taken for one EPOCH 311: 1.94 seconds
+EPOCH 312:
+[E 311 | iter 49] loss 0.0021672172006219625
+[Validation] 0.004339439328759909
+Time taken for one EPOCH 312: 1.94 seconds
+new ckpt get! val_loss:0.004339439328759909
+
+EPOCH 313:
+[E 312 | iter 49] loss 0.0021335151977837086
+[Validation] 0.004335921723395586
+Time taken for one EPOCH 313: 1.96 seconds
+new ckpt get! val_loss:0.004335921723395586
+
+EPOCH 314:
+[E 313 | iter 49] loss 0.002144191414117813
+[Validation] 0.00434130197390914
+Time taken for one EPOCH 314: 1.92 seconds
+EPOCH 315:
+[E 314 | iter 49] loss 0.002127752173691988
+[Validation] 0.004341507330536842
+Time taken for one EPOCH 315: 1.93 seconds
+EPOCH 316:
+[E 315 | iter 49] loss 0.002142084762454033
+[Validation] 0.0043332683853805065
+Time taken for one EPOCH 316: 1.94 seconds
+new ckpt get! val_loss:0.0043332683853805065
+
+EPOCH 317:
+[E 316 | iter 49] loss 0.002127437386661768
+[Validation] 0.004339566454291344
+Time taken for one EPOCH 317: 1.90 seconds
+EPOCH 318:
+[E 317 | iter 49] loss 0.0021435783710330725
+[Validation] 0.004335914738476276
+Time taken for one EPOCH 318: 2.00 seconds
+EPOCH 319:
+[E 318 | iter 49] loss 0.0021530180238187313
+[Validation] 0.00433612335473299
+Time taken for one EPOCH 319: 2.01 seconds
+EPOCH 320:
+[E 319 | iter 49] loss 0.002151880878955126
+[Validation] 0.004337137099355459
+Time taken for one EPOCH 320: 1.94 seconds
+EPOCH 321:
+[E 320 | iter 49] loss 0.002126055769622326
+[Validation] 0.004332852549850941
+Time taken for one EPOCH 321: 1.89 seconds
+new ckpt get! val_loss:0.004332852549850941
+
+EPOCH 322:
+[E 321 | iter 49] loss 0.002128291642293334
+[Validation] 0.004332713782787323
+Time taken for one EPOCH 322: 1.93 seconds
+new ckpt get! val_loss:0.004332713782787323
+
+EPOCH 323:
+[E 322 | iter 49] loss 0.0021410267800092697
+[Validation] 0.004335884004831314
+Time taken for one EPOCH 323: 1.84 seconds
+EPOCH 324:
+[E 323 | iter 49] loss 0.0021430044434964657
+[Validation] 0.004331789445132017
+Time taken for one EPOCH 324: 1.86 seconds
+new ckpt get! val_loss:0.004331789445132017
+
+EPOCH 325:
+[E 324 | iter 49] loss 0.002155137713998556
+[Validation] 0.004330300725996494
+Time taken for one EPOCH 325: 1.89 seconds
+new ckpt get! val_loss:0.004330300725996494
+
+EPOCH 326:
+[E 325 | iter 49] loss 0.0021318565122783184
+[Validation] 0.004325372166931629
+Time taken for one EPOCH 326: 1.83 seconds
+new ckpt get! val_loss:0.004325372166931629
+
+EPOCH 327:
+[E 326 | iter 49] loss 0.0021485737524926662
+[Validation] 0.004326638299971819
+Time taken for one EPOCH 327: 1.88 seconds
+EPOCH 328:
+[E 327 | iter 49] loss 0.0021405552979558706
+[Validation] 0.00432210136204958
+Time taken for one EPOCH 328: 1.90 seconds
+new ckpt get! val_loss:0.00432210136204958
+
+EPOCH 329:
+[E 328 | iter 49] loss 0.0021213246509432793
+[Validation] 0.0043259612284600735
+Time taken for one EPOCH 329: 1.92 seconds
+EPOCH 330:
+[E 329 | iter 49] loss 0.0021121734753251076
+[Validation] 0.004325498826801777
+Time taken for one EPOCH 330: 1.87 seconds
+EPOCH 331:
+[E 330 | iter 49] loss 0.00213191588409245
+[Validation] 0.004322291351854801
+Time taken for one EPOCH 331: 1.89 seconds
+EPOCH 332:
+[E 331 | iter 49] loss 0.002130933105945587
+[Validation] 0.004320309963077307
+Time taken for one EPOCH 332: 1.94 seconds
+new ckpt get! val_loss:0.004320309963077307
+
+EPOCH 333:
+[E 332 | iter 49] loss 0.00212685763835907
+[Validation] 0.004319840110838413
+Time taken for one EPOCH 333: 1.93 seconds
+new ckpt get! val_loss:0.004319840110838413
+
+EPOCH 334:
+[E 333 | iter 49] loss 0.0021176529116928577
+[Validation] 0.00431789318099618
+Time taken for one EPOCH 334: 1.91 seconds
+new ckpt get! val_loss:0.00431789318099618
+
+EPOCH 335:
+[E 334 | iter 49] loss 0.002129558939486742
+[Validation] 0.004320223815739155
+Time taken for one EPOCH 335: 1.86 seconds
+EPOCH 336:
+[E 335 | iter 49] loss 0.0021070335060358047
+[Validation] 0.004317635204643011
+Time taken for one EPOCH 336: 1.84 seconds
+new ckpt get! val_loss:0.004317635204643011
+
+EPOCH 337:
+[E 336 | iter 49] loss 0.0021246473770588636
+[Validation] 0.004313355777412653
+Time taken for one EPOCH 337: 1.92 seconds
+new ckpt get! val_loss:0.004313355777412653
+
+EPOCH 338:
+[E 337 | iter 49] loss 0.002135232090950012
+[Validation] 0.0043157064355909824
+Time taken for one EPOCH 338: 1.96 seconds
+EPOCH 339:
+[E 338 | iter 49] loss 0.0021080640144646168
+[Validation] 0.004313732497394085
+Time taken for one EPOCH 339: 2.00 seconds
+EPOCH 340:
+[E 339 | iter 49] loss 0.002118549309670925
+[Validation] 0.0043151723220944405
+Time taken for one EPOCH 340: 1.95 seconds
+EPOCH 341:
+[E 340 | iter 49] loss 0.0021287298295646906
+[Validation] 0.004312543664127588
+Time taken for one EPOCH 341: 1.93 seconds
+new ckpt get! val_loss:0.004312543664127588
+
+EPOCH 342:
+[E 341 | iter 49] loss 0.0021203176584094763
+[Validation] 0.004315905272960663
+Time taken for one EPOCH 342: 1.95 seconds
+EPOCH 343:
+[E 342 | iter 49] loss 0.0021170107647776604
+[Validation] 0.004315841477364302
+Time taken for one EPOCH 343: 1.91 seconds
+EPOCH 344:
+[E 343 | iter 49] loss 0.0021183425560593605
+[Validation] 0.004310993943363428
+Time taken for one EPOCH 344: 1.95 seconds
+new ckpt get! val_loss:0.004310993943363428
+
+EPOCH 345:
+[E 344 | iter 49] loss 0.002137088915333152
+[Validation] 0.004309878684580326
+Time taken for one EPOCH 345: 1.92 seconds
+new ckpt get! val_loss:0.004309878684580326
+
+EPOCH 346:
+[E 345 | iter 49] loss 0.0021167220547795296
+[Validation] 0.004312578588724136
+Time taken for one EPOCH 346: 1.97 seconds
+EPOCH 347:
+[E 346 | iter 49] loss 0.0021078793797641993
+[Validation] 0.004308884497731924
+Time taken for one EPOCH 347: 1.91 seconds
+new ckpt get! val_loss:0.004308884497731924
+
+EPOCH 348:
+[E 347 | iter 49] loss 0.0021122947800904512
+[Validation] 0.00430596899241209
+Time taken for one EPOCH 348: 1.95 seconds
+new ckpt get! val_loss:0.00430596899241209
+
+EPOCH 349:
+[E 348 | iter 49] loss 0.002139601157978177
+[Validation] 0.0043031321838498116
+Time taken for one EPOCH 349: 1.95 seconds
+new ckpt get! val_loss:0.0043031321838498116
+
+EPOCH 350:
+[E 349 | iter 49] loss 0.0021274222526699305
+[Validation] 0.004304257221519947
+Time taken for one EPOCH 350: 1.91 seconds
+EPOCH 351:
+[E 350 | iter 49] loss 0.002110749017447233
+[Validation] 0.004306135233491659
+Time taken for one EPOCH 351: 1.95 seconds
+EPOCH 352:
+[E 351 | iter 49] loss 0.0021285226102918386
+[Validation] 0.004302888177335262
+Time taken for one EPOCH 352: 1.95 seconds
+new ckpt get! val_loss:0.004302888177335262
+
+EPOCH 353:
+[E 352 | iter 49] loss 0.002114705042913556
+[Validation] 0.004303202964365482
+Time taken for one EPOCH 353: 1.95 seconds
+EPOCH 354:
+[E 353 | iter 49] loss 0.0021080435253679752
+[Validation] 0.004302708897739649
+Time taken for one EPOCH 354: 1.93 seconds
+new ckpt get! val_loss:0.004302708897739649
+
+EPOCH 355:
+[E 354 | iter 49] loss 0.0021090912632644176
+[Validation] 0.0042978934943675995
+Time taken for one EPOCH 355: 1.95 seconds
+new ckpt get! val_loss:0.0042978934943675995
+
+EPOCH 356:
+[E 355 | iter 49] loss 0.002127764280885458
+[Validation] 0.004301858600229025
+Time taken for one EPOCH 356: 1.91 seconds
+EPOCH 357:
+[E 356 | iter 49] loss 0.002114487113431096
+[Validation] 0.004298212472349405
+Time taken for one EPOCH 357: 1.90 seconds
+EPOCH 358:
+[E 357 | iter 49] loss 0.002122464356943965
+[Validation] 0.004297005012631416
+Time taken for one EPOCH 358: 1.95 seconds
+new ckpt get! val_loss:0.004297005012631416
+
+EPOCH 359:
+[E 358 | iter 49] loss 0.002131254179403186
+[Validation] 0.004295521881431341
+Time taken for one EPOCH 359: 1.91 seconds
+new ckpt get! val_loss:0.004295521881431341
+
+EPOCH 360:
+[E 359 | iter 49] loss 0.00209980015642941
+[Validation] 0.004300473257899284
+Time taken for one EPOCH 360: 1.95 seconds
+EPOCH 361:
+[E 360 | iter 49] loss 0.002090457361191511
+[Validation] 0.004290555603802204
+Time taken for one EPOCH 361: 1.97 seconds
+new ckpt get! val_loss:0.004290555603802204
+
+EPOCH 362:
+[E 361 | iter 49] loss 0.002103888662531972
+[Validation] 0.004289700649678707
+Time taken for one EPOCH 362: 1.96 seconds
+new ckpt get! val_loss:0.004289700649678707
+
+EPOCH 363:
+[E 362 | iter 49] loss 0.002117397729307413
+[Validation] 0.004291957709938288
+Time taken for one EPOCH 363: 1.93 seconds
+EPOCH 364:
+[E 363 | iter 49] loss 0.0021240119822323322
+[Validation] 0.00428724056109786
+Time taken for one EPOCH 364: 1.95 seconds
+new ckpt get! val_loss:0.00428724056109786
+
+EPOCH 365:
+[E 364 | iter 49] loss 0.002113454509526491
+[Validation] 0.004291904158890247
+Time taken for one EPOCH 365: 1.93 seconds
+EPOCH 366:
+[E 365 | iter 49] loss 0.002121012657880783
+[Validation] 0.004287357907742262
+Time taken for one EPOCH 366: 1.93 seconds
+EPOCH 367:
+[E 366 | iter 49] loss 0.002121737925335765
+[Validation] 0.004287741146981716
+Time taken for one EPOCH 367: 1.91 seconds
+EPOCH 368:
+[E 367 | iter 49] loss 0.002103090286254883
+[Validation] 0.004292177967727184
+Time taken for one EPOCH 368: 1.91 seconds
+EPOCH 369:
+[E 368 | iter 49] loss 0.002112631918862462
+[Validation] 0.004284477327018976
+Time taken for one EPOCH 369: 1.97 seconds
+new ckpt get! val_loss:0.004284477327018976
+
+EPOCH 370:
+[E 369 | iter 49] loss 0.002111106878146529
+[Validation] 0.004283335991203785
+Time taken for one EPOCH 370: 1.96 seconds
+new ckpt get! val_loss:0.004283335991203785
+
+EPOCH 371:
+[E 370 | iter 49] loss 0.0021155548747628927
+[Validation] 0.004281494300812483
+Time taken for one EPOCH 371: 1.92 seconds
+new ckpt get! val_loss:0.004281494300812483
+
+EPOCH 372:
+[E 371 | iter 49] loss 0.0020924489945173264
+[Validation] 0.004283398389816284
+Time taken for one EPOCH 372: 1.96 seconds
+EPOCH 373:
+[E 372 | iter 49] loss 0.0020881234668195248
+[Validation] 0.004287682473659515
+Time taken for one EPOCH 373: 1.99 seconds
+EPOCH 374:
+[E 373 | iter 49] loss 0.0021248790435492992
+[Validation] 0.0042824218980968
+Time taken for one EPOCH 374: 1.92 seconds
+EPOCH 375:
+[E 374 | iter 49] loss 0.002094052731990814
+[Validation] 0.004281483590602875
+Time taken for one EPOCH 375: 1.94 seconds
+new ckpt get! val_loss:0.004281483590602875
+
+EPOCH 376:
+[E 375 | iter 49] loss 0.002094987779855728
+[Validation] 0.004276625346392393
+Time taken for one EPOCH 376: 1.95 seconds
+new ckpt get! val_loss:0.004276625346392393
+
+EPOCH 377:
+[E 376 | iter 49] loss 0.0021134959533810616
+[Validation] 0.004276960622519255
+Time taken for one EPOCH 377: 1.95 seconds
+EPOCH 378:
+[E 377 | iter 49] loss 0.0021005563903599977
+[Validation] 0.004282499197870493
+Time taken for one EPOCH 378: 1.94 seconds
+EPOCH 379:
+[E 378 | iter 49] loss 0.002101341960951686
+[Validation] 0.00427644420415163
+Time taken for one EPOCH 379: 1.87 seconds
+new ckpt get! val_loss:0.00427644420415163
+
+EPOCH 380:
+[E 379 | iter 49] loss 0.0021053897216916084
+[Validation] 0.004279483575373888
+Time taken for one EPOCH 380: 1.98 seconds
+EPOCH 381:
+[E 380 | iter 49] loss 0.002080508740618825
+[Validation] 0.004279835615307093
+Time taken for one EPOCH 381: 1.91 seconds
+EPOCH 382:
+[E 381 | iter 49] loss 0.0021307985298335552
+[Validation] 0.004276655148714781
+Time taken for one EPOCH 382: 1.89 seconds
+EPOCH 383:
+[E 382 | iter 49] loss 0.0020714416168630123
+[Validation] 0.004277063999325037
+Time taken for one EPOCH 383: 1.93 seconds
+EPOCH 384:
+[E 383 | iter 49] loss 0.002102694706991315
+[Validation] 0.004277132451534271
+Time taken for one EPOCH 384: 1.88 seconds
+EPOCH 385:
+[E 384 | iter 49] loss 0.0021027945913374424
+[Validation] 0.004274750128388405
+Time taken for one EPOCH 385: 1.90 seconds
+new ckpt get! val_loss:0.004274750128388405
+
+EPOCH 386:
+[E 385 | iter 49] loss 0.0021336774807423353
+[Validation] 0.0042777289636433125
+Time taken for one EPOCH 386: 1.93 seconds
+EPOCH 387:
+[E 386 | iter 49] loss 0.002086344873532653
+[Validation] 0.004278106149286032
+Time taken for one EPOCH 387: 1.94 seconds
+EPOCH 388:
+[E 387 | iter 49] loss 0.00211017532274127
+[Validation] 0.00426790164783597
+Time taken for one EPOCH 388: 1.91 seconds
+new ckpt get! val_loss:0.00426790164783597
+
+EPOCH 389:
+[E 388 | iter 49] loss 0.002127130050212145
+[Validation] 0.004272881895303726
+Time taken for one EPOCH 389: 1.96 seconds
+EPOCH 390:
+[E 389 | iter 49] loss 0.0021132281981408596
+[Validation] 0.004271143116056919
+Time taken for one EPOCH 390: 1.98 seconds
+EPOCH 391:
+[E 390 | iter 49] loss 0.002107826294377446
+[Validation] 0.004271180834621191
+Time taken for one EPOCH 391: 1.94 seconds
+EPOCH 392:
+[E 391 | iter 49] loss 0.0021196603775024414
+[Validation] 0.004268253687769175
+Time taken for one EPOCH 392: 1.95 seconds
+EPOCH 393:
+[E 392 | iter 49] loss 0.0020855525508522987
+[Validation] 0.004265426192432642
+Time taken for one EPOCH 393: 1.93 seconds
+new ckpt get! val_loss:0.004265426192432642
+
+EPOCH 394:
+[E 393 | iter 49] loss 0.0021033629309386015
+[Validation] 0.004267355892807245
+Time taken for one EPOCH 394: 1.93 seconds
+EPOCH 395:
+[E 394 | iter 49] loss 0.0021032714284956455
+[Validation] 0.0042691840790212154
+Time taken for one EPOCH 395: 1.90 seconds
+EPOCH 396:
+[E 395 | iter 49] loss 0.0021175777073949575
+[Validation] 0.004267016425728798
+Time taken for one EPOCH 396: 1.90 seconds
+EPOCH 397:
+[E 396 | iter 49] loss 0.0020873872563242912
+[Validation] 0.004266642965376377
+Time taken for one EPOCH 397: 1.91 seconds
+EPOCH 398:
+[E 397 | iter 49] loss 0.0021076982375234365
+[Validation] 0.004265178926289082
+Time taken for one EPOCH 398: 1.93 seconds
+new ckpt get! val_loss:0.004265178926289082
+
+EPOCH 399:
+[E 398 | iter 49] loss 0.00212533725425601
+[Validation] 0.004261721856892109
+Time taken for one EPOCH 399: 1.98 seconds
+new ckpt get! val_loss:0.004261721856892109
+
+EPOCH 400:
+[E 399 | iter 49] loss 0.0021209591068327427
+[Validation] 0.004266718868166208
+Time taken for one EPOCH 400: 1.90 seconds
+EPOCH 401:
+[E 400 | iter 49] loss 0.0021172831766307354
+[Validation] 0.004268843214958906
+Time taken for one EPOCH 401: 1.93 seconds
+EPOCH 402:
+[E 401 | iter 49] loss 0.002088287379592657
+[Validation] 0.0042604925110936165
+Time taken for one EPOCH 402: 2.23 seconds
+new ckpt get! val_loss:0.0042604925110936165
+
+EPOCH 403:
+[E 402 | iter 49] loss 0.0020908587612211704
+[Validation] 0.004258961882442236
+Time taken for one EPOCH 403: 2.35 seconds
+new ckpt get! val_loss:0.004258961882442236
+
+EPOCH 404:
+[E 403 | iter 49] loss 0.002095774281769991
+[Validation] 0.004261454101651907
+Time taken for one EPOCH 404: 2.19 seconds
+EPOCH 405:
+[E 404 | iter 49] loss 0.002112830989062786
+[Validation] 0.004258198197931051
+Time taken for one EPOCH 405: 1.94 seconds
+new ckpt get! val_loss:0.004258198197931051
+
+EPOCH 406:
+[E 405 | iter 49] loss 0.002071673283353448
+[Validation] 0.004255486186593771
+Time taken for one EPOCH 406: 1.94 seconds
+new ckpt get! val_loss:0.004255486186593771
+
+EPOCH 407:
+[E 406 | iter 49] loss 0.002086919266730547
+[Validation] 0.00425434485077858
+Time taken for one EPOCH 407: 2.01 seconds
+new ckpt get! val_loss:0.00425434485077858
+
+EPOCH 408:
+[E 407 | iter 49] loss 0.002114268485456705
+[Validation] 0.004259128589183092
+Time taken for one EPOCH 408: 2.34 seconds
+EPOCH 409:
+[E 408 | iter 49] loss 0.002093925140798092
+[Validation] 0.0042567201890051365
+Time taken for one EPOCH 409: 2.33 seconds
+EPOCH 410:
+[E 409 | iter 49] loss 0.0020908229053020477
+[Validation] 0.004258144646883011
+Time taken for one EPOCH 410: 2.33 seconds
+EPOCH 411:
+[E 410 | iter 49] loss 0.0021093038376420736
+[Validation] 0.004256293177604675
+Time taken for one EPOCH 411: 2.37 seconds
+EPOCH 412:
+[E 411 | iter 49] loss 0.0020997081883251667
+[Validation] 0.004251445177942514
+Time taken for one EPOCH 412: 2.34 seconds
+new ckpt get! val_loss:0.004251445177942514
+
+EPOCH 413:
+[E 412 | iter 49] loss 0.0021171732805669308
+[Validation] 0.004255901090800762
+Time taken for one EPOCH 413: 2.31 seconds
+EPOCH 414:
+[E 413 | iter 49] loss 0.002094803610816598
+[Validation] 0.0042539481073617935
+Time taken for one EPOCH 414: 2.35 seconds
+EPOCH 415:
+[E 414 | iter 49] loss 0.0021100901067256927
+[Validation] 0.004250105936080217
+Time taken for one EPOCH 415: 2.12 seconds
+new ckpt get! val_loss:0.004250105936080217
+
+EPOCH 416:
+[E 415 | iter 49] loss 0.002086453605443239
+[Validation] 0.00425019022077322
+Time taken for one EPOCH 416: 1.97 seconds
+EPOCH 417:
+[E 416 | iter 49] loss 0.002094166586175561
+[Validation] 0.004248244222253561
+Time taken for one EPOCH 417: 1.94 seconds
+new ckpt get! val_loss:0.004248244222253561
+
+EPOCH 418:
+[E 417 | iter 49] loss 0.002090552356094122
+[Validation] 0.004251676145941019
+Time taken for one EPOCH 418: 1.96 seconds
+EPOCH 419:
+[E 418 | iter 49] loss 0.0020616636611521244
+[Validation] 0.004248687531799078
+Time taken for one EPOCH 419: 1.99 seconds
+EPOCH 420:
+[E 419 | iter 49] loss 0.0020752972923219204
+[Validation] 0.004247173201292753
+Time taken for one EPOCH 420: 1.94 seconds
+new ckpt get! val_loss:0.004247173201292753
+
+EPOCH 421:
+[E 420 | iter 49] loss 0.002105102641507983
+[Validation] 0.004244218580424786
+Time taken for one EPOCH 421: 1.94 seconds
+new ckpt get! val_loss:0.004244218580424786
+
+EPOCH 422:
+[E 421 | iter 49] loss 0.0020809012930840254
+[Validation] 0.004246011842042208
+Time taken for one EPOCH 422: 2.00 seconds
+EPOCH 423:
+[E 422 | iter 49] loss 0.0020740763284265995
+[Validation] 0.004243409261107445
+Time taken for one EPOCH 423: 1.97 seconds
+new ckpt get! val_loss:0.004243409261107445
+
+EPOCH 424:
+[E 423 | iter 49] loss 0.0020822505466639996
+[Validation] 0.004237995017319918
+Time taken for one EPOCH 424: 1.96 seconds
+new ckpt get! val_loss:0.004237995017319918
+
+EPOCH 425:
+[E 424 | iter 49] loss 0.002089538611471653
+[Validation] 0.004246813245117664
+Time taken for one EPOCH 425: 1.94 seconds
+EPOCH 426:
+[E 425 | iter 49] loss 0.002078940160572529
+[Validation] 0.00424527283757925
+Time taken for one EPOCH 426: 1.95 seconds
+EPOCH 427:
+[E 426 | iter 49] loss 0.0020889106672257185
+[Validation] 0.004247291944921017
+Time taken for one EPOCH 427: 1.90 seconds
+EPOCH 428:
+[E 427 | iter 49] loss 0.0020877851638942957
+[Validation] 0.0042442437261343
+Time taken for one EPOCH 428: 1.93 seconds
+EPOCH 429:
+[E 428 | iter 49] loss 0.002080619800835848
+[Validation] 0.0042459722608327866
+Time taken for one EPOCH 429: 1.88 seconds
+EPOCH 430:
+[E 429 | iter 49] loss 0.002057465026155114
+[Validation] 0.004240981303155422
+Time taken for one EPOCH 430: 1.93 seconds
+EPOCH 431:
+[E 430 | iter 49] loss 0.0020678299479186535
+[Validation] 0.004243018571287394
+Time taken for one EPOCH 431: 1.93 seconds
+EPOCH 432:
+[E 431 | iter 49] loss 0.002073069103062153
+[Validation] 0.004244084469974041
+Time taken for one EPOCH 432: 1.93 seconds
+EPOCH 433:
+[E 432 | iter 49] loss 0.0020613668020814657
+[Validation] 0.004246067255735397
+Time taken for one EPOCH 433: 1.93 seconds
+EPOCH 434:
+[E 433 | iter 49] loss 0.002075226977467537
+[Validation] 0.004234387539327145
+Time taken for one EPOCH 434: 1.92 seconds
+new ckpt get! val_loss:0.004234387539327145
+
+EPOCH 435:
+[E 434 | iter 49] loss 0.0020898114889860153
+[Validation] 0.0042342511005699635
+Time taken for one EPOCH 435: 1.97 seconds
+new ckpt get! val_loss:0.0042342511005699635
+
+EPOCH 436:
+[E 435 | iter 49] loss 0.002109747612848878
+[Validation] 0.0042344615794718266
+Time taken for one EPOCH 436: 1.93 seconds
+EPOCH 437:
+[E 436 | iter 49] loss 0.002055664313957095
+[Validation] 0.004233465995639563
+Time taken for one EPOCH 437: 1.90 seconds
+new ckpt get! val_loss:0.004233465995639563
+
+EPOCH 438:
+[E 437 | iter 49] loss 0.0021030427888035774
+[Validation] 0.004235440865159035
+Time taken for one EPOCH 438: 1.94 seconds
+EPOCH 439:
+[E 438 | iter 49] loss 0.0020787252578884363
+[Validation] 0.0042323158122599125
+Time taken for one EPOCH 439: 1.96 seconds
+new ckpt get! val_loss:0.0042323158122599125
+
+EPOCH 440:
+[E 439 | iter 49] loss 0.002082145307213068
+[Validation] 0.004230942577123642
+Time taken for one EPOCH 440: 1.93 seconds
+new ckpt get! val_loss:0.004230942577123642
+
+EPOCH 441:
+[E 440 | iter 49] loss 0.002087426371872425
+[Validation] 0.004228487610816956
+Time taken for one EPOCH 441: 1.94 seconds
+new ckpt get! val_loss:0.004228487610816956
+
+EPOCH 442:
+[E 441 | iter 49] loss 0.002069504465907812
+[Validation] 0.004234655760228634
+Time taken for one EPOCH 442: 1.94 seconds
+EPOCH 443:
+[E 442 | iter 49] loss 0.002084044273942709
+[Validation] 0.004230734892189503
+Time taken for one EPOCH 443: 1.95 seconds
+EPOCH 444:
+[E 443 | iter 49] loss 0.002077037002891302
+[Validation] 0.004235175903886557
+Time taken for one EPOCH 444: 1.95 seconds
+EPOCH 445:
+[E 444 | iter 49] loss 0.0020805946551263332
+[Validation] 0.004231697879731655
+Time taken for one EPOCH 445: 1.87 seconds
+EPOCH 446:
+[E 445 | iter 49] loss 0.002092997543513775
+[Validation] 0.004230935126543045
+Time taken for one EPOCH 446: 1.92 seconds
+EPOCH 447:
+[E 446 | iter 49] loss 0.0020699361339211464
+[Validation] 0.0042330427095294
+Time taken for one EPOCH 447: 1.94 seconds
+EPOCH 448:
+[E 447 | iter 49] loss 0.0020542913116514683
+[Validation] 0.004226656164973974
+Time taken for one EPOCH 448: 1.88 seconds
+new ckpt get! val_loss:0.004226656164973974
+
+EPOCH 449:
+[E 448 | iter 49] loss 0.0020886354614049196
+[Validation] 0.00422966992482543
+Time taken for one EPOCH 449: 1.94 seconds
+EPOCH 450:
+[E 449 | iter 49] loss 0.0021142729092389345
+[Validation] 0.004229288548231125
+Time taken for one EPOCH 450: 1.86 seconds
+EPOCH 451:
+[E 450 | iter 49] loss 0.002068967092782259
+[Validation] 0.004223629832267761
+Time taken for one EPOCH 451: 1.97 seconds
+new ckpt get! val_loss:0.004223629832267761
+
+EPOCH 452:
+[E 451 | iter 49] loss 0.002073175273835659
+[Validation] 0.0042235166765749454
+Time taken for one EPOCH 452: 1.97 seconds
+new ckpt get! val_loss:0.0042235166765749454
+
+EPOCH 453:
+[E 452 | iter 49] loss 0.002106437459588051
+[Validation] 0.004225871525704861
+Time taken for one EPOCH 453: 1.95 seconds
+EPOCH 454:
+[E 453 | iter 49] loss 0.0020629800856113434
+[Validation] 0.004224270582199097
+Time taken for one EPOCH 454: 1.92 seconds
+EPOCH 455:
+[E 454 | iter 49] loss 0.0020829953718930483
+[Validation] 0.004221151117235422
+Time taken for one EPOCH 455: 1.94 seconds
+new ckpt get! val_loss:0.004221151117235422
+
+EPOCH 456:
+[E 455 | iter 49] loss 0.0020845248363912106
+[Validation] 0.004223974887281656
+Time taken for one EPOCH 456: 1.91 seconds
+EPOCH 457:
+[E 456 | iter 49] loss 0.002079686615616083
+[Validation] 0.0042249467223882675
+Time taken for one EPOCH 457: 1.88 seconds
+EPOCH 458:
+[E 457 | iter 49] loss 0.0020698364824056625
+[Validation] 0.004219312686473131
+Time taken for one EPOCH 458: 1.94 seconds
+new ckpt get! val_loss:0.004219312686473131
+
+EPOCH 459:
+[E 458 | iter 49] loss 0.0020865947008132935
+[Validation] 0.004222072660923004
+Time taken for one EPOCH 459: 1.96 seconds
+EPOCH 460:
+[E 459 | iter 49] loss 0.002084334846585989
+[Validation] 0.0042221928015351295
+Time taken for one EPOCH 460: 1.90 seconds
+EPOCH 461:
+[E 460 | iter 49] loss 0.00208366010338068
+[Validation] 0.004221360199153423
+Time taken for one EPOCH 461: 1.92 seconds
+EPOCH 462:
+[E 461 | iter 49] loss 0.002069982700049877
+[Validation] 0.004216523375362158
+Time taken for one EPOCH 462: 1.95 seconds
+new ckpt get! val_loss:0.004216523375362158
+
+EPOCH 463:
+[E 462 | iter 49] loss 0.0020727403461933136
+[Validation] 0.004220407456159592
+Time taken for one EPOCH 463: 1.97 seconds
+EPOCH 464:
+[E 463 | iter 49] loss 0.0020920727401971817
+[Validation] 0.004220020491629839
+Time taken for one EPOCH 464: 1.91 seconds
+EPOCH 465:
+[E 464 | iter 49] loss 0.00206305761821568
+[Validation] 0.0042181117460131645
+Time taken for one EPOCH 465: 1.93 seconds
+EPOCH 466:
+[E 465 | iter 49] loss 0.002087908796966076
+[Validation] 0.004216453991830349
+Time taken for one EPOCH 466: 1.90 seconds
+new ckpt get! val_loss:0.004216453991830349
+
+EPOCH 467:
+[E 466 | iter 49] loss 0.0020846279803663492
+[Validation] 0.00421806750819087
+Time taken for one EPOCH 467: 1.96 seconds
+EPOCH 468:
+[E 467 | iter 49] loss 0.0020842519588768482
+[Validation] 0.004223001655191183
+Time taken for one EPOCH 468: 1.95 seconds
+EPOCH 469:
+[E 468 | iter 49] loss 0.00207867962308228
+[Validation] 0.004218218382447958
+Time taken for one EPOCH 469: 1.94 seconds
+EPOCH 470:
+[E 469 | iter 49] loss 0.002101370831951499
+[Validation] 0.004214936401695013
+Time taken for one EPOCH 470: 1.95 seconds
+new ckpt get! val_loss:0.004214936401695013
+
+EPOCH 471:
+[E 470 | iter 49] loss 0.002063035499304533
+[Validation] 0.0042149401269853115
+Time taken for one EPOCH 471: 1.94 seconds
+EPOCH 472:
+[E 471 | iter 49] loss 0.002088552340865135
+[Validation] 0.004215206950902939
+Time taken for one EPOCH 472: 2.00 seconds
+EPOCH 473:
+[E 472 | iter 49] loss 0.0020851900335401297
+[Validation] 0.004217165056616068
+Time taken for one EPOCH 473: 1.94 seconds
+EPOCH 474:
+[E 473 | iter 49] loss 0.002058123704046011
+[Validation] 0.0042119212448596954
+Time taken for one EPOCH 474: 1.94 seconds
+new ckpt get! val_loss:0.0042119212448596954
+
+EPOCH 475:
+[E 474 | iter 49] loss 0.0020701801404356956
+[Validation] 0.00420867744833231
+Time taken for one EPOCH 475: 1.93 seconds
+new ckpt get! val_loss:0.00420867744833231
+
+EPOCH 476:
+[E 475 | iter 49] loss 0.002053998177871108
+[Validation] 0.0042062439024448395
+Time taken for one EPOCH 476: 1.95 seconds
+new ckpt get! val_loss:0.0042062439024448395
+
+EPOCH 477:
+[E 476 | iter 49] loss 0.002042084466665983
+[Validation] 0.0042106276378035545
+Time taken for one EPOCH 477: 1.97 seconds
+EPOCH 478:
+[E 477 | iter 49] loss 0.0020564068108797073
+[Validation] 0.004207418765872717
+Time taken for one EPOCH 478: 2.00 seconds
+EPOCH 479:
+[E 478 | iter 49] loss 0.0020190055947750807
+[Validation] 0.004217769484966993
+Time taken for one EPOCH 479: 2.32 seconds
+EPOCH 480:
+[E 479 | iter 49] loss 0.0020644874311983585
+[Validation] 0.004206053912639618
+Time taken for one EPOCH 480: 2.33 seconds
+new ckpt get! val_loss:0.004206053912639618
+
+EPOCH 481:
+[E 480 | iter 49] loss 0.0020827266853302717
+[Validation] 0.004212471656501293
+Time taken for one EPOCH 481: 2.32 seconds
+EPOCH 482:
+[E 481 | iter 49] loss 0.0020696327555924654
+[Validation] 0.004209623206406832
+Time taken for one EPOCH 482: 2.38 seconds
+EPOCH 483:
+[E 482 | iter 49] loss 0.002054531592875719
+[Validation] 0.004205157049000263
+Time taken for one EPOCH 483: 2.00 seconds
+new ckpt get! val_loss:0.004205157049000263
+
+EPOCH 484:
+[E 483 | iter 49] loss 0.0020713643170893192
+[Validation] 0.004207333084195852
+Time taken for one EPOCH 484: 2.31 seconds
+EPOCH 485:
+[E 484 | iter 49] loss 0.0020569185726344585
+[Validation] 0.004203449934720993
+Time taken for one EPOCH 485: 2.34 seconds
+new ckpt get! val_loss:0.004203449934720993
+
+EPOCH 486:
+[E 485 | iter 49] loss 0.0020482600666582584
+[Validation] 0.004207593854516745
+Time taken for one EPOCH 486: 2.42 seconds
+EPOCH 487:
+[E 486 | iter 49] loss 0.0020851795561611652
+[Validation] 0.004204662051051855
+Time taken for one EPOCH 487: 2.33 seconds
+EPOCH 488:
+[E 487 | iter 49] loss 0.002066616201773286
+[Validation] 0.004206114448606968
+Time taken for one EPOCH 488: 2.32 seconds
+EPOCH 489:
+[E 488 | iter 49] loss 0.0020676623098552227
+[Validation] 0.004202819429337978
+Time taken for one EPOCH 489: 2.38 seconds
+new ckpt get! val_loss:0.004202819429337978
+
+EPOCH 490:
+[E 489 | iter 49] loss 0.0020816493779420853
+[Validation] 0.004205531440675259
+Time taken for one EPOCH 490: 2.06 seconds
+EPOCH 491:
+[E 490 | iter 49] loss 0.0020827320404350758
+[Validation] 0.004202472977340221
+Time taken for one EPOCH 491: 1.96 seconds
+new ckpt get! val_loss:0.004202472977340221
+
+EPOCH 492:
+[E 491 | iter 49] loss 0.002048052381724119
+[Validation] 0.004201830364763737
+Time taken for one EPOCH 492: 2.00 seconds
+new ckpt get! val_loss:0.004201830364763737
+
+EPOCH 493:
+[E 492 | iter 49] loss 0.0020758449099957943
+[Validation] 0.004203121643513441
+Time taken for one EPOCH 493: 1.95 seconds
+EPOCH 494:
+[E 493 | iter 49] loss 0.00207053916528821
+[Validation] 0.004202481359243393
+Time taken for one EPOCH 494: 1.98 seconds
+EPOCH 495:
+[E 494 | iter 49] loss 0.002082893392071128
+[Validation] 0.004202466458082199
+Time taken for one EPOCH 495: 1.95 seconds
+EPOCH 496:
+[E 495 | iter 49] loss 0.002070683753117919
+[Validation] 0.004197027999907732
+Time taken for one EPOCH 496: 1.94 seconds
+new ckpt get! val_loss:0.004197027999907732
+
+EPOCH 497:
+[E 496 | iter 49] loss 0.0020470605231821537
+[Validation] 0.004200010094791651
+Time taken for one EPOCH 497: 1.94 seconds
+EPOCH 498:
+[E 497 | iter 49] loss 0.0020494733471423388
+[Validation] 0.004204452503472567
+Time taken for one EPOCH 498: 1.97 seconds
+EPOCH 499:
+[E 498 | iter 49] loss 0.0020602457225322723
+[Validation] 0.004201116971671581
+Time taken for one EPOCH 499: 1.95 seconds
+EPOCH 500:
+[E 499 | iter 49] loss 0.00206085667014122
+[Validation] 0.004194597713649273
+Time taken for one EPOCH 500: 1.96 seconds
+new ckpt get! val_loss:0.004194597713649273
+
+EPOCH 501:
+[E 500 | iter 49] loss 0.002072235569357872
+[Validation] 0.004194912500679493
+Time taken for one EPOCH 501: 1.93 seconds
+EPOCH 502:
+[E 501 | iter 49] loss 0.002070679794996977
+[Validation] 0.004201594740152359
+Time taken for one EPOCH 502: 1.95 seconds
+EPOCH 503:
+[E 502 | iter 49] loss 0.0020457147620618343
+[Validation] 0.004195039160549641
+Time taken for one EPOCH 503: 1.94 seconds
+EPOCH 504:
+[E 503 | iter 49] loss 0.0020644934847950935
+[Validation] 0.004200042691081762
+Time taken for one EPOCH 504: 1.97 seconds
+EPOCH 505:
+[E 504 | iter 49] loss 0.002067565219476819
+[Validation] 0.004195403307676315
+Time taken for one EPOCH 505: 2.32 seconds
+EPOCH 506:
+[E 505 | iter 49] loss 0.0020538223907351494
+[Validation] 0.00419879425317049
+Time taken for one EPOCH 506: 2.34 seconds
+EPOCH 507:
+[E 506 | iter 49] loss 0.0020784270018339157
+[Validation] 0.004199285991489887
+Time taken for one EPOCH 507: 1.96 seconds
+EPOCH 508:
+[E 507 | iter 49] loss 0.002063291147351265
+[Validation] 0.004190220031887293
+Time taken for one EPOCH 508: 1.92 seconds
+new ckpt get! val_loss:0.004190220031887293
+
+EPOCH 509:
+[E 508 | iter 49] loss 0.002074959222227335
+[Validation] 0.004195109009742737
+Time taken for one EPOCH 509: 2.02 seconds
+EPOCH 510:
+[E 509 | iter 49] loss 0.0020518412347882986
+[Validation] 0.004186483100056648
+Time taken for one EPOCH 510: 1.89 seconds
+new ckpt get! val_loss:0.004186483100056648
+
+EPOCH 511:
+[E 510 | iter 49] loss 0.0020329102408140898
+[Validation] 0.004190564621239901
+Time taken for one EPOCH 511: 1.95 seconds
+EPOCH 512:
+[E 511 | iter 49] loss 0.002057040575891733
+[Validation] 0.004187142010778189
+Time taken for one EPOCH 512: 1.95 seconds
+EPOCH 513:
+[E 512 | iter 49] loss 0.0020559970289468765
+[Validation] 0.004187663085758686
+Time taken for one EPOCH 513: 1.95 seconds
+EPOCH 514:
+[E 513 | iter 49] loss 0.002087862929329276
+[Validation] 0.0041875941678881645
+Time taken for one EPOCH 514: 1.98 seconds
+EPOCH 515:
+[E 514 | iter 49] loss 0.002068493515253067
+[Validation] 0.004186760168522596
+Time taken for one EPOCH 515: 1.90 seconds
+EPOCH 516:
+[E 515 | iter 49] loss 0.002053735079243779
+[Validation] 0.0041882689110934734
+Time taken for one EPOCH 516: 1.98 seconds
+EPOCH 517:
+[E 516 | iter 49] loss 0.002060068305581808
+[Validation] 0.004189713392406702
+Time taken for one EPOCH 517: 1.93 seconds
+EPOCH 518:
+[E 517 | iter 49] loss 0.002069501904770732
+[Validation] 0.004187530837953091
+Time taken for one EPOCH 518: 1.96 seconds
+EPOCH 519:
+[E 518 | iter 49] loss 0.0020523229613900185
+[Validation] 0.004182361997663975
+Time taken for one EPOCH 519: 1.94 seconds
+new ckpt get! val_loss:0.004182361997663975
+
+EPOCH 520:
+[E 519 | iter 49] loss 0.0020800423808395863
+[Validation] 0.004181865602731705
+Time taken for one EPOCH 520: 1.89 seconds
+new ckpt get! val_loss:0.004181865602731705
+
+EPOCH 521:
+[E 520 | iter 49] loss 0.002030983567237854
+[Validation] 0.004184993915259838
+Time taken for one EPOCH 521: 1.93 seconds
+EPOCH 522:
+[E 521 | iter 49] loss 0.0020876419730484486
+[Validation] 0.004189754836261272
+Time taken for one EPOCH 522: 1.91 seconds
+EPOCH 523:
+[E 522 | iter 49] loss 0.0020405114628374577
+[Validation] 0.004189498722553253
+Time taken for one EPOCH 523: 1.93 seconds
+EPOCH 524:
+[E 523 | iter 49] loss 0.0020386050455272198
+[Validation] 0.004186391830444336
+Time taken for one EPOCH 524: 1.98 seconds
+EPOCH 525:
+[E 524 | iter 49] loss 0.0020650215446949005
+[Validation] 0.004184665624052286
+Time taken for one EPOCH 525: 2.12 seconds
+EPOCH 526:
+[E 525 | iter 49] loss 0.0020877295173704624
+[Validation] 0.004180821590125561
+Time taken for one EPOCH 526: 2.38 seconds
+new ckpt get! val_loss:0.004180821590125561
+
+EPOCH 527:
+[E 526 | iter 49] loss 0.002092067850753665
+[Validation] 0.004186227452009916
+Time taken for one EPOCH 527: 2.38 seconds
+EPOCH 528:
+[E 527 | iter 49] loss 0.0020346480887383223
+[Validation] 0.004180917050689459
+Time taken for one EPOCH 528: 2.32 seconds
+EPOCH 529:
+[E 528 | iter 49] loss 0.002068429021164775
+[Validation] 0.004178089089691639
+Time taken for one EPOCH 529: 2.33 seconds
+new ckpt get! val_loss:0.004178089089691639
+
+EPOCH 530:
+[E 529 | iter 49] loss 0.002059484366327524
+[Validation] 0.004183962941169739
+Time taken for one EPOCH 530: 2.38 seconds
+EPOCH 531:
+[E 530 | iter 49] loss 0.002056578639894724
+[Validation] 0.004182326141744852
+Time taken for one EPOCH 531: 2.38 seconds
+EPOCH 532:
+[E 531 | iter 49] loss 0.002075650030747056
+[Validation] 0.004182034637778997
+Time taken for one EPOCH 532: 2.34 seconds
+EPOCH 533:
+[E 532 | iter 49] loss 0.0020846049301326275
+[Validation] 0.004178812261670828
+Time taken for one EPOCH 533: 2.32 seconds
+EPOCH 534:
+[E 533 | iter 49] loss 0.002041667001321912
+[Validation] 0.004175468813627958
+Time taken for one EPOCH 534: 2.32 seconds
+new ckpt get! val_loss:0.004175468813627958
+
+EPOCH 535:
+[E 534 | iter 49] loss 0.0020263250917196274
+[Validation] 0.00417895894497633
+Time taken for one EPOCH 535: 2.37 seconds
+EPOCH 536:
+[E 535 | iter 49] loss 0.002067028544843197
+[Validation] 0.004175529815256596
+Time taken for one EPOCH 536: 2.38 seconds
+EPOCH 537:
+[E 536 | iter 49] loss 0.002042907988652587
+[Validation] 0.0041745384223759174
+Time taken for one EPOCH 537: 2.01 seconds
+new ckpt get! val_loss:0.0041745384223759174
+
+EPOCH 538:
+[E 537 | iter 49] loss 0.0020858803763985634
+[Validation] 0.004176400136202574
+Time taken for one EPOCH 538: 1.94 seconds
+EPOCH 539:
+[E 538 | iter 49] loss 0.002044945489615202
+[Validation] 0.004178653936833143
+Time taken for one EPOCH 539: 1.94 seconds
+EPOCH 540:
+[E 539 | iter 49] loss 0.0020303097553551197
+[Validation] 0.004177328199148178
+Time taken for one EPOCH 540: 1.95 seconds
+EPOCH 541:
+[E 540 | iter 49] loss 0.00205503823235631
+[Validation] 0.004176109563559294
+Time taken for one EPOCH 541: 1.97 seconds
+EPOCH 542:
+[E 541 | iter 49] loss 0.0020566429011523724
+[Validation] 0.004174342844635248
+Time taken for one EPOCH 542: 1.86 seconds
+new ckpt get! val_loss:0.004174342844635248
+
+EPOCH 543:
+[E 542 | iter 49] loss 0.00207277643494308
+[Validation] 0.0041688354685902596
+Time taken for one EPOCH 543: 2.01 seconds
+new ckpt get! val_loss:0.0041688354685902596
+
+EPOCH 544:
+[E 543 | iter 49] loss 0.002075403928756714
+[Validation] 0.004176021553575993
+Time taken for one EPOCH 544: 1.95 seconds
+EPOCH 545:
+[E 544 | iter 49] loss 0.002046266570687294
+[Validation] 0.004175656009465456
+Time taken for one EPOCH 545: 1.91 seconds
+EPOCH 546:
+[E 545 | iter 49] loss 0.002076660515740514
+[Validation] 0.00417554285377264
+Time taken for one EPOCH 546: 1.92 seconds
+EPOCH 547:
+[E 546 | iter 49] loss 0.0020770218688994646
+[Validation] 0.004169163294136524
+Time taken for one EPOCH 547: 1.96 seconds
+EPOCH 548:
+[E 547 | iter 49] loss 0.0020404099486768246
+[Validation] 0.0041725412011146545
+Time taken for one EPOCH 548: 1.89 seconds
+EPOCH 549:
+[E 548 | iter 49] loss 0.0020559788681566715
+[Validation] 0.004168556537479162
+Time taken for one EPOCH 549: 1.98 seconds
+new ckpt get! val_loss:0.004168556537479162
+
+EPOCH 550:
+[E 549 | iter 49] loss 0.002062917221337557
+[Validation] 0.004175824578851461
+Time taken for one EPOCH 550: 1.91 seconds
+EPOCH 551:
+[E 550 | iter 49] loss 0.0020809818524867296
+[Validation] 0.004174442496150732
+Time taken for one EPOCH 551: 1.93 seconds
+EPOCH 552:
+[E 551 | iter 49] loss 0.0020519664976745844
+[Validation] 0.004166656639426947
+Time taken for one EPOCH 552: 1.90 seconds
+new ckpt get! val_loss:0.004166656639426947
+
+EPOCH 553:
+[E 552 | iter 49] loss 0.002037069294601679
+[Validation] 0.004171732813119888
+Time taken for one EPOCH 553: 1.87 seconds
+EPOCH 554:
+[E 553 | iter 49] loss 0.0020479713566601276
+[Validation] 0.004169944673776627
+Time taken for one EPOCH 554: 1.94 seconds
+EPOCH 555:
+[E 554 | iter 49] loss 0.0020606033504009247
+[Validation] 0.004165711347013712
+Time taken for one EPOCH 555: 1.95 seconds
+new ckpt get! val_loss:0.004165711347013712
+
+EPOCH 556:
+[E 555 | iter 49] loss 0.0020532950293272734
+[Validation] 0.004170163534581661
+Time taken for one EPOCH 556: 2.02 seconds
+EPOCH 557:
+[E 556 | iter 49] loss 0.002029174007475376
+[Validation] 0.004167093429714441
+Time taken for one EPOCH 557: 1.91 seconds
+EPOCH 558:
+[E 557 | iter 49] loss 0.0020317616872489452
+[Validation] 0.004163666628301144
+Time taken for one EPOCH 558: 1.92 seconds
+new ckpt get! val_loss:0.004163666628301144
+
+EPOCH 559:
+[E 558 | iter 49] loss 0.0020573665387928486
+[Validation] 0.004164827521890402
+Time taken for one EPOCH 559: 1.97 seconds
+EPOCH 560:
+[E 559 | iter 49] loss 0.0020339388865977526
+[Validation] 0.004172074608504772
+Time taken for one EPOCH 560: 1.97 seconds
+EPOCH 561:
+[E 560 | iter 49] loss 0.002057671081274748
+[Validation] 0.004164205864071846
+Time taken for one EPOCH 561: 1.94 seconds
+EPOCH 562:
+[E 561 | iter 49] loss 0.0020438097417354584
+[Validation] 0.004166749306023121
+Time taken for one EPOCH 562: 1.96 seconds
+EPOCH 563:
+[E 562 | iter 49] loss 0.002066783607006073
+[Validation] 0.004167860373854637
+Time taken for one EPOCH 563: 1.90 seconds
+EPOCH 564:
+[E 563 | iter 49] loss 0.0020435655023902655
+[Validation] 0.0041666594333946705
+Time taken for one EPOCH 564: 1.95 seconds
+EPOCH 565:
+[E 564 | iter 49] loss 0.0020415072795003653
+[Validation] 0.00416512880474329
+Time taken for one EPOCH 565: 1.95 seconds
+EPOCH 566:
+[E 565 | iter 49] loss 0.002042801585048437
+[Validation] 0.004169698804616928
+Time taken for one EPOCH 566: 1.94 seconds
+EPOCH 567:
+[E 566 | iter 49] loss 0.002048111753538251
+[Validation] 0.004161723889410496
+Time taken for one EPOCH 567: 1.92 seconds
+new ckpt get! val_loss:0.004161723889410496
+
+EPOCH 568:
+[E 567 | iter 49] loss 0.0020798048935830593
+[Validation] 0.004163387697190046
+Time taken for one EPOCH 568: 1.94 seconds
+EPOCH 569:
+[E 568 | iter 49] loss 0.0020556855015456676
+[Validation] 0.004160100128501654
+Time taken for one EPOCH 569: 1.93 seconds
+new ckpt get! val_loss:0.004160100128501654
+
+EPOCH 570:
+[E 569 | iter 49] loss 0.002049943432211876
+[Validation] 0.004171018488705158
+Time taken for one EPOCH 570: 1.94 seconds
+EPOCH 571:
+[E 570 | iter 49] loss 0.00202914047986269
+[Validation] 0.004162377677857876
+Time taken for one EPOCH 571: 1.97 seconds
+EPOCH 572:
+[E 571 | iter 49] loss 0.002044845838099718
+[Validation] 0.004159204661846161
+Time taken for one EPOCH 572: 1.97 seconds
+new ckpt get! val_loss:0.004159204661846161
+
+EPOCH 573:
+[E 572 | iter 49] loss 0.002066930290311575
+[Validation] 0.004158470779657364
+Time taken for one EPOCH 573: 1.96 seconds
+new ckpt get! val_loss:0.004158470779657364
+
+EPOCH 574:
+[E 573 | iter 49] loss 0.002039561979472637
+[Validation] 0.004163216333836317
+Time taken for one EPOCH 574: 1.95 seconds
+EPOCH 575:
+[E 574 | iter 49] loss 0.0020434444304555655
+[Validation] 0.004160743672400713
+Time taken for one EPOCH 575: 1.89 seconds
+EPOCH 576:
+[E 575 | iter 49] loss 0.0020505981519818306
+[Validation] 0.004159448202699423
+Time taken for one EPOCH 576: 1.87 seconds
+EPOCH 577:
+[E 576 | iter 49] loss 0.002032521879300475
+[Validation] 0.004157757852226496
+Time taken for one EPOCH 577: 1.91 seconds
+new ckpt get! val_loss:0.004157757852226496
+
+EPOCH 578:
+[E 577 | iter 49] loss 0.0020808959379792213
+[Validation] 0.004157267045229673
+Time taken for one EPOCH 578: 2.00 seconds
+new ckpt get! val_loss:0.004157267045229673
+
+EPOCH 579:
+[E 578 | iter 49] loss 0.0020662788301706314
+[Validation] 0.004155881702899933
+Time taken for one EPOCH 579: 2.01 seconds
+new ckpt get! val_loss:0.004155881702899933
+
+EPOCH 580:
+[E 579 | iter 49] loss 0.002033219439908862
+[Validation] 0.004158980678766966
+Time taken for one EPOCH 580: 1.95 seconds
+EPOCH 581:
+[E 580 | iter 49] loss 0.0020138761028647423
+[Validation] 0.004159072879701853
+Time taken for one EPOCH 581: 1.95 seconds
+EPOCH 582:
+[E 581 | iter 49] loss 0.001991713885217905
+[Validation] 0.004158730152994394
+Time taken for one EPOCH 582: 1.95 seconds
+EPOCH 583:
+[E 582 | iter 49] loss 0.002046442124992609
+[Validation] 0.004164929036051035
+Time taken for one EPOCH 583: 1.94 seconds
+EPOCH 584:
+[E 583 | iter 49] loss 0.002050379291176796
+[Validation] 0.004160997457802296
+Time taken for one EPOCH 584: 1.95 seconds
+EPOCH 585:
+[E 584 | iter 49] loss 0.0020499476231634617
+[Validation] 0.0041548521257936954
+Time taken for one EPOCH 585: 1.95 seconds
+new ckpt get! val_loss:0.0041548521257936954
+
+EPOCH 586:
+[E 585 | iter 49] loss 0.002027493668720126
+[Validation] 0.004153070040047169
+Time taken for one EPOCH 586: 1.96 seconds
+new ckpt get! val_loss:0.004153070040047169
+
+EPOCH 587:
+[E 586 | iter 49] loss 0.0020423633977770805
+[Validation] 0.004155178554356098
+Time taken for one EPOCH 587: 1.94 seconds
+EPOCH 588:
+[E 587 | iter 49] loss 0.0020322701893746853
+[Validation] 0.004156349692493677
+Time taken for one EPOCH 588: 1.90 seconds
+EPOCH 589:
+[E 588 | iter 49] loss 0.002058584475889802
+[Validation] 0.004156178794801235
+Time taken for one EPOCH 589: 1.87 seconds
+EPOCH 590:
+[E 589 | iter 49] loss 0.0020508700981736183
+[Validation] 0.004151307046413422
+Time taken for one EPOCH 590: 1.95 seconds
+new ckpt get! val_loss:0.004151307046413422
+
+EPOCH 591:
+[E 590 | iter 49] loss 0.0020514586940407753
+[Validation] 0.004152498207986355
+Time taken for one EPOCH 591: 1.93 seconds
+EPOCH 592:
+[E 591 | iter 49] loss 0.002031471114605665
+[Validation] 0.00415209773927927
+Time taken for one EPOCH 592: 2.02 seconds
+EPOCH 593:
+[E 592 | iter 49] loss 0.002037827158346772
+[Validation] 0.004149367101490498
+Time taken for one EPOCH 593: 1.89 seconds
+new ckpt get! val_loss:0.004149367101490498
+
+EPOCH 594:
+[E 593 | iter 49] loss 0.002051957882940769
+[Validation] 0.004151171538978815
+Time taken for one EPOCH 594: 1.89 seconds
+EPOCH 595:
+[E 594 | iter 49] loss 0.0020472020842134953
+[Validation] 0.004150269087404013
+Time taken for one EPOCH 595: 1.87 seconds
+EPOCH 596:
+[E 595 | iter 49] loss 0.002030074829235673
+[Validation] 0.004152064677327871
+Time taken for one EPOCH 596: 1.93 seconds
+EPOCH 597:
+[E 596 | iter 49] loss 0.002014447934925556
+[Validation] 0.004152536392211914
+Time taken for one EPOCH 597: 1.94 seconds
+EPOCH 598:
+[E 597 | iter 49] loss 0.002028367016464472
+[Validation] 0.004151500761508942
+Time taken for one EPOCH 598: 1.92 seconds
+EPOCH 599:
+[E 598 | iter 49] loss 0.0020496025681495667
+[Validation] 0.00415088189765811
+Time taken for one EPOCH 599: 1.91 seconds
+EPOCH 600:
+[E 599 | iter 49] loss 0.002039030659943819
+[Validation] 0.004149625543504953
+Time taken for one EPOCH 600: 1.95 seconds
+EPOCH 601:
+[E 600 | iter 49] loss 0.0020640711300075054
+[Validation] 0.004148742649704218
+Time taken for one EPOCH 601: 1.97 seconds
+new ckpt get! val_loss:0.004148742649704218
+
+EPOCH 602:
+[E 601 | iter 49] loss 0.0020504752174019814
+[Validation] 0.0041505880653858185
+Time taken for one EPOCH 602: 1.96 seconds
+EPOCH 603:
+[E 602 | iter 49] loss 0.0020360243506729603
+[Validation] 0.004147606901824474
+Time taken for one EPOCH 603: 1.96 seconds
+new ckpt get! val_loss:0.004147606901824474
+
+EPOCH 604:
+[E 603 | iter 49] loss 0.002066061133518815
+[Validation] 0.004149516578763723
+Time taken for one EPOCH 604: 1.98 seconds
+EPOCH 605:
+[E 604 | iter 49] loss 0.002035662066191435
+[Validation] 0.0041466448456048965
+Time taken for one EPOCH 605: 1.96 seconds
+new ckpt get! val_loss:0.0041466448456048965
+
+EPOCH 606:
+[E 605 | iter 49] loss 0.0020452532917261124
+[Validation] 0.004147113300859928
+Time taken for one EPOCH 606: 1.95 seconds
+EPOCH 607:
+[E 606 | iter 49] loss 0.0020419368520379066
+[Validation] 0.004143542610108852
+Time taken for one EPOCH 607: 1.96 seconds
+new ckpt get! val_loss:0.004143542610108852
+
+EPOCH 608:
+[E 607 | iter 49] loss 0.0020288352388888597
+[Validation] 0.004145802929997444
+Time taken for one EPOCH 608: 1.95 seconds
+EPOCH 609:
+[E 608 | iter 49] loss 0.002039476530626416
+[Validation] 0.004147258121520281
+Time taken for one EPOCH 609: 1.97 seconds
+EPOCH 610:
+[E 609 | iter 49] loss 0.0020358460023999214
+[Validation] 0.004144183360040188
+Time taken for one EPOCH 610: 1.96 seconds
+EPOCH 611:
+[E 610 | iter 49] loss 0.0020152954384684563
+[Validation] 0.004146214574575424
+Time taken for one EPOCH 611: 1.94 seconds
+EPOCH 612:
+[E 611 | iter 49] loss 0.002032347023487091
+[Validation] 0.0041412850841879845
+Time taken for one EPOCH 612: 1.92 seconds
+new ckpt get! val_loss:0.0041412850841879845
+
+EPOCH 613:
+[E 612 | iter 49] loss 0.0020614927634596825
+[Validation] 0.004140229430049658
+Time taken for one EPOCH 613: 1.96 seconds
+new ckpt get! val_loss:0.004140229430049658
+
+EPOCH 614:
+[E 613 | iter 49] loss 0.0020492649637162685
+[Validation] 0.004140673670917749
+Time taken for one EPOCH 614: 1.88 seconds
+EPOCH 615:
+[E 614 | iter 49] loss 0.0020300187170505524
+[Validation] 0.004139457363635302
+Time taken for one EPOCH 615: 1.89 seconds
+new ckpt get! val_loss:0.004139457363635302
+
+EPOCH 616:
+[E 615 | iter 49] loss 0.0020236708223819733
+[Validation] 0.004142908379435539
+Time taken for one EPOCH 616: 1.97 seconds
+EPOCH 617:
+[E 616 | iter 49] loss 0.0020387086551636457
+[Validation] 0.00414612889289856
+Time taken for one EPOCH 617: 1.94 seconds
+EPOCH 618:
+[E 617 | iter 49] loss 0.00204659067094326
+[Validation] 0.004140596836805344
+Time taken for one EPOCH 618: 1.92 seconds
+EPOCH 619:
+[E 618 | iter 49] loss 0.0020114686340093613
+[Validation] 0.0041391365230083466
+Time taken for one EPOCH 619: 1.95 seconds
+new ckpt get! val_loss:0.0041391365230083466
+
+EPOCH 620:
+[E 619 | iter 49] loss 0.00200096657499671
+[Validation] 0.0041472758166491985
+Time taken for one EPOCH 620: 1.91 seconds
+EPOCH 621:
+[E 620 | iter 49] loss 0.0020142369903624058
+[Validation] 0.00414291163906455
+Time taken for one EPOCH 621: 1.92 seconds
+EPOCH 622:
+[E 621 | iter 49] loss 0.0020357295870780945
+[Validation] 0.004135698080062866
+Time taken for one EPOCH 622: 1.95 seconds
+new ckpt get! val_loss:0.004135698080062866
+
+EPOCH 623:
+[E 622 | iter 49] loss 0.002023620530962944
+[Validation] 0.004137472715228796
+Time taken for one EPOCH 623: 1.94 seconds
+EPOCH 624:
+[E 623 | iter 49] loss 0.002040183637291193
+[Validation] 0.0041395192965865135
+Time taken for one EPOCH 624: 1.93 seconds
+EPOCH 625:
+[E 624 | iter 49] loss 0.002023272914811969
+[Validation] 0.004146883729845285
+Time taken for one EPOCH 625: 1.96 seconds
+EPOCH 626:
+[E 625 | iter 49] loss 0.0020349188707768917
+[Validation] 0.004140118137001991
+Time taken for one EPOCH 626: 1.91 seconds
+EPOCH 627:
+[E 626 | iter 49] loss 0.0020431114826351404
+[Validation] 0.004140584263950586
+Time taken for one EPOCH 627: 1.95 seconds
+EPOCH 628:
+[E 627 | iter 49] loss 0.002049429342150688
+[Validation] 0.004135715309530497
+Time taken for one EPOCH 628: 1.96 seconds
+EPOCH 629:
+[E 628 | iter 49] loss 0.002039947547018528
+[Validation] 0.004135372582823038
+Time taken for one EPOCH 629: 1.95 seconds
+new ckpt get! val_loss:0.004135372582823038
+
+EPOCH 630:
+[E 629 | iter 49] loss 0.002005284186452627
+[Validation] 0.004138333257287741
+Time taken for one EPOCH 630: 1.96 seconds
+EPOCH 631:
+[E 630 | iter 49] loss 0.0020287041552364826
+[Validation] 0.004136452917009592
+Time taken for one EPOCH 631: 1.92 seconds
+EPOCH 632:
+[E 631 | iter 49] loss 0.002028214978054166
+[Validation] 0.004134932532906532
+Time taken for one EPOCH 632: 1.89 seconds
+new ckpt get! val_loss:0.004134932532906532
+
+EPOCH 633:
+[E 632 | iter 49] loss 0.0020473371259868145
+[Validation] 0.004134253598749638
+Time taken for one EPOCH 633: 1.96 seconds
+new ckpt get! val_loss:0.004134253598749638
+
+EPOCH 634:
+[E 633 | iter 49] loss 0.0020398800261318684
+[Validation] 0.0041366214863955975
+Time taken for one EPOCH 634: 1.97 seconds
+EPOCH 635:
+[E 634 | iter 49] loss 0.002008643001317978
+[Validation] 0.004132706206291914
+Time taken for one EPOCH 635: 1.96 seconds
+new ckpt get! val_loss:0.004132706206291914
+
+EPOCH 636:
+[E 635 | iter 49] loss 0.0020505706779658794
+[Validation] 0.00413538608700037
+Time taken for one EPOCH 636: 1.97 seconds
+EPOCH 637:
+[E 636 | iter 49] loss 0.00202749902382493
+[Validation] 0.004133806563913822
+Time taken for one EPOCH 637: 1.96 seconds
+EPOCH 638:
+[E 637 | iter 49] loss 0.0020506661385297775
+[Validation] 0.004136196803301573
+Time taken for one EPOCH 638: 1.95 seconds
+EPOCH 639:
+[E 638 | iter 49] loss 0.002006388269364834
+[Validation] 0.004139116499572992
+Time taken for one EPOCH 639: 1.95 seconds
+EPOCH 640:
+[E 639 | iter 49] loss 0.002028943505138159
+[Validation] 0.004134254530072212
+Time taken for one EPOCH 640: 2.13 seconds
+EPOCH 641:
+[E 640 | iter 49] loss 0.002022628439590335
+[Validation] 0.004132480826228857
+Time taken for one EPOCH 641: 2.33 seconds
+new ckpt get! val_loss:0.004132480826228857
+
+EPOCH 642:
+[E 641 | iter 49] loss 0.0020241327583789825
+[Validation] 0.004134034737944603
+Time taken for one EPOCH 642: 2.41 seconds
+EPOCH 643:
+[E 642 | iter 49] loss 0.0020488884765654802
+[Validation] 0.004124866332858801
+Time taken for one EPOCH 643: 2.33 seconds
+new ckpt get! val_loss:0.004124866332858801
+
+EPOCH 644:
+[E 643 | iter 49] loss 0.0020194558892399073
+[Validation] 0.004130609333515167
+Time taken for one EPOCH 644: 2.33 seconds
+EPOCH 645:
+[E 644 | iter 49] loss 0.0020452640019357204
+[Validation] 0.004130483604967594
+Time taken for one EPOCH 645: 2.39 seconds
+EPOCH 646:
+[E 645 | iter 49] loss 0.0020348625257611275
+[Validation] 0.004131517373025417
+Time taken for one EPOCH 646: 2.35 seconds
+EPOCH 647:
+[E 646 | iter 49] loss 0.002047603949904442
+[Validation] 0.004128727130591869
+Time taken for one EPOCH 647: 2.32 seconds
+EPOCH 648:
+[E 647 | iter 49] loss 0.0020370492711663246
+[Validation] 0.004130070563405752
+Time taken for one EPOCH 648: 2.32 seconds
+EPOCH 649:
+[E 648 | iter 49] loss 0.002043607411906123
+[Validation] 0.004128368571400642
+Time taken for one EPOCH 649: 2.35 seconds
+EPOCH 650:
+[E 649 | iter 49] loss 0.0020381086505949497
+[Validation] 0.0041276840493083
+Time taken for one EPOCH 650: 2.36 seconds
+EPOCH 651:
+[E 650 | iter 49] loss 0.002055675955489278
+[Validation] 0.004126624204218388
+Time taken for one EPOCH 651: 2.33 seconds
+EPOCH 652:
+[E 651 | iter 49] loss 0.0020305097568780184
+[Validation] 0.004130418412387371
+Time taken for one EPOCH 652: 2.38 seconds
+EPOCH 653:
+[E 652 | iter 49] loss 0.002047012560069561
+[Validation] 0.004126701503992081
+Time taken for one EPOCH 653: 2.30 seconds
+EPOCH 654:
+[E 653 | iter 49] loss 0.0020411554723978043
+[Validation] 0.004132370464503765
+Time taken for one EPOCH 654: 2.33 seconds
+EPOCH 655:
+[E 654 | iter 49] loss 0.002018787432461977
+[Validation] 0.0041310847736895084
+Time taken for one EPOCH 655: 2.33 seconds
+EPOCH 656:
+[E 655 | iter 49] loss 0.0020506433211266994
+[Validation] 0.004125718958675861
+Time taken for one EPOCH 656: 2.34 seconds
+EPOCH 657:
+[E 656 | iter 49] loss 0.002016210462898016
+[Validation] 0.004128563217818737
+Time taken for one EPOCH 657: 2.37 seconds
+EPOCH 658:
+[E 657 | iter 49] loss 0.002047533169388771
+[Validation] 0.004126908723264933
+Time taken for one EPOCH 658: 2.35 seconds
+EPOCH 659:
+[E 658 | iter 49] loss 0.0020128972828388214
+[Validation] 0.004123440477997065
+Time taken for one EPOCH 659: 2.33 seconds
+new ckpt get! val_loss:0.004123440477997065
+
+EPOCH 660:
+[E 659 | iter 49] loss 0.00203569233417511
+[Validation] 0.004126219544559717
+Time taken for one EPOCH 660: 2.33 seconds
+EPOCH 661:
+[E 660 | iter 49] loss 0.0020058080554008484
+[Validation] 0.004129663109779358
+Time taken for one EPOCH 661: 2.36 seconds
+EPOCH 662:
+[E 661 | iter 49] loss 0.002027775626629591
+[Validation] 0.004119463264942169
+Time taken for one EPOCH 662: 2.36 seconds
+new ckpt get! val_loss:0.004119463264942169
+
+EPOCH 663:
+[E 662 | iter 49] loss 0.002035748213529587
+[Validation] 0.004130327142775059
+Time taken for one EPOCH 663: 2.38 seconds
+EPOCH 664:
+[E 663 | iter 49] loss 0.0020285239443182945
+[Validation] 0.004121184349060059
+Time taken for one EPOCH 664: 2.33 seconds
+EPOCH 665:
+[E 664 | iter 49] loss 0.002021827967837453
+[Validation] 0.004127318970859051
+Time taken for one EPOCH 665: 2.32 seconds
+EPOCH 666:
+[E 665 | iter 49] loss 0.0020495096687227488
+[Validation] 0.004121664445847273
+Time taken for one EPOCH 666: 2.36 seconds
+EPOCH 667:
+[E 666 | iter 49] loss 0.002016337588429451
+[Validation] 0.004121060017496347
+Time taken for one EPOCH 667: 2.37 seconds
+EPOCH 668:
+[E 667 | iter 49] loss 0.002025292720645666
+[Validation] 0.0041227336041629314
+Time taken for one EPOCH 668: 2.33 seconds
+EPOCH 669:
+[E 668 | iter 49] loss 0.002027269918471575
+[Validation] 0.004130231216549873
+Time taken for one EPOCH 669: 2.32 seconds
+EPOCH 670:
+[E 669 | iter 49] loss 0.00203259801492095
+[Validation] 0.004121048841625452
+Time taken for one EPOCH 670: 2.33 seconds
+EPOCH 671:
+[E 670 | iter 49] loss 0.0020432686433196068
+[Validation] 0.004121194593608379
+Time taken for one EPOCH 671: 2.35 seconds
+EPOCH 672:
+[E 671 | iter 49] loss 0.002019831445068121
+[Validation] 0.004121106117963791
+Time taken for one EPOCH 672: 2.35 seconds
+EPOCH 673:
+[E 672 | iter 49] loss 0.002028215443715453
+[Validation] 0.004116549156606197
+Time taken for one EPOCH 673: 2.34 seconds
+new ckpt get! val_loss:0.004116549156606197
+
+EPOCH 674:
+[E 673 | iter 49] loss 0.0020272021647542715
+[Validation] 0.004117589443922043
+Time taken for one EPOCH 674: 2.34 seconds
+EPOCH 675:
+[E 674 | iter 49] loss 0.0020302145276218653
+[Validation] 0.004120346158742905
+Time taken for one EPOCH 675: 2.32 seconds
+EPOCH 676:
+[E 675 | iter 49] loss 0.0020554258953779936
+[Validation] 0.004115238320082426
+Time taken for one EPOCH 676: 2.33 seconds
+new ckpt get! val_loss:0.004115238320082426
+
+EPOCH 677:
+[E 676 | iter 49] loss 0.0020445017144083977
+[Validation] 0.0041161999106407166
+Time taken for one EPOCH 677: 2.33 seconds
+EPOCH 678:
+[E 677 | iter 49] loss 0.002017465652897954
+[Validation] 0.004115774296224117
+Time taken for one EPOCH 678: 2.40 seconds
+EPOCH 679:
+[E 678 | iter 49] loss 0.0020339139737188816
+[Validation] 0.004118097946047783
+Time taken for one EPOCH 679: 2.37 seconds
+EPOCH 680:
+[E 679 | iter 49] loss 0.002014309400692582
+[Validation] 0.004114319570362568
+Time taken for one EPOCH 680: 2.32 seconds
+new ckpt get! val_loss:0.004114319570362568
+
+EPOCH 681:
+[E 680 | iter 49] loss 0.002021550666540861
+[Validation] 0.004115599673241377
+Time taken for one EPOCH 681: 2.33 seconds
+EPOCH 682:
+[E 681 | iter 49] loss 0.0020282419864088297
+[Validation] 0.004117837641388178
+Time taken for one EPOCH 682: 2.40 seconds
+EPOCH 683:
+[E 682 | iter 49] loss 0.0020219585858285427
+[Validation] 0.004119825083762407
+Time taken for one EPOCH 683: 2.26 seconds
+EPOCH 684:
+[E 683 | iter 49] loss 0.002019018866121769
+[Validation] 0.0041142795234918594
+Time taken for one EPOCH 684: 2.32 seconds
+new ckpt get! val_loss:0.0041142795234918594
+
+EPOCH 685:
+[E 684 | iter 49] loss 0.0020291144028306007
+[Validation] 0.004119168035686016
+Time taken for one EPOCH 685: 2.32 seconds
+EPOCH 686:
+[E 685 | iter 49] loss 0.002010893076658249
+[Validation] 0.004120174795389175
+Time taken for one EPOCH 686: 2.32 seconds
+EPOCH 687:
+[E 686 | iter 49] loss 0.0020191888324916363
+[Validation] 0.0041121067479252815
+Time taken for one EPOCH 687: 2.37 seconds
+new ckpt get! val_loss:0.0041121067479252815
+
+EPOCH 688:
+[E 687 | iter 49] loss 0.0020238959696143866
+[Validation] 0.004114917013794184
+Time taken for one EPOCH 688: 2.31 seconds
+EPOCH 689:
+[E 688 | iter 49] loss 0.0020123894792050123
+[Validation] 0.004117325413972139
+Time taken for one EPOCH 689: 2.32 seconds
+EPOCH 690:
+[E 689 | iter 49] loss 0.001999924425035715
+[Validation] 0.004115022718906403
+Time taken for one EPOCH 690: 2.33 seconds
+EPOCH 691:
+[E 690 | iter 49] loss 0.0020354166626930237
+[Validation] 0.004114682786166668
+Time taken for one EPOCH 691: 2.36 seconds
+EPOCH 692:
+[E 691 | iter 49] loss 0.002052878262475133
+[Validation] 0.004110863897949457
+Time taken for one EPOCH 692: 2.33 seconds
+new ckpt get! val_loss:0.004110863897949457
+
+EPOCH 693:
+[E 692 | iter 49] loss 0.002000965643674135
+[Validation] 0.004112089518457651
+Time taken for one EPOCH 693: 2.34 seconds
+EPOCH 694:
+[E 693 | iter 49] loss 0.002035079523921013
+[Validation] 0.004109295550733805
+Time taken for one EPOCH 694: 2.31 seconds
+new ckpt get! val_loss:0.004109295550733805
+
+EPOCH 695:
+[E 694 | iter 49] loss 0.0020066818688064814
+[Validation] 0.004107409622520208
+Time taken for one EPOCH 695: 2.32 seconds
+new ckpt get! val_loss:0.004107409622520208
+
+EPOCH 696:
+[E 695 | iter 49] loss 0.0020190703216940165
+[Validation] 0.004117907024919987
+Time taken for one EPOCH 696: 2.36 seconds
+EPOCH 697:
+[E 696 | iter 49] loss 0.002020055428147316
+[Validation] 0.0041132583282887936
+Time taken for one EPOCH 697: 2.33 seconds
+EPOCH 698:
+[E 697 | iter 49] loss 0.0020393184386193752
+[Validation] 0.004106908570975065
+Time taken for one EPOCH 698: 2.32 seconds
+new ckpt get! val_loss:0.004106908570975065
+
+EPOCH 699:
+[E 698 | iter 49] loss 0.0020149345509707928
+[Validation] 0.004107833839952946
+Time taken for one EPOCH 699: 2.32 seconds
+EPOCH 700:
+[E 699 | iter 49] loss 0.002036393154412508
+[Validation] 0.004113893024623394
+Time taken for one EPOCH 700: 2.31 seconds
+EPOCH 701:
+[E 700 | iter 49] loss 0.002024655696004629
+[Validation] 0.004108548164367676
+Time taken for one EPOCH 701: 2.32 seconds
+EPOCH 702:
+[E 701 | iter 49] loss 0.0019908053800463676
+[Validation] 0.004109073430299759
+Time taken for one EPOCH 702: 2.37 seconds
+EPOCH 703:
+[E 702 | iter 49] loss 0.002029824536293745
+[Validation] 0.004108718130737543
+Time taken for one EPOCH 703: 2.35 seconds
+EPOCH 704:
+[E 703 | iter 49] loss 0.0020371638238430023
+[Validation] 0.004109982401132584
+Time taken for one EPOCH 704: 2.33 seconds
+EPOCH 705:
+[E 704 | iter 49] loss 0.002009688876569271
+[Validation] 0.004107418470084667
+Time taken for one EPOCH 705: 1.96 seconds
+EPOCH 706:
+[E 705 | iter 49] loss 0.0020082639530301094
+[Validation] 0.004111646208912134
+Time taken for one EPOCH 706: 1.87 seconds
+EPOCH 707:
+[E 706 | iter 49] loss 0.0020160051062703133
+[Validation] 0.004112166352570057
+Time taken for one EPOCH 707: 2.08 seconds
+EPOCH 708:
+[E 707 | iter 49] loss 0.002004559151828289
+[Validation] 0.004108374007046223
+Time taken for one EPOCH 708: 2.33 seconds
+EPOCH 709:
+[E 708 | iter 49] loss 0.002005534013733268
+[Validation] 0.004109099507331848
+Time taken for one EPOCH 709: 2.39 seconds
+EPOCH 710:
+[E 709 | iter 49] loss 0.002030361909419298
+[Validation] 0.004108839202672243
+Time taken for one EPOCH 710: 2.31 seconds
+EPOCH 711:
+[E 710 | iter 49] loss 0.002017960650846362
+[Validation] 0.00411135284230113
+Time taken for one EPOCH 711: 2.31 seconds
+EPOCH 712:
+[E 711 | iter 49] loss 0.002020200714468956
+[Validation] 0.004107329994440079
+Time taken for one EPOCH 712: 2.31 seconds
+EPOCH 713:
+[E 712 | iter 49] loss 0.00199468107894063
+[Validation] 0.00410366989672184
+Time taken for one EPOCH 713: 2.33 seconds
+new ckpt get! val_loss:0.00410366989672184
+
+EPOCH 714:
+[E 713 | iter 49] loss 0.0020111771300435066
+[Validation] 0.0041082920506596565
+Time taken for one EPOCH 714: 2.25 seconds
+EPOCH 715:
+[E 714 | iter 49] loss 0.0019928477704524994
+[Validation] 0.004108276218175888
+Time taken for one EPOCH 715: 2.38 seconds
+EPOCH 716:
+[E 715 | iter 49] loss 0.002006272319704294
+[Validation] 0.004102820064872503
+Time taken for one EPOCH 716: 2.34 seconds
+new ckpt get! val_loss:0.004102820064872503
+
+EPOCH 717:
+[E 716 | iter 49] loss 0.0020345267839729786
+[Validation] 0.004110570996999741
+Time taken for one EPOCH 717: 2.32 seconds
+EPOCH 718:
+[E 717 | iter 49] loss 0.0020087810698896646
+[Validation] 0.004099318291991949
+Time taken for one EPOCH 718: 2.32 seconds
+new ckpt get! val_loss:0.004099318291991949
+
+EPOCH 719:
+[E 718 | iter 49] loss 0.0020204195752739906
+[Validation] 0.004108182154595852
+Time taken for one EPOCH 719: 2.36 seconds
+EPOCH 720:
+[E 719 | iter 49] loss 0.0020250570960342884
+[Validation] 0.004104873165488243
+Time taken for one EPOCH 720: 2.20 seconds
+EPOCH 721:
+[E 720 | iter 49] loss 0.0020099084358662367
+[Validation] 0.004102883394807577
+Time taken for one EPOCH 721: 1.96 seconds
+EPOCH 722:
+[E 721 | iter 49] loss 0.002017747610807419
+[Validation] 0.004107137210667133
+Time taken for one EPOCH 722: 1.98 seconds
+EPOCH 723:
+[E 722 | iter 49] loss 0.0019902163185179234
+[Validation] 0.004107504617422819
+Time taken for one EPOCH 723: 1.91 seconds
+EPOCH 724:
+[E 723 | iter 49] loss 0.002010892378166318
+[Validation] 0.0041064112447202206
+Time taken for one EPOCH 724: 1.89 seconds
+EPOCH 725:
+[E 724 | iter 49] loss 0.002022423082962632
+[Validation] 0.004101226571947336
+Time taken for one EPOCH 725: 1.88 seconds
+EPOCH 726:
+[E 725 | iter 49] loss 0.002010245341807604
+[Validation] 0.004101503640413284
+Time taken for one EPOCH 726: 1.98 seconds
+EPOCH 727:
+[E 726 | iter 49] loss 0.0020337312016636133
+[Validation] 0.004104273393750191
+Time taken for one EPOCH 727: 1.98 seconds
+EPOCH 728:
+[E 727 | iter 49] loss 0.002019914099946618
+[Validation] 0.0041006263345479965
+Time taken for one EPOCH 728: 1.87 seconds
+EPOCH 729:
+[E 728 | iter 49] loss 0.0020318140741437674
+[Validation] 0.004101946949958801
+Time taken for one EPOCH 729: 1.94 seconds
+EPOCH 730:
+[E 729 | iter 49] loss 0.002018691273406148
+[Validation] 0.004106404259800911
+Time taken for one EPOCH 730: 1.94 seconds
+EPOCH 731:
+[E 730 | iter 49] loss 0.0020539031829684973
+[Validation] 0.0040994687005877495
+Time taken for one EPOCH 731: 1.93 seconds
+EPOCH 732:
+[E 731 | iter 49] loss 0.0020196607802063227
+[Validation] 0.00409728055819869
+Time taken for one EPOCH 732: 1.98 seconds
+new ckpt get! val_loss:0.00409728055819869
+
+EPOCH 733:
+[E 732 | iter 49] loss 0.0020349211990833282
+[Validation] 0.00409816624596715
+Time taken for one EPOCH 733: 2.00 seconds
+EPOCH 734:
+[E 733 | iter 49] loss 0.002026831265538931
+[Validation] 0.004097967408597469
+Time taken for one EPOCH 734: 1.95 seconds
+EPOCH 735:
+[E 734 | iter 49] loss 0.002015062142163515
+[Validation] 0.004094963893294334
+Time taken for one EPOCH 735: 1.93 seconds
+new ckpt get! val_loss:0.004094963893294334
+
+EPOCH 736:
+[E 735 | iter 49] loss 0.002033530967310071
+[Validation] 0.004097748547792435
+Time taken for one EPOCH 736: 1.97 seconds
+EPOCH 737:
+[E 736 | iter 49] loss 0.0020155911333858967
+[Validation] 0.0041051628068089485
+Time taken for one EPOCH 737: 1.98 seconds
+EPOCH 738:
+[E 737 | iter 49] loss 0.0020109205506742
+[Validation] 0.0040984489023685455
+Time taken for one EPOCH 738: 1.97 seconds
+EPOCH 739:
+[E 738 | iter 49] loss 0.0020006003323942423
+[Validation] 0.0041014766320586205
+Time taken for one EPOCH 739: 1.97 seconds
+EPOCH 740:
+[E 739 | iter 49] loss 0.0020118551328778267
+[Validation] 0.004097157623618841
+Time taken for one EPOCH 740: 1.89 seconds
+EPOCH 741:
+[E 740 | iter 49] loss 0.002000045031309128
+[Validation] 0.0040940046310424805
+Time taken for one EPOCH 741: 1.89 seconds
+new ckpt get! val_loss:0.0040940046310424805
+
+EPOCH 742:
+[E 741 | iter 49] loss 0.002011468168348074
+[Validation] 0.0040959557518363
+Time taken for one EPOCH 742: 1.95 seconds
+EPOCH 743:
+[E 742 | iter 49] loss 0.00202685734257102
+[Validation] 0.004100802820175886
+Time taken for one EPOCH 743: 1.93 seconds
+EPOCH 744:
+[E 743 | iter 49] loss 0.0020365349482744932
+[Validation] 0.0041005671955645084
+Time taken for one EPOCH 744: 1.98 seconds
+EPOCH 745:
+[E 744 | iter 49] loss 0.0020167105831205845
+[Validation] 0.004097641911357641
+Time taken for one EPOCH 745: 1.94 seconds
+EPOCH 746:
+[E 745 | iter 49] loss 0.0020029214210808277
+[Validation] 0.00409590732306242
+Time taken for one EPOCH 746: 1.92 seconds
+EPOCH 747:
+[E 746 | iter 49] loss 0.0020195869728922844
+[Validation] 0.004092753864824772
+Time taken for one EPOCH 747: 1.95 seconds
+new ckpt get! val_loss:0.004092753864824772
+
+EPOCH 748:
+[E 747 | iter 49] loss 0.0019980487413704395
+[Validation] 0.0040974789299070835
+Time taken for one EPOCH 748: 1.97 seconds
+EPOCH 749:
+[E 748 | iter 49] loss 0.0020091990008950233
+[Validation] 0.004091246519237757
+Time taken for one EPOCH 749: 1.94 seconds
+new ckpt get! val_loss:0.004091246519237757
+
+EPOCH 750:
+[E 749 | iter 49] loss 0.002009784337133169
+[Validation] 0.004094693809747696
+Time taken for one EPOCH 750: 1.95 seconds
+EPOCH 751:
+[E 750 | iter 49] loss 0.0020094511564821005
+[Validation] 0.004106531850993633
+Time taken for one EPOCH 751: 1.90 seconds
+EPOCH 752:
+[E 751 | iter 49] loss 0.002018615836277604
+[Validation] 0.004099141340702772
+Time taken for one EPOCH 752: 1.94 seconds
+EPOCH 753:
+[E 752 | iter 49] loss 0.0019987488631159067
+[Validation] 0.004091997165232897
+Time taken for one EPOCH 753: 1.95 seconds
+EPOCH 754:
+[E 753 | iter 49] loss 0.002010588999837637
+[Validation] 0.004092838149517775
+Time taken for one EPOCH 754: 1.94 seconds
+EPOCH 755:
+[E 754 | iter 49] loss 0.001984353642910719
+[Validation] 0.004093433264642954
+Time taken for one EPOCH 755: 1.94 seconds
+EPOCH 756:
+[E 755 | iter 49] loss 0.002013025339692831
+[Validation] 0.004093225114047527
+Time taken for one EPOCH 756: 1.88 seconds
+EPOCH 757:
+[E 756 | iter 49] loss 0.0020290259271860123
+[Validation] 0.004093176685273647
+Time taken for one EPOCH 757: 1.95 seconds
+EPOCH 758:
+[E 757 | iter 49] loss 0.00198649475350976
+[Validation] 0.0040963576175272465
+Time taken for one EPOCH 758: 1.94 seconds
+EPOCH 759:
+[E 758 | iter 49] loss 0.002039553364738822
+[Validation] 0.004090844187885523
+Time taken for one EPOCH 759: 1.95 seconds
+new ckpt get! val_loss:0.004090844187885523
+
+EPOCH 760:
+[E 759 | iter 49] loss 0.0020199702121317387
+[Validation] 0.004089941270649433
+Time taken for one EPOCH 760: 1.94 seconds
+new ckpt get! val_loss:0.004089941270649433
+
+EPOCH 761:
+[E 760 | iter 49] loss 0.002005442976951599
+[Validation] 0.004089956171810627
+Time taken for one EPOCH 761: 1.92 seconds
+EPOCH 762:
+[E 761 | iter 49] loss 0.0020069461315870285
+[Validation] 0.004093526862561703
+Time taken for one EPOCH 762: 1.94 seconds
+EPOCH 763:
+[E 762 | iter 49] loss 0.002004497218877077
+[Validation] 0.004092702176421881
+Time taken for one EPOCH 763: 1.93 seconds
+EPOCH 764:
+[E 763 | iter 49] loss 0.001972805242985487
+[Validation] 0.004091800190508366
+Time taken for one EPOCH 764: 1.95 seconds
+EPOCH 765:
+[E 764 | iter 49] loss 0.0020033023320138454
+[Validation] 0.0040931724943220615
+Time taken for one EPOCH 765: 1.94 seconds
+EPOCH 766:
+[E 765 | iter 49] loss 0.002011154545471072
+[Validation] 0.004092169459909201
+Time taken for one EPOCH 766: 1.92 seconds
+EPOCH 767:
+[E 766 | iter 49] loss 0.002008984796702862
+[Validation] 0.004090405069291592
+Time taken for one EPOCH 767: 1.97 seconds
+EPOCH 768:
+[E 767 | iter 49] loss 0.002023873617872596
+[Validation] 0.004091066773980856
+Time taken for one EPOCH 768: 1.95 seconds
+EPOCH 769:
+[E 768 | iter 49] loss 0.0020197301637381315
+[Validation] 0.004087033681571484
+Time taken for one EPOCH 769: 1.93 seconds
+new ckpt get! val_loss:0.004087033681571484
+
+EPOCH 770:
+[E 769 | iter 49] loss 0.002003201749175787
+[Validation] 0.004092663526535034
+Time taken for one EPOCH 770: 1.92 seconds
+EPOCH 771:
+[E 770 | iter 49] loss 0.002001324901357293
+[Validation] 0.004087189212441444
+Time taken for one EPOCH 771: 1.93 seconds
+EPOCH 772:
+[E 771 | iter 49] loss 0.001999233616515994
+[Validation] 0.004085874650627375
+Time taken for one EPOCH 772: 1.98 seconds
+new ckpt get! val_loss:0.004085874650627375
+
+EPOCH 773:
+[E 772 | iter 49] loss 0.0020345496013760567
+[Validation] 0.004091764334589243
+Time taken for one EPOCH 773: 1.94 seconds
+EPOCH 774:
+[E 773 | iter 49] loss 0.002006318885833025
+[Validation] 0.004089326597750187
+Time taken for one EPOCH 774: 1.94 seconds
+EPOCH 775:
+[E 774 | iter 49] loss 0.0020085745491087437
+[Validation] 0.004084151703864336
+Time taken for one EPOCH 775: 1.93 seconds
+new ckpt get! val_loss:0.004084151703864336
+
+EPOCH 776:
+[E 775 | iter 49] loss 0.002002525143325329
+[Validation] 0.00408334843814373
+Time taken for one EPOCH 776: 2.00 seconds
+new ckpt get! val_loss:0.00408334843814373
+
+EPOCH 777:
+[E 776 | iter 49] loss 0.002002269495278597
+[Validation] 0.004089226480573416
+Time taken for one EPOCH 777: 1.99 seconds
+EPOCH 778:
+[E 777 | iter 49] loss 0.002011846750974655
+[Validation] 0.0040826257318258286
+Time taken for one EPOCH 778: 1.90 seconds
+new ckpt get! val_loss:0.0040826257318258286
+
+EPOCH 779:
+[E 778 | iter 49] loss 0.00202021817676723
+[Validation] 0.0040901536121964455
+Time taken for one EPOCH 779: 1.96 seconds
+EPOCH 780:
+[E 779 | iter 49] loss 0.0020172023214399815
+[Validation] 0.0040894197300076485
+Time taken for one EPOCH 780: 1.92 seconds
+EPOCH 781:
+[E 780 | iter 49] loss 0.0020248042419552803
+[Validation] 0.004088064655661583
+Time taken for one EPOCH 781: 1.93 seconds
+EPOCH 782:
+[E 781 | iter 49] loss 0.0020226314663887024
+[Validation] 0.004085088148713112
+Time taken for one EPOCH 782: 1.94 seconds
+EPOCH 783:
+[E 782 | iter 49] loss 0.001996459439396858
+[Validation] 0.004084527026861906
+Time taken for one EPOCH 783: 1.86 seconds
+EPOCH 784:
+[E 783 | iter 49] loss 0.002007753122597933
+[Validation] 0.004086704459041357
+Time taken for one EPOCH 784: 1.93 seconds
+EPOCH 785:
+[E 784 | iter 49] loss 0.0020110085606575012
+[Validation] 0.004088049288839102
+Time taken for one EPOCH 785: 1.97 seconds
+EPOCH 786:
+[E 785 | iter 49] loss 0.0020158563274890184
+[Validation] 0.004091713577508926
+Time taken for one EPOCH 786: 1.88 seconds
+EPOCH 787:
+[E 786 | iter 49] loss 0.0020138046238571405
+[Validation] 0.004085554741322994
+Time taken for one EPOCH 787: 1.94 seconds
+EPOCH 788:
+[E 787 | iter 49] loss 0.0020090017933398485
+[Validation] 0.004087589681148529
+Time taken for one EPOCH 788: 1.94 seconds
+EPOCH 789:
+[E 788 | iter 49] loss 0.001991685712710023
+[Validation] 0.004088264424353838
+Time taken for one EPOCH 789: 1.94 seconds
+EPOCH 790:
+[E 789 | iter 49] loss 0.001994007732719183
+[Validation] 0.0040860166773200035
+Time taken for one EPOCH 790: 1.94 seconds
+EPOCH 791:
+[E 790 | iter 49] loss 0.001993479672819376
+[Validation] 0.004087728913873434
+Time taken for one EPOCH 791: 1.95 seconds
+EPOCH 792:
+[E 791 | iter 49] loss 0.001999417319893837
+[Validation] 0.0040872348472476006
+Time taken for one EPOCH 792: 1.94 seconds
+EPOCH 793:
+[E 792 | iter 49] loss 0.0020014173351228237
+[Validation] 0.004088179208338261
+Time taken for one EPOCH 793: 1.95 seconds
+EPOCH 794:
+[E 793 | iter 49] loss 0.002003519795835018
+[Validation] 0.004080716986209154
+Time taken for one EPOCH 794: 1.96 seconds
+new ckpt get! val_loss:0.004080716986209154
+
+EPOCH 795:
+[E 794 | iter 49] loss 0.001984963659197092
+[Validation] 0.004078084137290716
+Time taken for one EPOCH 795: 1.95 seconds
+new ckpt get! val_loss:0.004078084137290716
+
+EPOCH 796:
+[E 795 | iter 49] loss 0.0020093792118132114
+[Validation] 0.004084136802703142
+Time taken for one EPOCH 796: 1.91 seconds
+EPOCH 797:
+[E 796 | iter 49] loss 0.0019917571917176247
+[Validation] 0.00408578384667635
+Time taken for one EPOCH 797: 1.95 seconds
+EPOCH 798:
+[E 797 | iter 49] loss 0.0020191736984997988
+[Validation] 0.004079078324139118
+Time taken for one EPOCH 798: 1.95 seconds
+EPOCH 799:
+[E 798 | iter 49] loss 0.002029626164585352
+[Validation] 0.0040841843001544476
+Time taken for one EPOCH 799: 1.94 seconds
+EPOCH 800:
+[E 799 | iter 49] loss 0.0020123838912695646
+[Validation] 0.004079869948327541
+Time taken for one EPOCH 800: 1.94 seconds
+EPOCH 801:
+[E 800 | iter 49] loss 0.0020001190714538097
+[Validation] 0.004087015520781279
+Time taken for one EPOCH 801: 1.93 seconds
+EPOCH 802:
+[E 801 | iter 49] loss 0.0020116018131375313
+[Validation] 0.0040826378390192986
+Time taken for one EPOCH 802: 1.93 seconds
+EPOCH 803:

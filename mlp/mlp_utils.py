@@ -64,12 +64,12 @@ def do_evaluation3(model, loader, device):
         #     total_loss+=loss
         with torch.no_grad():
             desc0 = data[0].to(device)
-            desc1 = data[1].to(device)
+            # desc1 = data[1].to(device)
             pred0 = model(desc0)
-            pred1 = model(desc1)
+            # pred1 = model(desc1)
             loss0 = loss_fn(pred0, desc0)
-            loss1 = loss_fn(pred1, desc1)
-            loss = loss0 + loss1
+            # loss1 = loss_fn(pred1, desc1)
+            loss = loss0
             total_loss+=loss
     average_loss = total_loss/len(loader)
 

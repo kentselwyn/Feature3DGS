@@ -30,8 +30,6 @@ class MLPDataset(Dataset):
         self.h5_file_path = h5_file_path
         self.data = []
         self.keypoints = []
-        
-        
         with h5py.File(self.h5_file_path, 'r') as hfile:
             root_group = hfile['home']
 
@@ -68,32 +66,20 @@ class MLPDataset(Dataset):
         return len(self.data)
 
 
+NAME = "pgt_7scenes_chess"
+MODEL = "SP"
+all_path = f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7_scenes/{NAME}"
+dim = 4
 
-MODEL = "SP_scannet"
-ckpt_path = "/home/koki/code/cc/gluetrain/mlp_data/mlpckpt"
-
-if MODEL=="SP_homo":
-    NAME = "r640_SP-k512-nms4-homohraphies"
-elif MODEL=="SP_new":
-    NAME = "r1024_SP-k1024-nms3"
-elif MODEL=="DISK":
-    NAME = "r1024_DISK-k1024-nms5"
-elif MODEL=="ALIKED":
-    NAME = "r1024_ALIKED-k1024-n16"
-elif MODEL=="ALIKED_32":
-    NAME = "r1024_ALIKED-k1024-n32"
-elif MODEL=="SP_scannet":
-    NAME = "rNone_SP-k512-nms4-scannet"
 
 conf = {
-    "dim": 16,
-    "folder_path": f"{ckpt_path}/ckpt/{MODEL}",
-    # "fea_path": f"{ckpt_path}/desc_data/{NAME}.h5",
-    "fea_path": f"/home/koki/code/cc/gluetrain/mlp_data/desc_data/{NAME}.h5",
-    "load_ckpt": "/home/koki/code/cc/gluetrain/mlp_data/mlpckpt/ckpt/SP/short_pair_16/model_20240221_105233_496",
+    "dim": dim,
+    "folder_path": f"{all_path}/mlpckpt",
+    "fea_path": f"{all_path}/desc_data/r1024_SP-k1024-nms4-{NAME}.h5",
+    "load_ckpt": None,
     "train":{
-        "epochs": 10000,
-        "lr": 1e-4,
+        "epochs": 1000,
+        "lr": 1e-3,
         "seed": 0,
         "batch_size": 64,
         "num_workers": 0,
@@ -121,17 +107,13 @@ def manage_checkpoints(save_dir, max_checkpoints=10):
 def main(conf):
     conf = OmegaConf.create(conf)
 
-    if MODEL.startswith("SP"):
-        model = get_mlp(conf.dim)
-    else:
-        model = get_mlp_128(conf.dim)
 
+    model = get_mlp(conf.dim)
     model.to(device)
+
     if conf.load_ckpt is not None:
         ckpt = torch.load(conf.load_ckpt)
         model.load_state_dict(ckpt)
-    # ckpt = torch.load("/home/koki/gluetrain/mlp_data/mlpckpt/ckpt/ALIKED/time:20241021_115835_dim8_batch64_lr0.0002_epoch500/epoch_496.pt")
-    # model.load_state_dict(ckpt)
 
     params = [param for param in model.parameters() if param.requires_grad]
     optimizer = torch.optim.Adam(params , lr=conf.train.lr)
@@ -155,7 +137,7 @@ def main(conf):
     trainloader = DataLoader(train_dataset, batch_size=conf.train.batch_size , shuffle=True, num_workers=conf.train.num_workers)
     valloader = DataLoader(val_dataset, batch_size=conf.train.batch_size, shuffle=False, num_workers=conf.train.num_workers)
 
-    out_path = f"{conf.folder_path}/time:{timestamp}_dim{conf.dim}_batch{conf.train.batch_size}_lr{conf.train.lr}_epoch{conf.train.epochs}"
+    out_path = f"{conf.folder_path}/type:{MODEL}_time:{timestamp}_dim{conf.dim}_batch{conf.train.batch_size}_lr{conf.train.lr}_epoch{conf.train.epochs}"
     os.makedirs(out_path, exist_ok=True)
 
     writer = SummaryWriter(f"{out_path}/runs/{timestamp}")
@@ -223,13 +205,10 @@ def print_hdf5_structure(file_path):
         hfile.visititems(recursive_print)
 
 
-# /home/koki/gluetrain/mlp_data/mlpckpt/ckpt/DISK
-# python -m core.MLP.train2
-# nohup python -u -m core.MLP.train2 > /home/koki/code/cc/gluetrain/mlp_data/mlpckpt/ckpt/SP_scannet/log_dim16.txt 2>&1 &
+
+# nohup python -u -m mlp.train > /home/koki/code/cc/feature_3dgs_2/log_dim4.txt 2>&1 &
 if __name__=="__main__":
     conf = OmegaConf.create(conf)
-    # dataset = MLPDataset(conf.fea_path)
-    # data = dataset[0]
     main(conf=conf)
     # print_hdf5_structure(conf.fea_path)
 
