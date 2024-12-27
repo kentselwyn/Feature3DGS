@@ -6,11 +6,13 @@ from tqdm import tqdm
 from datetime import datetime
 from omegaconf import OmegaConf
 import torch.nn as nn
+from argparse import ArgumentParser
 from torch.utils.data import Dataset, random_split, DataLoader
 from .modules import get_mlp, get_mlp_128
 from .tools import set_seed
 from .tensor import batch_to_device
 from .mlp_utils import do_evaluation3
+import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.tensorboard.writer import SummaryWriter
 
 
@@ -69,22 +71,30 @@ class MLPDataset(Dataset):
 NAME = "pgt_7scenes_chess"
 MODEL = "SP"
 all_path = f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7_scenes/{NAME}"
-dim = 4
+
 
 
 conf = {
-    "dim": dim,
+    "dim": None,
     "folder_path": f"{all_path}/mlpckpt",
     "fea_path": f"{all_path}/desc_data/r1024_SP-k1024-nms4-{NAME}.h5",
-    "load_ckpt": None,
+    "load_ckpt": "/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7_scenes/pgt_7scenes_chess/mlpckpt/type:SP_time:20241224_215131_dim4_batch64_lr0.001_epoch1000/epoch_994.pt",
     "train":{
-        "epochs": 1000,
-        "lr": 1e-3,
+        "epochs": 5000,
+        "start_epoch": 2500,
+        "lr": 8e-4,
         "seed": 0,
         "batch_size": 64,
         "num_workers": 0,
     }
 }
+def lr_schedule(epoch):
+    start = conf['train']['start_epoch']
+    if epoch < start:
+        return 1.0  # Keep the learning rate the same
+    else:
+        factor = 0.9 ** ((epoch - start) // 500)  # Decrease every 500 epochs
+        return factor
 
 
 
@@ -104,6 +114,7 @@ def manage_checkpoints(save_dir, max_checkpoints=10):
 
 
 
+
 def main(conf):
     conf = OmegaConf.create(conf)
 
@@ -114,9 +125,11 @@ def main(conf):
     if conf.load_ckpt is not None:
         ckpt = torch.load(conf.load_ckpt)
         model.load_state_dict(ckpt)
+        print(f'{conf.load_ckpt} ckpt loaded')
 
     params = [param for param in model.parameters() if param.requires_grad]
     optimizer = torch.optim.Adam(params , lr=conf.train.lr)
+    scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_schedule)
 
     best_vloss = 1_000_000.
 
@@ -158,6 +171,8 @@ def main(conf):
 
             loss.backward()
             optimizer.step()
+            scheduler.step()
+
             if index % 99 == 0:
                 total_iteration = len(trainloader) * epoch + index
                 writer.add_scalar("train/" + "mse", loss.item(), total_iteration)
@@ -206,9 +221,17 @@ def print_hdf5_structure(file_path):
 
 
 
-# nohup python -u -m mlp.train > /home/koki/code/cc/feature_3dgs_2/log_dim4.txt 2>&1 &
+# nohup python -u -m mlp.train --dim 16 > /home/koki/code/cc/feature_3dgs_2/log_dim4_2.txt 2>&1 &
 if __name__=="__main__":
     conf = OmegaConf.create(conf)
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--dim",
+        type=int,
+        default="/home/koki/code/cc/feature_3dgs_2/all_data/scene0000_01/B",
+    )
+    args = parser.parse_args()
+    conf.dim = args.dim
     main(conf=conf)
     # print_hdf5_structure(conf.fea_path)
 

@@ -5,6 +5,19 @@ from torchrl.modules import MLP
 
 
 
+class MLP_module_4_short(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.MLP    = MLP(in_features=256, out_features=4   , num_cells=[128, 64, 32, 16, 8])
+        self.MLP_de = MLP(in_features=4,   out_features=256,  num_cells=[8, 16, 32, 64, 128])
+        # for p in self.parameters():
+        #     p.requires_grad = False
+
+    def forward(self, desc: torch.Tensor):
+        desc_mlp = self.MLP(desc)
+        desc_back = self.MLP_de(desc_mlp)
+        return desc_back
+
 class MLP_module_8_short(nn.Module):
     def __init__(self):
         super().__init__()
@@ -22,7 +35,6 @@ class MLP_module_8_short(nn.Module):
         desc_back = self.MLP_de(desc_mlp)
         return desc_back
 
-
 class MLP_module_16_short(nn.Module):
     def __init__(self):
         super().__init__()
@@ -37,6 +49,9 @@ class MLP_module_16_short(nn.Module):
     def decode(self, desc_mlp: torch.Tensor):
         desc_back = self.MLP_de(desc_mlp)
         return desc_back
+
+
+
 
 
 
@@ -190,6 +205,29 @@ def get_mlp_model(dim = 16, type = "SP"):
     
     return model
         
+
+
+def get_mlp_dataset(dim=16, dataset="SP_7scenes_chess"):
+    CKPT_FOLDER = Path("/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7_scenes/pgt_7scenes_chess/mlpckpt")
+    if dataset=="SP_7scenes_chess":
+        if dim==4:
+            model_path = CKPT_FOLDER/"type:SP_time:20241224_223934_dim4_batch64_lr0.0008_epoch5000/epoch_542.pt"
+            model = MLP_module_4_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        elif dim==8:
+            model_path = CKPT_FOLDER/"type:SP_time:20241224_213513_dim8_batch64_lr0.001_epoch10000/epoch_3948.pt"
+            model = MLP_module_8_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        elif dim==16:
+            model_path = CKPT_FOLDER/"type:SP_time:20241224_210047_dim16_batch64_lr0.001_epoch10000/epoch_2714.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    return model
+
+
 
 # python -m encoders.superpoint.mlp
 if __name__=="__main__":

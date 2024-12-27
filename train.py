@@ -102,10 +102,8 @@ def training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_
 
 
 
-
-
-
-def training(model_param, opt_param, pipe_param, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from):
+def training(model_param, opt_param, pipe_param, testing_iterations, saving_iterations, 
+             checkpoint_iterations, checkpoint, debug_from):
     first_iter = 0
     tb_writer = prepare_output_and_logger(model_param)
     gaussians = GaussianModel(model_param.sh_degree)
@@ -165,8 +163,8 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
         render_pkg = render(viewpoint_cam, gaussians, pipe_param, background)
         
 
-        feature_map, score_map, image, viewspace_point_tensor, visibility_filter, radii = render_pkg["feature_map"], render_pkg["score_map"], render_pkg["render"], \
-            render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
+        feature_map, score_map, image, viewspace_point_tensor, visibility_filter, radii = render_pkg["feature_map"], \
+        render_pkg["score_map"], render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
 
         
         # Loss
@@ -317,7 +315,8 @@ if __name__ == "__main__":
     # Start GUI server, configure and run training
     # network_gui.init(args.ip, args.port)
     torch.autograd.set_detect_anomaly(args.detect_anomaly)
-    training(Model_param.extract(args), Opt_param.extract(args), Pipe_param.extract(args), args.test_iterations, args.save_iterations, args.checkpoint_iterations, args.start_checkpoint, args.debug_from)
+    training(Model_param.extract(args), Opt_param.extract(args), Pipe_param.extract(args), args.test_iterations, args.save_iterations, 
+             args.checkpoint_iterations, args.start_checkpoint, args.debug_from)
 
     # All done
     print("\nTraining complete.")

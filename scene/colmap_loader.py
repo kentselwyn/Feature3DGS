@@ -297,3 +297,54 @@ def read_colmap_bin_array(path):
     array = array.reshape((width, height, channels), order="F")
     return np.transpose(array, (1, 0, 2)).squeeze()
 
+
+
+
+def read_points3D_nvm(nvm_file, threshold=1000):
+    """
+    Formats of nvm file:
+        <Number of cameras>   <List of cameras>
+        <Number of 3D points> <List of points>
+        <Point>  = <XYZ> <RGB> <number of measurements> <List of Measurements>
+        <Measurement> = <Image index> <Feature Index> <xy>
+    """
+    cams = []       # List image frames 
+    cam_points = {} # Map key: index of frame, value: list of indices of 3d points that are visible to this frame.
+    points = []     # List of 3d points in the reconstruction model
+    rgb = []
+
+    print('Read 3D points from {}'.format(nvm_file))
+    with open(nvm_file, 'r') as f:
+        next(f)    # Skip headding lines
+        next(f)
+        
+        # Load images
+        cam_num = int(next(f).split()[0])
+        for i in range(cam_num):
+            line = next(f) 
+            frame = line.split()[0]
+            cams.append(frame)
+            cam_points[frame] = []
+            
+        next(f)  # Skip the separation line
+        point_num = int(next(f).split()[0])
+        for i in range(point_num):
+            line = next(f)
+            cur = line.split()
+            points.append([float(x) for x in cur[0:3]])
+            rgb.append([int(x) for x in cur[3:6]])
+            measure_num = int(cur[6])
+            for j in range(measure_num):
+                idx = int(cur[7+j*4])
+                frame = cams[idx]
+                cam_points[frame].append(i)
+    print('Loading finished: camera frames {}, total 3d points {}'.format(len(cam_points), len(points)))
+
+    filtered_points = []
+    filtered_colors = []
+    for point, color in zip(points, rgb):
+        if all(abs(coord) <= threshold for coord in point):
+            filtered_points.append(point)
+            filtered_colors.append(color)
+    
+    return np.stack(filtered_points), np.stack(filtered_colors)

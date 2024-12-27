@@ -5,7 +5,7 @@ from utils.utils import load_image2
 from encoders.superpoint.superpoint import SuperPoint
 from encoders.disk_kornia import DISK
 from encoders.aliked import ALIKED
-from encoders.superpoint.mlp import get_mlp_model
+from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 import time
@@ -111,8 +111,8 @@ def main(args):
         }
         model = ALIKED(conf).to("cuda").eval()
     
-    mlp = get_mlp_model(dim = args.mlp_dim, type=args.method)
-    
+    # mlp = get_mlp_model(dim = args.mlp_dim, type=args.method)
+    mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.method)
     mlp = mlp.to("cuda").eval()
 
     img_folder = f"{args.input}/{args.images}"
@@ -151,7 +151,7 @@ def main(args):
 
 
         
-# python dataset_build.py --input /home/koki/code/cc/feature_3dgs_2/img_match/Else/tandt_db/truck --resize_num 1 --max_num_keypoints 1024 --method SP_tank_db --images images_low_resolution
+# python -m z_scannet1500.dataset_build --input /home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7_scenes/pgt_7scenes_chess/train --mlp_dim 16 --resize_num 1 --max_num_keypoints 1024 --method SP_7scenes_chess --images rgb
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(

@@ -6,7 +6,7 @@ import torch
 import argparse
 import subprocess
 from tqdm import tqdm
-import z_scannet1500.dataset_build as dataset_build
+import dataset_build as dataset_build
 import eval.metrics_gauss as metrics_gauss
 from eval.eval_scannet1500 import match_eval
 
