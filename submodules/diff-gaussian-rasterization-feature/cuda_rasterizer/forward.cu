@@ -311,7 +311,7 @@ renderCUDA(
 	const float* __restrict__ features, // rgb 
 	const float* __restrict__ semantics, // semantics
 	const float* __restrict__ scores,   ////////
-	const float* __restrict__ depths, // depth
+	const float* __restrict__ depth, // depth
 	const float4* __restrict__ conic_opacity,
 	float* __restrict__ final_T,
 	uint32_t* __restrict__ n_contrib,
@@ -354,6 +354,7 @@ renderCUDA(
 	__shared__ int collected_id[BLOCK_SIZE];
 	__shared__ float2 collected_xy[BLOCK_SIZE];
 	__shared__ float4 collected_conic_opacity[BLOCK_SIZE];
+	__shared__ float collected_depth[BLOCK_SIZE];
 
 
 	// Initialize helper variables
@@ -362,11 +363,12 @@ renderCUDA(
 	uint32_t contributor = 0;
 	uint32_t last_contributor = 0;
 
-	// C: color, SF: semantic feature, D: depth
+	// C: color, SF: semantic feature
 	float C[CHANNELS] = { 0 };
 	float SF[NUM_SEMANTIC_CHANNELS] = { 0 };
 	float SCORE = { 0 };
-	float D = { 0 };
+	// float D = { 0 }; // Mean Depth
+	float D = 15.0f;  // Median Depth. TODO: This is a hack setting max_depth to 15
 
 	// Iterate over batches until all done or range is complete
 	for (int i = 0; i < rounds; i++, toDo -= BLOCK_SIZE)
@@ -384,6 +386,7 @@ renderCUDA(
 			collected_id[block.thread_rank()] = coll_id;
 			collected_xy[block.thread_rank()] = points_xy_image[coll_id];
 			collected_conic_opacity[block.thread_rank()] = conic_opacity[coll_id];
+			collected_depth[block.thread_rank()] = depth[coll_id];
 		}
 
 		block.sync();
@@ -424,9 +427,17 @@ renderCUDA(
 				C[ch] += features[collected_id[j] * CHANNELS + ch] * alpha * T;
 			}
 
-			float depp = depths[collected_id[j]];
+			// Mean Depth:
+			// float depp = depth[collected_id[j]];
 			float w = alpha*T;
-			D += depp*w;
+			// D += depp*w;
+
+			// Median Depth:
+            if (T > 0.5f && test_T < 0.5)
+			{
+			    float dep = collected_depth[j];
+				D = dep;
+			}
 			
 			for (int ch = 0; ch < NUM_SEMANTIC_CHANNELS; ch++){
 				SF[ch] += semantics[collected_id[j] * NUM_SEMANTIC_CHANNELS + ch] * alpha * T; 
