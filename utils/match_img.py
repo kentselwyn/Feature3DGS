@@ -32,7 +32,7 @@ def extract_kpt(score: torch.Tensor, threshold = 0.3):
 
     # print("elapsed time:", end-start)
     
-    centroids = torch.tensor(centroids)
+    centroids = torch.tensor(centroids, dtype=torch.float32)
     return centroids
 
 
@@ -193,6 +193,11 @@ def choose_th(score, args):
 
 # python -m utils.match_img
 mlp = get_mlp_model(16, type="SP_tank_db").to("cuda")
+
+
+
+
+
 
 def score_feature_match(data, args, matcher):
     
@@ -525,9 +530,9 @@ def img_match_test(data: dict, encoder, matcher, mlp) -> Tuple[torch.Tensor, tor
 
 def save_matchimg(data, path):
     all_images, all_keypoints, all_matches = [], [], []
-    all_images.append([data["img0"], data["img1"]])
-    all_keypoints.append([data['kpt0'], data['kpt1']])
-    all_matches.append((data['mkpt0'], data['mkpt1']))
+    all_images.append([data["img0"].detach().cpu().numpy(), data["img1"].detach().cpu().numpy()])
+    all_keypoints.append([data['kpt0'].detach().cpu(), data['kpt1'].detach().cpu()])
+    all_matches.append((data['mkpt0'].detach().cpu(), data['mkpt1'].detach().cpu()))
     
     fig, axes = plot_image_grid(all_images, return_fig=True, set_lim=True)
     plot_keypoints(all_keypoints[0], axes=axes[0], colors="royalblue")

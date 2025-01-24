@@ -24,7 +24,8 @@ class Scene:
 
     gaussians : GaussianModel
 
-    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, shuffle=True, resolution_scales=[1.0]): 
+    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, shuffle=True, 
+                 resolution_scales=[1.0], load_feature=True, view_num=None): 
         """b
         :param path: Path to colmap scene main folder.
         """
@@ -43,7 +44,7 @@ class Scene:
         self.test_cameras = {}
 
         if os.path.exists(os.path.join(args.source_path, "train")):
-            scene_info = sceneLoadTypeCallbacks["Split"](args.source_path)
+            scene_info = sceneLoadTypeCallbacks["Split"](args.source_path, foundation_model=args.foundation_model, load_feature=load_feature, view_num=view_num)
         elif os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = sceneLoadTypeCallbacks["Colmap"](path=args.source_path, foundation_model=args.foundation_model, 
                                                           eval=args.eval, images=args.images)
@@ -77,8 +78,9 @@ class Scene:
         self.cameras_extent = scene_info.nerf_normalization["radius"]
 
         for resolution_scale in resolution_scales:
-            print("Loading Training Cameras")
-            self.train_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.train_cameras, resolution_scale, args)
+            if load_feature:
+                print("Loading Training Cameras")
+                self.train_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.train_cameras, resolution_scale, args)
             print("Loading Test Cameras")
             self.test_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.test_cameras, resolution_scale, args)
 
@@ -89,8 +91,6 @@ class Scene:
                                                            "point_cloud.ply"))
         else:
             self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent, scene_info.semantic_feature_dim, args.speedup) 
-
-
 
 
     def save(self, iteration):

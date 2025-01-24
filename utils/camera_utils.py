@@ -65,10 +65,11 @@ def loadCam(args, id, cam_info, resolution_scale):
     return Camera(colmap_id=cam_info.uid, R=cam_info.R, T=cam_info.T, 
                   FoVx=cam_info.FovX, FoVy=cam_info.FovY, 
                   image=gt_image, gt_alpha_mask=loaded_mask,
-                  image_name=cam_info.image_name, uid=id, semantic_feature = gt_semantic_feature,
+                  image_name=cam_info.image_name, uid=id, 
+                  semantic_feature = gt_semantic_feature,
                   score_feature = gt_score_feature, #
                   intrinsic_params = intrinsic_params,
-                  data_device=args.data_device) 
+                  data_device="cpu") 
 
 
 
@@ -76,7 +77,8 @@ def cameraList_from_camInfos(cam_infos, resolution_scale, args):
     camera_list = []
 
     for id, c in enumerate(cam_infos):
-        camera_list.append(loadCam(args, id, c, resolution_scale))
+        cam = loadCam(args, id, c, resolution_scale)
+        camera_list.append(cam)
 
     return camera_list
 

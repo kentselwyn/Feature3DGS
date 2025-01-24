@@ -12,8 +12,8 @@
 import torch
 import math
 # from diff_gaussian_rasterization_feature_dim8 import GaussianRasterizationSettings, GaussianRasterizer
-# from diff_gaussian_rasterization_feature_test_median_depth import GaussianRasterizationSettings, GaussianRasterizer
-from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
+from diff_gaussian_rasterization_feature_test_median_depth import GaussianRasterizationSettings, GaussianRasterizer
+# from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
 from scene.gaussian_model import GaussianModel
 from utils.sh_utils import eval_sh
 
@@ -114,11 +114,3 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             'feature_map': feature_map,
             'score_map': score_map,
             "depth": depth} ###d
-
-
-
-
-
-
-
-

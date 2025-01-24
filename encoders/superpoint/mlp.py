@@ -207,21 +207,87 @@ def get_mlp_model(dim = 16, type = "SP"):
         
 
 
-def get_mlp_dataset(dim=16, dataset="SP_7scenes_chess"):
-    CKPT_FOLDER = Path("/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7_scenes/pgt_7scenes_chess/mlpckpt")
-    if dataset=="SP_7scenes_chess":
+def get_mlp_dataset(dim=16, dataset="pgt_7scenes_chess"):
+    CKPT_FOLDER = Path(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc")
+    if dataset=="pgt_7scenes_chess":
         if dim==4:
-            model_path = CKPT_FOLDER/"type:SP_time:20241224_223934_dim4_batch64_lr0.0008_epoch5000/epoch_542.pt"
+            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20241224_223934_dim4_batch64_lr0.0008_epoch5000/epoch_542.pt"
             model = MLP_module_4_short()
             ckpt = torch.load(model_path)
             model.load_state_dict(ckpt)
         elif dim==8:
-            model_path = CKPT_FOLDER/"type:SP_time:20241224_213513_dim8_batch64_lr0.001_epoch10000/epoch_3948.pt"
+            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20241224_213513_dim8_batch64_lr0.001_epoch10000/epoch_9813.pt"
             model = MLP_module_8_short()
             ckpt = torch.load(model_path)
             model.load_state_dict(ckpt)
         elif dim==16:
-            model_path = CKPT_FOLDER/"type:SP_time:20241224_210047_dim16_batch64_lr0.001_epoch10000/epoch_2714.pt"
+            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20241224_210047_dim16_batch64_lr0.001_epoch10000/epoch_9810.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    if dataset=="pgt_7scenes_fire":
+        if dim==16:
+            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250107_162819_dim16_batch64_lr0.0008_epoch5000/epoch_1776.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    
+    if dataset=="pgt_7scenes_heads":
+        if dim==16:
+            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250115_024821_dim16_batch64_lr0.0008_epoch5000/epoch_2335.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    if dataset=="pgt_7scenes_office":
+        if dim==16:
+            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250115_030334_dim16_batch64_lr0.0008_epoch5000/epoch_791.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    if dataset=="pgt_7scenes_pumpkin":
+        if dim==16:
+            "type:SP_time:20250115_031231_dim16_batch64_lr0.0008_epoch5000"
+            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/epoch_852.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    if dataset=="pgt_7scenes_redkitchen":
+        if dim==16:
+            "type:SP_time:20250115_032624_dim16_batch64_lr0.0008_epoch5000"
+            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/epoch_456.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    
+    if dataset=="pgt_7scenes_stairs":
+        if dim==16:
+            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250107_160254_dim16_batch64_lr0.0008_epoch5000/epoch_1722.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    
+    if dataset=="Cambridge_KingsCollege":
+        if dim==16:
+            model_path = CKPT_FOLDER/f"Cambridge/{dataset}/mlpckpt/type:SP_time:20250107_161544_dim16_batch64_lr0.0008_epoch5000/epoch_2753.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    if dataset=="Cambridge_OldHospital":
+        if dim==16:
+            model_path = CKPT_FOLDER/f"Cambridge/{dataset}/mlpckpt/type:SP_time:20250107_162033_dim16_batch64_lr0.0008_epoch5000/epoch_4096.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    
+    if dataset=="Cambridge_ShopFacade":
+        if dim==16:
+            model_path = CKPT_FOLDER/f"Cambridge/{dataset}/mlpckpt/type:SP_time:20250115_034958_dim16_batch64_lr0.0008_epoch5000/epoch_4982.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    if dataset=="Cambridge_StMarysChurch":
+        if dim==16:
+            model_path = CKPT_FOLDER/f"Cambridge/{dataset}/mlpckpt/type:SP_time:20250115_035230_dim16_batch64_lr0.0008_epoch5000/epoch_2317.pt"
             model = MLP_module_16_short()
             ckpt = torch.load(model_path)
             model.load_state_dict(ckpt)
@@ -231,7 +297,7 @@ def get_mlp_dataset(dim=16, dataset="SP_7scenes_chess"):
 
 # python -m encoders.superpoint.mlp
 if __name__=="__main__":
-    model = get_mlp_model(16, "ALIKED")
+    model = get_mlp_dataset(16)
 
     breakpoint()
 

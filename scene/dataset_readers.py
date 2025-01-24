@@ -24,7 +24,7 @@ from utils.sh_utils import SH2RGB
 from scene.gaussian_model import BasicPointCloud
 from torchvision.transforms import PILToTensor
 import torch
-
+from encoders.superpoint.superpoint import SuperPoint
 
 
 class CameraInfo(NamedTuple):
@@ -183,7 +183,7 @@ def storePly(path, xyz, rgb):
 
 
 
-def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=None, llffhold=8):
+def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=None, llffhold=8, load_feature=True):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.bin")
@@ -295,7 +295,7 @@ def readCamerasFromTransforms(path, transformsfile, white_background, semantic_f
 
 
 
-def readNerfSyntheticInfo(path, foundation_model, white_background, eval, extension=".png"): 
+def readNerfSyntheticInfo(path, foundation_model, white_background, eval, extension=".png", load_feature=True): 
     if foundation_model =='sam':
         semantic_feature_dir = "sam_embeddings" 
     elif foundation_model =='lseg':
@@ -341,6 +341,9 @@ def readNerfSyntheticInfo(path, foundation_model, white_background, eval, extens
 
 
 
+
+
+
 def readSplit_cams_params(intrinsic_folder, extrinsic_folder):
 
     intrinsic_files = sorted(os.listdir(intrinsic_folder))
@@ -380,22 +383,24 @@ def readSplit_cams_params(intrinsic_folder, extrinsic_folder):
 
 
 @torch.inference_mode()
-def readSplitInfo(path, pcd = None):
+def readSplitInfo(path, foundation_model, pcd = None, load_feature=True, view_num=None):
     
     train_images_folder = os.path.join(path, "train/rgb")
     train_extrinsic_folder = os.path.join(path, "train/poses")
     train_intrinsic_folder = os.path.join(path, "train/calibration")
+    train_feature_folder = os.path.join(path, f"train/{foundation_model}")
     
     test_images_folder = os.path.join(path, "test/rgb")
     test_extrinsic_folder = os.path.join(path, "test/poses")
     test_intrinsic_folder = os.path.join(path, "test/calibration")
+    test_feature_folder = os.path.join(path, f"test/{foundation_model}")
 
     ply_path = os.path.join(path, "out.ply")
 
     scene_name = path.split("_")[-1]    
 
     if '7scenes' in path:
-        sfm_path = os.path.join(f"/home/koki/code/gsplatloc/datasets/7_scenes/7scenes_reference_models", 
+        sfm_path = os.path.join(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7scenes_reference_models", 
                                 scene_name, "old_gt_refined")
 
     elif 'Cambridge' in path:
@@ -409,6 +414,10 @@ def readSplitInfo(path, pcd = None):
     train_views = sorted(os.listdir(train_images_folder))
     test_views = sorted(os.listdir(test_images_folder))
 
+    if view_num is not None:
+        train_views = train_views[:view_num]
+        test_views = test_views[:view_num]
+
     train_cam_infos_unsorted = []
     test_cam_infos_unsorted = []
 
@@ -417,9 +426,8 @@ def readSplitInfo(path, pcd = None):
 
     width, height = Image.open(f"{train_images_folder}/{train_views[0]}").size
     
-    model = XFeat().cuda()
-
-
+    # model = SuperPoint().cuda()
+    
     for i, view in enumerate(train_views):
         sys.stdout.write('\r')
         sys.stdout.write(f"Reading {i+1} train / {len(train_views)} camera")
@@ -435,20 +443,45 @@ def readSplitInfo(path, pcd = None):
         FovX = focal2fov(focal_length_x, width)
 
         image_path = os.path.join(train_images_folder, view)
-        image_name = os.path.basename(image_path).split(".png")[0]
+        image_name = os.path.basename(image_path).split(".png")[0].split(".color")[0]
         image = Image.open(image_path)
       
-        tensor_image = PILToTensor()(image)[None].float()
-        semantic_feature = model.get_descriptors(tensor_image)[0].cpu()
-
-        # breakpoint()
-   
-        cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-                            image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1],
-                            semantic_feature=semantic_feature)
+        # tensor_image = PILToTensor()(image)[None].float()
+        # semantic_feature = model.get_descriptors(tensor_image)[0].cpu()
         
+        semantic_feature_path = os.path.join(train_feature_folder, image_name) + '_fmap.pt'
+        semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
+        if os.path.exists(semantic_feature_path) and load_feature:
+            semantic_feature = torch.load(semantic_feature_path)
+        else:
+            semantic_feature = None
+
+
+        score_feature_path = os.path.join(train_feature_folder, image_name) + '_smap.pt'
+        score_feature_name = os.path.basename(score_feature_path).split(".")[0]
+        if os.path.exists(score_feature_path) and load_feature:
+            score_feature = torch.load(score_feature_path)
+        else:
+            score_feature = None
+   
+        # cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+        #                     image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1],
+        #                     semantic_feature=semantic_feature)
+        
+        # CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+        #                       image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1],
+        #                       semantic_feature=semantic_feature,
+        #                       semantic_feature_path=semantic_feature_path,
+        #                       semantic_feature_name=semantic_feature_name)
+        
+        cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+                            image_path=image_path, image_name=image_name,
+                            intrinsic_params=None,
+                            width=width, height=height,
+                            semantic_feature=semantic_feature,           score_feature = score_feature,
+                            semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
+                            semantic_feature_name=semantic_feature_name, score_feature_name = score_feature_name)
         train_cam_infos_unsorted.append(cam_info)
-    
 
     for i, view in enumerate(test_views):
         sys.stdout.write('\r')
@@ -465,21 +498,37 @@ def readSplitInfo(path, pcd = None):
         FovX = focal2fov(focal_length_x, width)
 
         image_path = os.path.join(test_images_folder, view)
-        image_name = os.path.basename(image_path).split(".png")[0]
+        image_name = os.path.basename(image_path).split(".png")[0].split(".color")[0]
         image = Image.open(image_path)
-      
-        tensor_image = PILToTensor()(image)[None].float()
-        semantic_feature = model.get_descriptors(tensor_image)[0].cpu()
+
+
+        semantic_feature_path = os.path.join(test_feature_folder, image_name) + '_fmap.pt'
+        semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
+        if os.path.exists(semantic_feature_path) and load_feature:
+            semantic_feature = torch.load(semantic_feature_path)
+        else:
+            semantic_feature = None
+
+        score_feature_path = os.path.join(test_feature_folder, image_name) + '_smap.pt'
+        score_feature_name = os.path.basename(score_feature_path).split(".")[0]
+        if os.path.exists(score_feature_path) and load_feature:
+            score_feature = torch.load(score_feature_path)
+        else:
+            score_feature = None
+
 
         cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-                            image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1],
-                            semantic_feature=semantic_feature)
+                            image_path=image_path, image_name=image_name,
+                            intrinsic_params=None,
+                            width=width, height=height,
+                            semantic_feature=semantic_feature,           score_feature = score_feature,
+                            semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
+                            semantic_feature_name=semantic_feature_name, score_feature_name = score_feature_name)
         test_cam_infos_unsorted.append(cam_info)
 
 
     train_cam_infos = sorted(train_cam_infos_unsorted, key = lambda x : x.image_name)
     test_cam_infos = sorted(test_cam_infos_unsorted, key = lambda x : x.image_name)
-
 
     print(f"\nTotal cams: {len(train_cam_infos)+len(test_cam_infos)}")
     nerf_normalization = getNerfppNorm(train_cam_infos)
@@ -513,7 +562,10 @@ def readSplitInfo(path, pcd = None):
         print("Error reading .ply file. Using default point cloud.")
         pcd = None
     
-    semantic_feature_dim = train_cam_infos[0].semantic_feature.shape[0]
+    if train_cam_infos[0].semantic_feature is not None:
+        semantic_feature_dim = train_cam_infos[0].semantic_feature.shape[0]
+    else:
+        semantic_feature_dim = None
 
     scene_info = SceneInfo(point_cloud=pcd,
                            train_cameras=train_cam_infos,

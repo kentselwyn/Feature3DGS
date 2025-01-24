@@ -67,10 +67,14 @@ class MLPDataset(Dataset):
     def __len__(self):
         return len(self.data)
 
-
-NAME = "pgt_7scenes_chess"
+# Cambridge
+# 7_scenes
+SCENE = "Cambridge"
+# Cambridge_StMarysChurch
+# pgt_7scenes_redkitchen
+NAME = "Cambridge_StMarysChurch"
 MODEL = "SP"
-all_path = f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7_scenes/{NAME}"
+all_path = f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/{SCENE}/{NAME}"
 
 
 
@@ -78,7 +82,7 @@ conf = {
     "dim": None,
     "folder_path": f"{all_path}/mlpckpt",
     "fea_path": f"{all_path}/desc_data/r1024_SP-k1024-nms4-{NAME}.h5",
-    "load_ckpt": "/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7_scenes/pgt_7scenes_chess/mlpckpt/type:SP_time:20241224_215131_dim4_batch64_lr0.001_epoch1000/epoch_994.pt",
+    "load_ckpt": None,
     "train":{
         "epochs": 5000,
         "start_epoch": 2500,
@@ -142,7 +146,7 @@ def main(conf):
     set_seed(conf.train.seed)
 
     dataset_size = len(dataset)
-    train_size = int(0.8 * dataset_size)
+    train_size = int(0.98 * dataset_size)
     val_size = dataset_size - train_size
 
     train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
@@ -221,14 +225,13 @@ def print_hdf5_structure(file_path):
 
 
 
-# nohup python -u -m mlp.train --dim 16 > /home/koki/code/cc/feature_3dgs_2/log_dim4_2.txt 2>&1 &
+# nohup python -u -m mlp.train --dim 16 > /home/koki/code/cc/feature_3dgs_2/log_dim16_StMarysChurch.txt 2>&1 &
 if __name__=="__main__":
     conf = OmegaConf.create(conf)
     parser = ArgumentParser()
     parser.add_argument(
         "--dim",
         type=int,
-        default="/home/koki/code/cc/feature_3dgs_2/all_data/scene0000_01/B",
     )
     args = parser.parse_args()
     conf.dim = args.dim

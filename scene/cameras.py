@@ -16,11 +16,14 @@ from utils.graphics_utils import getWorld2View2, getProjectionMatrix, getIntrins
 
 class Camera(nn.Module):
     def __init__(self, colmap_id, R, T, FoVx, FoVy, image, gt_alpha_mask,
-                 image_name, uid, semantic_feature,
+                 image_name, uid, 
+                 semantic_feature,
                  score_feature, #
                  intrinsic_params,
-                 trans=np.array([0.0, 0.0, 0.0]), scale=1.0, data_device = "cuda"
-                 ): 
+                 trans=np.array([0.0, 0.0, 0.0]), 
+                 scale=1.0, 
+                 data_device = "cpu"
+        ): 
         super(Camera, self).__init__()
 
         self.uid = uid
@@ -62,17 +65,27 @@ class Camera(nn.Module):
         self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
         self.camera_center = self.world_view_transform.inverse()[3, :3]
 
-        K = getIntrinsicMatrix(intrinsic_params)
+        
         # scale_x = self.image_width / 1296.
         # scale_y = self.image_height / 968.
         # K[0, 0] *= scale_x  # fx
         # K[1, 1] *= scale_y  # fy
         # K[0, 2] *= scale_x  # cx
         # K[1, 2] *= scale_y  # cy
-        self.intrinsic_matrix = K
+        
         self.extrinsic_matrix = getWorld2View2(R, T, trans, scale)
 
-        self.intrinsic_params = intrinsic_params
+        if intrinsic_params is not None:
+            K = getIntrinsicMatrix(intrinsic_params)
+            self.intrinsic_matrix = K
+            self.intrinsic_params = intrinsic_params
+    def update_RT(self, R, t):
+        self.R = R
+        self.T = t
+        self.world_view_transform = torch.tensor(getWorld2View2(self.R, self.T, self.trans, self.scale)).transpose(0, 1).cuda()
+        self.projection_matrix = getProjectionMatrix(znear=self.znear, zfar=self.zfar, fovX=self.FoVx, fovY=self.FoVy).transpose(0,1).cuda()
+        self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
+        self.camera_center = self.world_view_transform.inverse()[3, :3]
 
         
 
