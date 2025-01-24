@@ -14,7 +14,7 @@ from arguments import ModelParams, PipelineParams, get_combined_args, get_args
 from encoders.superpoint.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from utils.match_img import score_feature_one
-from eval import save_matchimg, backproject_depth, umeyama_alignment, compute_registration_error_w_scale
+from eval.eval import save_matchimg, backproject_depth, umeyama_alignment, compute_registration_error_w_scale
 from utils.metrics_match import compute_metrics
 from pprint import pprint
 from utils.vis_scoremap import one_channel_vis

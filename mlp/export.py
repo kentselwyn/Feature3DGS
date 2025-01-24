@@ -9,7 +9,9 @@ from .image import ImagePreprocessor, load_image
 from .export_predictions import export_predictions
 from encoders.superpoint.superpoint import SuperPoint
 
-path = Path(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7_scenes/pgt_7scenes_chess/train/rgb")
+
+path = Path(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/Cambridge/Cambridge_StMarysChurch/train/rgb")
+scene_name = path.parts[-4]
 data_name = path.parts[-3]
 
 random.seed(0)
@@ -101,7 +103,7 @@ def run_export(args, feature_file):
 
 
 
-data_path = f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7_scenes/{data_name}/desc_data"
+data_path = f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/{scene_name}/{data_name}/desc_data"
 
 
 # python -m mlp.export --method sp

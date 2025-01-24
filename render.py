@@ -145,6 +145,8 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, '{0:05d}'.format(idx) + "_smap.pt"))
         #############
 
+        if idx==200:
+            break
 
 
 # novel view render
@@ -380,22 +382,27 @@ def render_pairs(model_path, feature_name, img_name, name, iteration, views, gau
 
 
 # render all
-def render_sets(model_param : ModelParams, iteration : int, pipe_param : PipelineParams, skip_train : bool, skip_test : bool, 
-                novel_view:bool, pairs:bool, multi_interpolate:bool, num_views:int, img_name:str):
+def render_sets(model_param : ModelParams, iteration : int, pipe_param : PipelineParams, skip_train : bool, 
+                skip_test : bool, 
+                novel_view:bool, pairs:bool, multi_interpolate:bool, num_views:int, img_name:str, view_num:int):
     with torch.no_grad():
         gaussians = GaussianModel(model_param.sh_degree)
-        scene = Scene(model_param, gaussians, load_iteration=iteration, shuffle=False)
+        scene = Scene(model_param, gaussians, load_iteration=iteration, shuffle=False, view_num=view_num)
 
         bg_color = [1,1,1] if model_param.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
         if not skip_train:
-            render_set(model_param.model_path, "rendering/trains", scene.loaded_iter, scene.getTrainCameras(), 
-                       gaussians, pipe_param, background, model_param.speedup)
+            render_set(model_param.model_path, "rendering/trains", scene.loaded_iter, 
+                       scene.getTrainCameras(), 
+                       gaussians, pipe_param, background, 
+                       model_param.speedup)
 
         if not skip_test:
-            render_set(model_param.model_path, "rendering/test", scene.loaded_iter, scene.getTestCameras(), 
-                       gaussians, pipe_param, background, model_param.speedup)
+            render_set(model_param.model_path, "rendering/test", scene.loaded_iter, 
+                       scene.getTestCameras(), 
+                       gaussians, pipe_param, background, 
+                       model_param.speedup)
 
         if novel_view:
             render_novel_views(model_param.model_path, "rendering/novel_views", scene.loaded_iter, scene.getTrainCameras(), 
@@ -424,6 +431,7 @@ if __name__ == "__main__":
     parser.add_argument("--multi_interpolate", action="store_true") ###
     parser.add_argument("--num_views", default=100, type=int)
     parser.add_argument("--pairs", action="store_true")
+    parser.add_argument("--view_num", default=None, type=int)
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
     print(args.source_path)
@@ -431,7 +439,7 @@ if __name__ == "__main__":
     safe_state(args.quiet)
     render_sets(Model_param.extract(args), args.iteration, Pipe_param.extract(args), 
                 args.skip_train, args.skip_test, args.novel_view, args.pairs,
-                args.multi_interpolate, args.num_views, args.images)
+                args.multi_interpolate, args.num_views, args.images, args.view_num)
     
     
 
