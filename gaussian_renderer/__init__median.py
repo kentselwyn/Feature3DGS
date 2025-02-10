@@ -8,13 +8,23 @@
 #
 # For inquiries contact  george.drettakis@inria.fr
 #
-
+import os
 import torch
 import math
-# from diff_gaussian_rasterization_feature_dim8 import GaussianRasterizationSettings, GaussianRasterizer
-from diff_gaussian_rasterization_feature_test_median_depth import GaussianRasterizationSettings, GaussianRasterizer
-# from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
 from scene.gaussian_model import GaussianModel
+
+mlp_dim = int(os.getenv("MLP_DIM", "16"))
+depth_render = bool(os.getenv("DEPTH_RENSER", False))
+
+if mlp_dim==16:
+    if depth_render:
+        from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
+    else:
+        from diff_gaussian_rasterization_feature_test_median_depth import GaussianRasterizationSettings, GaussianRasterizer
+elif mlp_dim==32:
+    from diff_gaussian_rasterization_feature_test_dim32_median_depth import GaussianRasterizationSettings, GaussianRasterizer
+elif mlp_dim==64:
+    from diff_gaussian_rasterization_feature_test_dim64_median_depth import GaussianRasterizationSettings, GaussianRasterizer
 from utils.sh_utils import eval_sh
 
 

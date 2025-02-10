@@ -8,12 +8,20 @@
 #
 # For inquiries contact  george.drettakis@inria.fr
 #
-
+import os
 import torch
 import math
-# from diff_gaussian_rasterization_feature_dim8 import GaussianRasterizationSettings, GaussianRasterizer
+
+mlp_dim = int(os.getenv("MLP_DIM", "16"))
+if mlp_dim==16:
+    from diff_gaussian_rasterization_feature_test_dim16 import GaussianRasterizationSettings, GaussianRasterizer
+elif mlp_dim==32:
+    from diff_gaussian_rasterization_feature_test_dim32 import GaussianRasterizationSettings, GaussianRasterizer
+elif mlp_dim==64:
+    from diff_gaussian_rasterization_feature_test_dim64 import GaussianRasterizationSettings, GaussianRasterizer
+
 # from diff_gaussian_rasterization_feature_test_median_depth import GaussianRasterizationSettings, GaussianRasterizer
-from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
+# from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
 from scene.gaussian_model import GaussianModel
 from utils.sh_utils import eval_sh
 
@@ -91,7 +99,16 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     var_loss = torch.zeros(1,viewpoint_camera.image_height,viewpoint_camera.image_width) ###d
 
 
-
+    # print(means3D.device)
+    # print(means2D.device)
+    # print(shs.device)
+    # # print(colors_precomp.device)
+    # print(semantic_feature.device)
+    # print(score_feature.device)
+    # print(opacity.device)
+    # print(scales.device)
+    # print(rotations.device)
+    # breakpoint()
     # Rasterize visible Gaussians to image, obtain their radii (on screen). 
     rendered_image, feature_map, score_map, radii, depth = rasterizer(
         means3D = means3D,
