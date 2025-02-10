@@ -51,7 +51,7 @@ def export_predictions(
         #         scales = 1.0 / (data["scales"] if len(idx) == 0 
         #                                         else data[f"view{idx}"]["scales"])
         #         pred[key] = pred[key] * scales[None]
-
+        # breakpoint()
         pred = {key: value[0].cpu().numpy() for key, value in pred.items()}
 
         if as_half:

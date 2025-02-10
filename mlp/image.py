@@ -8,7 +8,6 @@ import torch
 from omegaconf import OmegaConf
 
 
-
 class ImagePreprocessor:
     default_conf = {
         "resize": None,  # target edge length, None for no resizing
@@ -98,12 +97,6 @@ class ImagePreprocessor:
         return size
 
 
-
-
-
-
-
-
 def read_image(path: Path, grayscale: bool = False) -> np.ndarray:
     """Read an image from path as RGB or grayscale"""
     if not Path(path).exists():
@@ -133,11 +126,6 @@ def load_image(path: Path, grayscale=False) -> torch.Tensor:
     return numpy_image_to_torch(image)
 
 
-
-
-
-
-
 if __name__=="__main__":
     conf = {
         "resize": 256,
@@ -149,9 +137,3 @@ if __name__=="__main__":
     processed_data = preprocessor(image_tensor)
 
     print(processed_data["image"].shape)  # Check the shape of the processed image
-
-
-
-
-
-

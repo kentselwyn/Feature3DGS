@@ -41,3 +41,12 @@ bash zenith_scripts/render_7scenes.sh
     ```
     bash zenith_scripts/loc_inference.sh
     ```
+
+
+Pipeline
+1. export MLP dataset ->                                  (bash zenith_scripts/export.sh)
+2. train MLP(use b5,b6) ->                                (bash zenith_scripts/mlp_train.sh)
+3. use MLP build gaussian feature set(tarin+test) ->      (bash zenith_scripts/dataset_build.sh)
+4. train gaussian ->                                      (bash zenith_scripts/train.sh)
+4. render gaussian ->                                     (bash zenith_scripts/render.sh)
+5. localization inference(need to change to depth median) (bash zenith_scripts/loc_inference.sh)

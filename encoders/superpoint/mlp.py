@@ -50,9 +50,36 @@ class MLP_module_16_short(nn.Module):
         desc_back = self.MLP_de(desc_mlp)
         return desc_back
 
+class MLP_module_32_short(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.MLP    = MLP(in_features=256, out_features=32   , num_cells=[128, 64, 32])
+        self.MLP_de = MLP(in_features=32,   out_features=256,  num_cells=[32, 64, 128])
+        # for p in self.parameters():
+        #     p.requires_grad = False
+    def forward(self, desc: torch.Tensor):
+        desc_mlp = self.MLP(desc)
+        # desc_back = self.MLP_de(desc_mlp)
+        return desc_mlp
+    def decode(self, desc_mlp: torch.Tensor):
+        desc_back = self.MLP_de(desc_mlp)
+        return desc_back
 
 
-
+class MLP_module_64_short(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.MLP    = MLP(in_features=256, out_features=64   , num_cells=[128, 64, 64])
+        self.MLP_de = MLP(in_features=64,   out_features=256,  num_cells=[64, 64, 128])
+        # for p in self.parameters():
+        #     p.requires_grad = False
+    def forward(self, desc: torch.Tensor):
+        desc_mlp = self.MLP(desc)
+        # desc_back = self.MLP_de(desc_mlp)
+        return desc_mlp
+    def decode(self, desc_mlp: torch.Tensor):
+        desc_back = self.MLP_de(desc_mlp)
+        return desc_back
 
 
 class MLP_module_8_128(nn.Module):
@@ -96,9 +123,8 @@ class MLP_module_16_128(nn.Module):
         return desc_back
 
 
-# "/mnt/home_6T/public/koki/ckpt/mlp/Superpoint/"
-
 CKPT_FOLDER = Path("/mnt/home_6T/public/koki/mlpckpt/ckpt/")
+
 
 def get_mlp_model(dim = 16, type = "SP"):
     if type=="SP_scannet":
@@ -206,7 +232,6 @@ def get_mlp_model(dim = 16, type = "SP"):
     return model
         
 
-
 def get_mlp_dataset(dim=16, dataset="pgt_7scenes_chess"):
     CKPT_FOLDER = Path(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc")
     if dataset=="pgt_7scenes_chess":
@@ -265,6 +290,16 @@ def get_mlp_dataset(dim=16, dataset="pgt_7scenes_chess"):
             model = MLP_module_16_short()
             ckpt = torch.load(model_path)
             model.load_state_dict(ckpt)
+        if dim==32:
+            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250203_064553_dim32_batch64_lr0.0008_epoch5000/epoch_1212.pt"
+            model = MLP_module_32_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        if dim==64:
+            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250203_065135_dim64_batch64_lr0.0008_epoch5000/epoch_1722.pt"
+            model = MLP_module_64_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
     
     if dataset=="Cambridge_KingsCollege":
         if dim==16:
@@ -291,14 +326,39 @@ def get_mlp_dataset(dim=16, dataset="pgt_7scenes_chess"):
             model = MLP_module_16_short()
             ckpt = torch.load(model_path)
             model.load_state_dict(ckpt)
+    
+    if dataset=="Cambridge":
+        if dim==16:
+            model_path = CKPT_FOLDER/f"Cambridge/mlpckpt/type:SP_time:20250204_235348_dim16_batch64_lr0.0008_epoch5000/epoch_1015.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        if dim==32:
+            model_path = CKPT_FOLDER/f"Cambridge/mlpckpt/type:SP_time:20250204_234918_dim32_batch64_lr0.0008_epoch5000/epoch_910.pt"
+            model = MLP_module_32_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        if dim==64:
+            model_path = CKPT_FOLDER/f"Cambridge/mlpckpt/type:SP_time:20250204_235020_dim64_batch64_lr0.0008_epoch5000/epoch_981.pt"
+            model = MLP_module_64_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
     return model
 
+
+def get_mlp_augment(dim=16, dataset=None):
+    CKPT_FOLDER = Path(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc")
+    scene_name = dataset[8:]
+    if scene_name=="pgt_7scenes_stairs":
+        if dim==16:
+            model_path = CKPT_FOLDER/f"7_scenes/{scene_name}/mlpckpt/type:SP_time:20250207_192934_dim16_batch64_lr0.0008_epoch4000_descr640_SP-k1024-nms4-7_scenes_pgt_7scenes_stairs-auglg_setlen20/epoch_112.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    return model
 
 
 # python -m encoders.superpoint.mlp
 if __name__=="__main__":
-    model = get_mlp_dataset(16)
-
+    model = get_mlp_augment(dim=16, dataset="augment_pgt_7scenes_stairs")
     breakpoint()
-
-

@@ -88,12 +88,12 @@ class MLP_module_32_short(nn.Module):
         super().__init__()
         self.MLP    = MLP(in_features=256, out_features=32   , num_cells=[128, 64, 32])
         self.MLP_de = MLP(in_features=32,   out_features=256,  num_cells=[32, 64, 128])
-        for p in self.parameters():
-            p.requires_grad = False
+        # for p in self.parameters():
+        #     p.requires_grad = False
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
         desc_back = self.MLP_de(desc_mlp)
-        return desc_mlp, desc_back
+        return desc_back
 
 
 class MLP_module_64_short(nn.Module):
@@ -101,10 +101,12 @@ class MLP_module_64_short(nn.Module):
         super().__init__()
         self.MLP    = MLP(in_features=256, out_features=64   , num_cells=[128, 64, 64])
         self.MLP_de = MLP(in_features=64,   out_features=256,  num_cells=[64, 64, 128])
+        # for p in self.parameters():
+        #     p.requires_grad = False
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
         desc_back = self.MLP_de(desc_mlp)
-        return desc_mlp, desc_back
+        return desc_back
 
 
 class MLP_module_128_short(nn.Module):
@@ -255,6 +257,10 @@ def get_mlp(dim = 16):
         model = MLP_module_8_short()
     elif dim==16:
         model = MLP_module_16_short()
+    elif dim==32:
+        model = MLP_module_32_short()
+    elif dim==64:
+        model = MLP_module_64_short()
     else:
         model=None
     return model

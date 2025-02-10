@@ -15,6 +15,7 @@ data/mlpckpt
 data/vis_loc
 data_scannet
 scene000000_B/
+submodules/diff-gaussian-rasterization-feature-gg/third_party
 submodules/diff-gaussian-rasterization-feature/third_party
 SIBR_viewers
 viewer_windows/
@@ -31,3 +32,5 @@ simple_knn_b4.egg-info/
 simple_knn.egg-info/
 visloc_pseudo_gt_limitations/
 **.egg-info
+test_imgs/
+ace_encoder_pretrained.pt
