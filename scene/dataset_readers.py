@@ -11,20 +11,18 @@
 
 import os
 import sys
+import json
+import torch
+import numpy as np
 from PIL import Image
+from pathlib import Path
 from typing import NamedTuple
+from utils.sh_utils import SH2RGB
+from plyfile import PlyData, PlyElement
+from scene.gaussian_model import BasicPointCloud
+from utils.graphics_utils import getWorld2View2, focal2fov, fov2focal
 from scene.colmap_loader import read_extrinsics_text, read_intrinsics_text, qvec2rotmat, \
     read_extrinsics_binary, read_intrinsics_binary, read_points3D_binary, read_points3D_text, read_points3D_nvm
-from utils.graphics_utils import getWorld2View2, focal2fov, fov2focal
-import numpy as np
-import json
-from pathlib import Path
-from plyfile import PlyData, PlyElement
-from utils.sh_utils import SH2RGB
-from scene.gaussian_model import BasicPointCloud
-from torchvision.transforms import PILToTensor
-import torch
-from encoders.superpoint.superpoint import SuperPoint
 
 
 class CameraInfo(NamedTuple):
@@ -224,7 +222,6 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
         print("Converting point3d.bin to .ply, will happen only the first time you open the scene.")
         try:
             xyz, rgb, _ = read_points3D_binary(bin_path)
-            
         except:
             xyz, rgb, _ = read_points3D_text(txt_path)
         storePly(ply_path, xyz, rgb)
@@ -448,7 +445,6 @@ def readSplitInfo(path, foundation_model, pcd = None, load_feature=True, view_nu
       
         # tensor_image = PILToTensor()(image)[None].float()
         # semantic_feature = model.get_descriptors(tensor_image)[0].cpu()
-        
         semantic_feature_path = os.path.join(train_feature_folder, image_name) + '_fmap.pt'
         semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
         if os.path.exists(semantic_feature_path) and load_feature:
@@ -463,16 +459,6 @@ def readSplitInfo(path, foundation_model, pcd = None, load_feature=True, view_nu
             score_feature = torch.load(score_feature_path)
         else:
             score_feature = None
-   
-        # cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-        #                     image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1],
-        #                     semantic_feature=semantic_feature)
-        
-        # CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-        #                       image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1],
-        #                       semantic_feature=semantic_feature,
-        #                       semantic_feature_path=semantic_feature_path,
-        #                       semantic_feature_name=semantic_feature_name)
         
         cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                             image_path=image_path, image_name=image_name,
@@ -573,7 +559,7 @@ def readSplitInfo(path, foundation_model, pcd = None, load_feature=True, view_nu
                            nerf_normalization=nerf_normalization,
                            ply_path=ply_path,
                            semantic_feature_dim=semantic_feature_dim)
-
+    # breakpoint()
     return scene_info
 
 

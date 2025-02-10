@@ -10,9 +10,9 @@
 #
 import os
 import torch
-import numpy as np
 import sklearn
 import torchvision
+import numpy as np
 from PIL import Image
 import torch.nn as nn
 from tqdm import tqdm
@@ -30,9 +30,6 @@ from gaussian_renderer import GaussianModel
 from utils.graphics_utils import getWorld2View2
 from utils.vis_scoremap import one_channel_vis
 from arguments import ModelParams, PipelineParams, get_combined_args
-
-
-
 
 
 # utils
@@ -76,9 +73,6 @@ def multi_interpolate_matrices(matrix, num_interpolations):
     return np.array(interpolated_matrices)
 
 
-
-
-
 # render train, test
 def render_set(model_path, name, iteration, views, gaussians, pipe_param, background, speedup):
     render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "image_renders")
@@ -104,13 +98,11 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
     makedirs(saved_score_path, exist_ok=True)
 
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
-        render_pkg = render(view, gaussians, pipe_param, background) 
-
+        render_pkg = render(view, gaussians, pipe_param, background)
         gt = view.original_image[0:3, :, :]
         gt_feature_map = view.semantic_feature.cuda() 
         torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, '{0:05d}'.format(idx) + ".png")) 
         torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
-
 
         ############## visualize feature map
         feature_map = render_pkg["feature_map"][:16]
@@ -126,7 +118,6 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         feature_map = feature_map.cpu().numpy().astype(np.float16)
         torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, '{0:05d}'.format(idx) + "_fmap.pt"))
         #############
-
 
         ############# score map
         score_map = render_pkg['score_map']
@@ -144,9 +135,6 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         score_map = score_map.cpu().numpy().astype(np.float16)
         torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, '{0:05d}'.format(idx) + "_smap.pt"))
         #############
-
-        if idx==200:
-            break
 
 
 # novel view render
@@ -371,14 +359,10 @@ def render_pairs(model_path, feature_name, img_name, name, iteration, views, gau
         
         # gt_score_map_vis = one_channel_vis(gt_score_map)
         # gt_score_map_vis.save(os.path.join(gt_score_map_path, '{}'.format(view.image_name) + "_score_vis.png"))
-        
         # save feature map
         score_map = score_map.cpu().numpy().astype(np.float16)
         torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, '{}'.format(view.image_name) + "_smap.pt"))
         #############
-
-
-
 
 
 # render all
@@ -387,7 +371,9 @@ def render_sets(model_param : ModelParams, iteration : int, pipe_param : Pipelin
                 novel_view:bool, pairs:bool, multi_interpolate:bool, num_views:int, img_name:str, view_num:int):
     with torch.no_grad():
         gaussians = GaussianModel(model_param.sh_degree)
-        scene = Scene(model_param, gaussians, load_iteration=iteration, shuffle=False, view_num=view_num)
+        if view_num==-1:
+            view_num = None
+        scene = Scene(model_param, gaussians, load_iteration=iteration, shuffle=False, view_num=view_num, load_feature=True)
 
         bg_color = [1,1,1] if model_param.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
@@ -414,10 +400,6 @@ def render_sets(model_param : ModelParams, iteration : int, pipe_param : Pipelin
                          scene.getTrainCameras(), gaussians, pipe_param, background)
 
 
-
-
-
-
 if __name__ == "__main__":
     # Set up command line argument parser
     parser = ArgumentParser(description="Testing script parameters")
@@ -431,7 +413,7 @@ if __name__ == "__main__":
     parser.add_argument("--multi_interpolate", action="store_true") ###
     parser.add_argument("--num_views", default=100, type=int)
     parser.add_argument("--pairs", action="store_true")
-    parser.add_argument("--view_num", default=None, type=int)
+    parser.add_argument("--view_num", default=-1, type=int)
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
     print(args.source_path)
@@ -439,9 +421,4 @@ if __name__ == "__main__":
     safe_state(args.quiet)
     render_sets(Model_param.extract(args), args.iteration, Pipe_param.extract(args), 
                 args.skip_train, args.skip_test, args.novel_view, args.pairs,
-                args.multi_interpolate, args.num_views, args.images, args.view_num)
-    
-    
-
-
-    
+                args.multi_interpolate, args.num_views, args.images, args.view_num)    

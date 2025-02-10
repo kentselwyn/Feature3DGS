@@ -9,21 +9,20 @@
 # For inquiries contact  george.drettakis@inria.fr
 #
 
-
+import os
 import torch
 import numpy as np
-from utils.general_utils import inverse_sigmoid, get_expon_lr_func, build_rotation
 from torch import nn
-import os
-from utils.system_utils import mkdir_p
-from plyfile import PlyData, PlyElement
 from utils.sh_utils import RGB2SH
 from simple_knn._C import distCUDA2
+from utils.system_utils import mkdir_p
+from plyfile import PlyData, PlyElement
 from utils.graphics_utils import BasicPointCloud
 from utils.general_utils import strip_symmetric, build_scaling_rotation
+from utils.general_utils import inverse_sigmoid, get_expon_lr_func, build_rotation
+
 
 class GaussianModel:
-
     def setup_functions(self):
         def build_covariance_from_scaling_rotation(scaling, scaling_modifier, rotation):
             L = build_scaling_rotation(scaling_modifier * scaling, rotation)
@@ -154,9 +153,8 @@ class GaussianModel:
         if speedup: # speed up for Segmentation
             semantic_feature_size = int(semantic_feature_size/4)
         self._semantic_feature = torch.zeros(fused_point_cloud.shape[0], semantic_feature_size, 1).float().cuda()
+        # self._semantic_feature = torch.zeros(fused_point_cloud.shape[0], 8, 1).float().cuda()
         self._score_feature = torch.zeros(fused_point_cloud.shape[0], 1, 1).float().cuda()
-
-
         print("Number of points at initialisation : ", fused_point_cloud.shape[0])
 
         dist2 = torch.clamp_min(distCUDA2(torch.from_numpy(np.asarray(pcd.points)).float().cuda()), 0.0000001)
@@ -175,8 +173,6 @@ class GaussianModel:
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
         self._semantic_feature = nn.Parameter(self._semantic_feature.transpose(1, 2).contiguous().requires_grad_(True))
         self._score_feature = nn.Parameter(self._score_feature.transpose(1, 2).contiguous().requires_grad_(True))
-
-
 
 
     def training_setup(self, training_args):

@@ -10,17 +10,20 @@
 #
 
 import os
-import torch
-from random import randint
-from utils.loss_utils import l1_loss, ssim, tv_loss, l2_loss, weighted_l2
-from gaussian_renderer import render, network_gui
 import sys
-from scene import Scene, GaussianModel
-from utils.general_utils import safe_state
 import uuid
+import torch
 from tqdm import tqdm
-from utils.image_utils import psnr, render_net_image
+from random import randint
+from datetime import datetime
+import torch.nn.functional as F
+from utils.image_utils import psnr
+from gaussian_renderer import render
+from scene import Scene, GaussianModel
+from models.networks import CNN_decoder
+from utils.general_utils import safe_state
 from argparse import ArgumentParser, Namespace
+from utils.loss_utils import l1_loss, ssim, l2_loss, weighted_l2
 from arguments import ModelParams, PipelineParams, OptimizationParams
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -28,20 +31,14 @@ try:
 except ImportError:
     TENSORBOARD_FOUND = False
 
-import torch.nn.functional as F
-from models.networks import CNN_decoder
-from datetime import datetime
 
-
-
-def prepare_output_and_logger(args):    
+def prepare_output_and_logger(args):
     if not args.model_path:
         if os.getenv('OAR_JOB_ID'):
             unique_str=os.getenv('OAR_JOB_ID')
         else:
             unique_str = str(uuid.uuid4())
         args.model_path = os.path.join("./output/", unique_str[0:10])
-        
     # Set up output folder
     print("Output folder: {}".format(args.model_path))
     os.makedirs(args.model_path, exist_ok = True)
@@ -58,8 +55,6 @@ def prepare_output_and_logger(args):
     return tb_writer
 
 
-
-
 def training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_loss, elapsed, testing_iterations, scene : Scene, renderFunc, renderArgs):
     if tb_writer:
         tb_writer.add_scalar('train_loss_patches/l1_loss_RGB', Ll1.item(), iteration)
@@ -67,13 +62,11 @@ def training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_
         tb_writer.add_scalar('train_loss_patches/loss_score', Ll1_score.item(), iteration)
         tb_writer.add_scalar('train_loss_patches/total_loss', loss.item(), iteration)
         tb_writer.add_scalar('iter_time', elapsed, iteration)
-
     # Report test and samples of training set
     if iteration in testing_iterations:
         torch.cuda.empty_cache()
         validation_configs = ({'name': 'test', 'cameras' : scene.getTestCameras()}, 
                               {'name': 'train', 'cameras' : [scene.getTrainCameras()[idx % len(scene.getTrainCameras())] for idx in range(5, 30, 5)]})
-
         for config in validation_configs:
             if config['cameras'] and len(config['cameras']) > 0:
                 l1_test = 0.0
@@ -93,13 +86,10 @@ def training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_
                 if tb_writer:
                     tb_writer.add_scalar(config['name'] + '/loss_viewpoint - l1_loss', l1_test, iteration)
                     tb_writer.add_scalar(config['name'] + '/loss_viewpoint - psnr', psnr_test, iteration)
-
         if tb_writer:
             tb_writer.add_histogram("scene/opacity_histogram", scene.gaussians.get_opacity, iteration)
             tb_writer.add_scalar('total_points', scene.gaussians.get_xyz.shape[0], iteration)
         torch.cuda.empty_cache()
-
-
 
 
 def training(model_param, opt_param, pipe_param, testing_iterations, saving_iterations, 
@@ -114,17 +104,12 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
     viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
     gt_feature_map = viewpoint_cam.semantic_feature.cuda()
     feature_out_dim = gt_feature_map.shape[0]
-
-
     gt_score_map = viewpoint_cam.score_feature.cuda()
-
-    
     # speed up
     if model_param.speedup:
         feature_in_dim = int(feature_out_dim/4)
         cnn_decoder = CNN_decoder(feature_in_dim, feature_out_dim)
         cnn_decoder_optimizer = torch.optim.Adam(cnn_decoder.parameters(), lr=0.0001)
-
 
     gaussians.training_setup(opt_param)
     if checkpoint:
@@ -142,56 +127,40 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
     progress_bar = tqdm(range(first_iter, opt_param.iterations), desc="Training progress")
     first_iter += 1
 
+    torch.autograd.set_detect_anomaly(True)
+
     for iteration in range(first_iter, opt_param.iterations + 1):
-
         iter_start.record()
-
         gaussians.update_learning_rate(iteration)
-
         # Every 1000 its we increase the levels of SH up to a maximum degree
         if iteration % 1000 == 0:
             gaussians.oneupSHdegree()
-
         # Pick a random Camera
         if not viewpoint_stack:
             viewpoint_stack = scene.getTrainCameras().copy()
         viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack)-1))
-
         # Render
         if (iteration - 1) == debug_from:
             pipe_param.debug = True
         render_pkg = render(viewpoint_cam, gaussians, pipe_param, background)
-        
-
         feature_map, score_map, image, viewspace_point_tensor, visibility_filter, radii = render_pkg["feature_map"], \
         render_pkg["score_map"], render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
 
-        
         # Loss
-        gt_image = viewpoint_cam.original_image.cuda()
+        gt_image = viewpoint_cam.original_image.cuda().detach()
         gt_feature_map = viewpoint_cam.semantic_feature.cuda().detach()
         # ### score
-        gt_score_map = viewpoint_cam.score_feature
+        gt_score_map = viewpoint_cam.score_feature.cuda().detach()
         gt_score_map = gt_score_map.cuda().detach()
-        
-
+    
         # adjust_gt_feature = F.interpolate(gt_image.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
         feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), 
                                     mode='bilinear', align_corners=True).squeeze(0)
         score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], gt_score_map.shape[2]), 
                                   mode='bilinear', align_corners=True).squeeze(0)
-
-        # adjust_gt_feature = adjust_gt_feature.sum(0)
-        # gt_feature_mask = (adjust_gt_feature>0).unsqueeze(0).expand(16, -1, -1)
-
-        # gt_feature_map = gt_feature_map * gt_feature_mask
-
-
         if model_param.speedup:
             feature_map = cnn_decoder(feature_map)
-            
         Ll1_feature = l1_loss(feature_map, gt_feature_map)
-
 
         score_loss_comp = None
         if model_param.score_loss=="L2":
@@ -200,11 +169,8 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
             score_loss_comp = weighted_l2
         elif model_param.score_loss=="L1":
             score_loss_comp = l1_loss
-        
         Ll1_score = score_loss_comp(score_map, gt_score_map)
-
         Ll1 = l1_loss(image, gt_image)
-
         loss = (1.0 - opt_param.lambda_dssim) * Ll1 + opt_param.lambda_dssim * (1.0 - ssim(image, gt_image)) +  1.0 * Ll1_feature + \
                 model_param.score_scale* Ll1_score
 
@@ -230,8 +196,6 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
                 if model_param.speedup:
                     print("\n[ITER {}] Saving feature decoder ckpt".format(iteration))
                     torch.save(cnn_decoder.state_dict(), scene.model_path + "/decoder_chkpnt" + str(iteration) + ".pth")
-  
-
             # Densification
             if iteration < opt_param.densify_until_iter:
                 # Keep track of max radii in image-space for pruning
@@ -244,8 +208,6 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
                 
                 if iteration % opt_param.opacity_reset_interval == 0 or (model_param.white_background and iteration == opt_param.densify_from_iter):
                     gaussians.reset_opacity()
-            
-
             # Optimizer step
             if iteration < opt_param.iterations:
                 gaussians.optimizer.step()
@@ -258,34 +220,6 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))
                 torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
 
-        # with torch.no_grad():        
-        #     if network_gui.conn == None:
-        #         network_gui.try_connect(model_param.render_items)
-        #     while network_gui.conn != None:
-        #         try:
-        #             net_image_bytes = None
-        #             custom_cam, do_training, keep_alive, scaling_modifer, render_mode = network_gui.receive()
-        #             if custom_cam != None:
-        #                 render_pkg = render(custom_cam, gaussians, pipe_param, background, scaling_modifer)   
-        #                 net_image = render_net_image(render_pkg, model_param.render_items, render_mode, custom_cam)
-        #                 net_image_bytes = memoryview((torch.clamp(net_image, min=0, max=1.0) * 255).byte().permute(1, 2, 0).contiguous().cpu().numpy())
-        #             metrics_dict = {
-        #                 "#": gaussians.get_opacity.shape[0],
-        #                 "loss": ema_loss_for_log
-        #                 # Add more metrics as needed
-        #             }
-        #             # Send the data
-        #             network_gui.send(net_image_bytes, model_param.source_path, metrics_dict)
-        #             if do_training and ((iteration < int(opt_param.iterations)) or not keep_alive):
-        #                 break
-        #         except Exception as e:
-        #             # raise e
-        #             network_gui.conn = None
-            
-
-
-
-
 
 if __name__ == "__main__":
     # Set up command line argument parser
@@ -297,23 +231,17 @@ if __name__ == "__main__":
     parser.add_argument('--port', type=int, default=6009)
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
-    parser.add_argument("--test_iterations", nargs="+", type=int, default=[10_000])
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[10_000])
+    parser.add_argument("--test_iterations", nargs="+", type=int, default=[8000, 10_000, 15_000, 20_000, 25_000, 30_000])
+    parser.add_argument("--save_iterations", nargs="+", type=int, default=[8000, 10_000, 15_000, 20_000, 25_000, 30_000])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
     parser.add_argument("--start_checkpoint", type=str, default = None)
-
     args = parser.parse_args(sys.argv[1:])
-    
     args.save_iterations.append(args.iterations)
-    
     print("Optimizing " + args.model_path)
 
     # Initialize system state (RNG)
     safe_state(args.quiet)
-
-    # Start GUI server, configure and run training
-    # network_gui.init(args.ip, args.port)
     torch.autograd.set_detect_anomaly(args.detect_anomaly)
     training(Model_param.extract(args), Opt_param.extract(args), Pipe_param.extract(args), args.test_iterations, args.save_iterations, 
              args.checkpoint_iterations, args.start_checkpoint, args.debug_from)

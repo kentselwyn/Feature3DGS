@@ -64,15 +64,6 @@ class Camera(nn.Module):
         self.projection_matrix = getProjectionMatrix(znear=self.znear, zfar=self.zfar, fovX=self.FoVx, fovY=self.FoVy).transpose(0,1).cuda()
         self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
         self.camera_center = self.world_view_transform.inverse()[3, :3]
-
-        
-        # scale_x = self.image_width / 1296.
-        # scale_y = self.image_height / 968.
-        # K[0, 0] *= scale_x  # fx
-        # K[1, 1] *= scale_y  # fy
-        # K[0, 2] *= scale_x  # cx
-        # K[1, 2] *= scale_y  # cy
-        
         self.extrinsic_matrix = getWorld2View2(R, T, trans, scale)
 
         if intrinsic_params is not None:

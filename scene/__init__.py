@@ -8,14 +8,13 @@
 #
 # For inquiries contact  george.drettakis@inria.fr
 #
-import sys
 import os
-import random
 import json
-from utils.system_utils import searchForMaxIteration
-from .dataset_readers import sceneLoadTypeCallbacks
-from .gaussian_model import GaussianModel
+import random
 from arguments import ModelParams
+from .gaussian_model import GaussianModel
+from .dataset_readers import sceneLoadTypeCallbacks
+from utils.system_utils import searchForMaxIteration
 from utils.camera_utils import cameraList_from_camInfos, camera_to_JSON
 
 
@@ -54,7 +53,6 @@ class Scene:
         else:
             assert False, "Could not recognize scene type!"
 
-
         if not self.loaded_iter:
             with open(scene_info.ply_path, 'rb') as src_file, open(os.path.join(self.model_path, "input.ply") , 'wb') as dest_file:
                 dest_file.write(src_file.read())
@@ -69,12 +67,9 @@ class Scene:
             with open(os.path.join(self.model_path, "cameras.json"), 'w') as file:
                 json.dump(json_cams, file)
 
-
-
         if shuffle:
             random.shuffle(scene_info.train_cameras)  # Multi-res consistent random shuffling
             random.shuffle(scene_info.test_cameras)  # Multi-res consistent random shuffling
-
         self.cameras_extent = scene_info.nerf_normalization["radius"]
 
         for resolution_scale in resolution_scales:
@@ -92,7 +87,6 @@ class Scene:
         else:
             self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent, scene_info.semantic_feature_dim, args.speedup) 
 
-
     def save(self, iteration):
         point_cloud_path = os.path.join(self.model_path, "point_cloud/iteration_{}".format(iteration))
         self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud.ply"))
@@ -102,6 +96,3 @@ class Scene:
 
     def getTestCameras(self, scale=1.0):
         return self.test_cameras[scale]
-    
-
-# python -m scene
