@@ -13,6 +13,7 @@ data/gsreg
 data/img_match
 data/mlpckpt
 data/vis_loc
+data/ace_models
 data_scannet
 scene000000_B/
 submodules/diff-gaussian-rasterization-feature-gg/third_party
@@ -34,3 +35,7 @@ visloc_pseudo_gt_limitations/
 **.egg-info
 test_imgs/
 ace_encoder_pretrained.pt
+encoders/lseg_encoder/README.MD
+zz_pcd/
+log_**
+test_imgs2/
