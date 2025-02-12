@@ -1,11 +1,11 @@
 import os
 import torch
 import argparse
-import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from encoders.aliked import ALIKED
 from utils.utils import load_image2
 from encoders.disk_kornia import DISK
+from utils.vis_scoremap import one_channel_vis
 from encoders.superpoint.superpoint import SuperPoint
 from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment
 
@@ -64,6 +64,9 @@ def save_all(img: torch.Tensor, kpts: torch.Tensor, desc: torch.Tensor, sp_path:
     img = img.permute(1,2,0).cpu().numpy()
     torch.save(desc, f"{sp_path}_fmap.pt")
     torch.save(score, f"{sp_path}_smap.pt")
+    score_vis = one_channel_vis(score)
+    score_vis.save(os.path.join(sp_path + "_smap_vis.png"))
+    # breakpoint()
     
 
 def main(args):
@@ -91,6 +94,8 @@ def main(args):
     
     if args.method.startswith("SP"):
         mlp = get_mlp_model(dim = args.mlp_dim, type=args.method)
+    elif args.method.startswith("all"):
+        mlp = get_mlp_dataset(dim = args.mlp_dim, dataset=args.method)
     elif args.method.startswith("pgt"):
         mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.method)
     elif args.method == "Cambridge":
@@ -130,6 +135,7 @@ if __name__=="__main__":
     parser.add_argument("--th", type=float, default=0.01,)
     parser.add_argument("--max_num_keypoints", type=float, default=1024,)
     parser.add_argument("--images", type=str, default="images")
+    parser.add_argument("--name", type=str, required=True)
     args = parser.parse_args()
-    args.feature_name = f"{args.method}_imrate:{args.resize_num}_th:{args.th}_mlpdim:{args.mlp_dim}_kptnum:{int(args.max_num_keypoints)}_score0.6_{args.images}"
+    args.feature_name = f"{args.name}"
     main(args)
