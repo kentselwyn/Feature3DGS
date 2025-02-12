@@ -4,6 +4,7 @@ import numpy as np
 from utils.loc_utils import *
 from argparse import ArgumentParser
 from scene import Scene, GaussianModel
+from utils.match_img import save_matchimg
 from utils.graphics_utils import fov2focal
 from utils.find_depth import project_2d_to_3d
 from utils.vis_scoremap import one_channel_vis
@@ -12,7 +13,7 @@ from encoders.superpoint.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from arguments import ModelParams, PipelineParams, get_combined_args
 from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment
-from utils.match_img import extract_kpt, sample_descriptors_fix_sampling, save_matchimg
+
 
 
 def choose_th(score, histogram_th):

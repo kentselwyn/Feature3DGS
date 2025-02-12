@@ -10,3 +10,6 @@ python dataset_build.py --source_path "$s_path_train" --method "$mlp_method" --m
 python dataset_build.py --source_path "$s_path_test" --method "$mlp_method" --mlp_dim $mlp_dim --images rgb
 
 # bash zenith_scripts/dataset_build.sh 7_scenes pgt_7scenes_stairs augment_pgt_7scenes_stairs 16
+# bash zenith_scripts/dataset_build.sh 7_scenes pgt_7scenes_stairs all 8
+
+# bash zenith_scripts/dataset_build.sh 7_scenes pgt_7scenes_stairs all_auglg 4

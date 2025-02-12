@@ -128,7 +128,6 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
     first_iter += 1
 
     torch.autograd.set_detect_anomaly(True)
-
     for iteration in range(first_iter, opt_param.iterations + 1):
         iter_start.record()
         gaussians.update_learning_rate(iteration)
@@ -176,7 +175,6 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
 
         loss.backward()
         iter_end.record()
-
         with torch.no_grad():
             # Progress bar
             ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
@@ -232,20 +230,17 @@ if __name__ == "__main__":
     parser.add_argument('--debug_from', type=int, default=-1)
     parser.add_argument('--detect_anomaly', action='store_true', default=False)
     parser.add_argument("--test_iterations", nargs="+", type=int, default=[8000, 10_000, 15_000, 20_000, 25_000, 30_000])
-    parser.add_argument("--save_iterations", nargs="+", type=int, default=[8000, 10_000, 15_000, 20_000, 25_000, 30_000])
+    parser.add_argument("--save_iterations", nargs="+", type=int, default=[15_000, 20_000, 30_000])
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--checkpoint_iterations", nargs="+", type=int, default=[])
     parser.add_argument("--start_checkpoint", type=str, default = None)
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
     print("Optimizing " + args.model_path)
-
     # Initialize system state (RNG)
     safe_state(args.quiet)
     torch.autograd.set_detect_anomaly(args.detect_anomaly)
-    training(Model_param.extract(args), Opt_param.extract(args), Pipe_param.extract(args), args.test_iterations, args.save_iterations, 
+    training(Model_param.extract(args), Opt_param.extract(args), Pipe_param.extract(args),
+              args.test_iterations, args.save_iterations, 
              args.checkpoint_iterations, args.start_checkpoint, args.debug_from)
-
-    # All done
     print("\nTraining complete.")
-

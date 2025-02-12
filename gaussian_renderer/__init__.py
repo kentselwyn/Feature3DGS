@@ -13,8 +13,14 @@ import torch
 import math
 
 mlp_dim = int(os.getenv("MLP_DIM", "16"))
+if mlp_dim==4:
+    from diff_gaussian_rasterization_feature_test_dim4 import GaussianRasterizationSettings, GaussianRasterizer
+if mlp_dim==8:
+    from diff_gaussian_rasterization_feature_test_dim8 import GaussianRasterizationSettings, GaussianRasterizer
 if mlp_dim==16:
-    from diff_gaussian_rasterization_feature_test_dim16 import GaussianRasterizationSettings, GaussianRasterizer
+    ##############################################################################################
+    from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
+    ##############################################################################################
 elif mlp_dim==32:
     from diff_gaussian_rasterization_feature_test_dim32 import GaussianRasterizationSettings, GaussianRasterizer
 elif mlp_dim==64:

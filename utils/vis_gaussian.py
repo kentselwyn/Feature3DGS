@@ -13,19 +13,24 @@ def choose_th(score, histogram_th):
     return percentile_value.item()
 
 
-# python vis_gaussian.py
+# python -m utils.vis_gaussian
 if __name__=="__main__":
     gaussians = GaussianModel(3)
-    gaussians.load_ply("/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7_scenes/pgt_7scenes_stairs/outputs/SP_imrate:1_th:0.01_mlpdim:16_kptnum:1024_score0.6_rgb/point_cloud/iteration_30000/point_cloud.ply")
-
+    gaussians.load_ply(
+    "/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/" + \
+    "7_scenes/pgt_7scenes_stairs/outputs/"+\
+    "augment_pgt_7scenes_stairs_imrate:1_th:0.01_mlpdim:16_kptnum:1024_score0.6_rgb/"+\
+    "point_cloud/iteration_30000/point_cloud.ply")
 
     positions = gaussians.get_xyz
     scores = gaussians.get_score_feature.squeeze(-1)
 
-    percentage = 0.92
+    percentage = 0.95
+    eps = 0.01
+    min_samples = 3
     th = choose_th(scores, percentage)
 
-    print(positions.shape)
+    # print(positions.shape)
     print(scores.shape)
     print(th)
     mask_score = scores>th
@@ -46,10 +51,8 @@ if __name__=="__main__":
     colors = np.zeros((scores_np.shape[0], 3))  # Initialize RGB colors
     colors[:, 0] = scores_np[:, 0]
 
-
-    dbscan = DBSCAN(eps=0.004, min_samples=8)
+    dbscan = DBSCAN(eps=eps, min_samples=min_samples)
     labels = dbscan.fit_predict(filtered_points)
-
 
     # Find cluster centers
     unique_labels = set(labels)
@@ -76,15 +79,13 @@ if __name__=="__main__":
     pcd.points = o3d.utility.Vector3dVector(filtered_points)
     colors = np.array([[1, 0, 0] if lbl != -1 else [0.5, 0.5, 0.5] for lbl in labels])  # Red for clusters, grey for noise
     pcd.colors = o3d.utility.Vector3dVector(colors)
-    o3d.io.write_point_cloud(f"clusters_{percentage}.ply", pcd)
+    o3d.io.write_point_cloud(f"/home/koki/code/cc/feature_3dgs_2/zz_pcd/clusters_{percentage}_{eps}_{min_samples}.ply", pcd)
 
 
     center_points = np.array(cluster_centers)
     center_pcd = o3d.geometry.PointCloud()
     center_pcd.points = o3d.utility.Vector3dVector(center_points)
     center_pcd.paint_uniform_color([1, 0, 0])  # Green for cluster centers
-    o3d.io.write_point_cloud(f"cluster_centers_{percentage}.ply", center_pcd)
+    o3d.io.write_point_cloud(f"/home/koki/code/cc/feature_3dgs_2/zz_pcd/centers_{percentage}_{eps}_{min_samples}.ply", center_pcd)
 
     # o3d.visualization.draw_geometries([pcd, center_pcd])
-
-

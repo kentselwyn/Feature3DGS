@@ -14,3 +14,5 @@ python train.py -s "$SOURSE_PATH" -m "$OUT_PATH" -f "$feature_name" --iterations
 
 # bash zenith_scripts/train.sh Cambridge Cambridge_KingsCollege Cambridge 32
 # bash zenith_scripts/train.sh 7_scenes pgt_7scenes_stairs augment_pgt_7scenes_stairs 16
+# bash zenith_scripts/train.sh 7_scenes pgt_7scenes_stairs all 8
+# bash zenith_scripts/train.sh 7_scenes pgt_7scenes_stairs all_auglg 4

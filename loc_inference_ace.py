@@ -32,6 +32,8 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
     scene_name = model_path.split('/')[-3]
     if args.mlp_method.startswith("SP"):
         mlp = get_mlp_model(dim = args.mlp_dim, type=args.mlp_method)
+    elif args.mlp_method.startswith("all"):
+        mlp = get_mlp_dataset(dim = args.mlp_dim, dataset=args.mlp_method)
     elif args.mlp_method.startswith("pgt"):
         mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.mlp_method)
     elif args.mlp_method == "Cambridge":
@@ -59,8 +61,6 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
             K[1, 2] = view.image_height / 2
             gt_R = view.R # c2w rotation
             gt_t = view.T # w2c translation
-
-
             # Predict scene coordinates.
             with autocast(enabled=True):
                 scene_coordinates_B3HW = ace_network(image_B1HW)
@@ -110,7 +110,10 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 db_feature = render_pkg["feature_map"]
                 db_depth = render_pkg["depth"]
                 query_render = gt_im
-                result = loc_utils.match_img(query_render, db_score, db_feature, encoder, matcher, mlp, args)
+                if args.rival:
+                    result = loc_utils.img_match2(query_render, db_render, encoder, matcher)
+                else:
+                    result = loc_utils.match_img(query_render, db_score, db_feature, encoder, matcher, mlp, args)
                 if result is None:
                     prior_rErr.append(rotError)
                     prior_tErr.append(transError)
@@ -151,6 +154,7 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                     loc_utils.save_matchimg(result, 
                         f'{match_folder}/{index}_{view.image_name}__(T:{transError:.2f}_R:{rotError:.2f})__(T:{transError_final:.2f}_R:{rotError_final:.2f}).png')
                 
+                print(index)
                 print(f"Rotation Error: {rotError} deg")
                 print(f"Translation Error: {transError} cm")
                 # Print the errors
@@ -218,6 +222,7 @@ if __name__ == "__main__":
     parser.add_argument("--ace_ckpt", type=str)
     parser.add_argument("--pnp", default="iters", type=str)
     parser.add_argument("--test_name", required=True, type=str)
+    parser.add_argument("--rival", default=0, type=int)
     parser.add_argument("--ace_encoder_path", 
                         default="/home/koki/code/cc/feature_3dgs_2/ace_encoder_pretrained.pt", type=str)
     args = get_combined_args(parser)

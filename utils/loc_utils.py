@@ -5,6 +5,7 @@ import math
 import torch
 import pickle
 import open3d as o3d
+from typing import Tuple
 import torch.nn.functional as F
 from utils.match_img import extract_kpt, sample_descriptors_fix_sampling, save_matchimg, find_small_circle_centers
 
@@ -323,4 +324,36 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     result['mkpt1'] = m1
     result['kpt0'] = kpt_q[0].cpu()
     result['kpt1'] = kpt_db[0].cpu()
+    return result
+
+
+def img_match2(query_render, db_render, encoder, matcher) -> Tuple[torch.Tensor, torch.Tensor]:
+    d0 = {}
+    d1 = {}
+    d0['image'] = query_render
+    d1['image'] = db_render.unsqueeze(0)
+    # breakpoint()
+    p0 = encoder(d0)
+    p1 = encoder(d1)
+
+    tmp = {}
+    tmp["keypoints0"] = p0['keypoints']
+    tmp["keypoints1"] = p1['keypoints']
+    tmp["descriptors0"] = p0['descriptors']
+    tmp["descriptors1"] = p1['descriptors']
+    tmp["image_size"] = d0['image'][0].shape[1:]
+
+    if tmp["keypoints1"].shape[1]==0:
+        return None
+    pred = matcher(tmp)
+    m0 = pred['m0']
+    valid = (m0[0] > -1)
+    m0, m1 = tmp["keypoints0"][0][valid].cpu(), tmp["keypoints1"][0][m0[0][valid]].cpu()
+    kpt0, kpt1 = tmp['keypoints0'][0].cpu(), tmp['keypoints1'][0].cpu()
+
+    result = {}
+    result['mkpt0'] = m0
+    result['mkpt1'] = m1
+    result['kpt0'] = kpt0
+    result['kpt1'] = kpt1
     return result
