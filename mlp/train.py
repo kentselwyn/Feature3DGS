@@ -90,8 +90,10 @@ def main(conf):
     val_size = dataset_size - train_size
 
     train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-    trainloader = DataLoader(train_dataset, batch_size=conf.train.batch_size , shuffle=True, num_workers=conf.train.num_workers)
-    valloader = DataLoader(val_dataset, batch_size=conf.train.batch_size, shuffle=False, num_workers=conf.train.num_workers)
+    trainloader = DataLoader(train_dataset, batch_size=conf.train.batch_size , 
+                             shuffle=True, num_workers=conf.train.num_workers)
+    valloader = DataLoader(val_dataset, batch_size=conf.train.batch_size, 
+                           shuffle=False, num_workers=conf.train.num_workers)
 
     out_path = f"{conf.folder_path}/{conf.out_name}"
     os.makedirs(out_path, exist_ok=True)

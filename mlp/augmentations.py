@@ -219,8 +219,8 @@ class LGAugmentation(BaseAugmentation):
     default_conf = {"p": 0.95}
     def _init(self, conf):
         self.transforms = [
-            A.RandomGamma(p=0.2, gamma_limit=(15, 65)),
-            A.HueSaturationValue(p=0.2, val_shift_limit=(-100, -40)),
+            A.RandomGamma(p=0.3, gamma_limit=(15, 65)),
+            A.HueSaturationValue(p=0.3, val_shift_limit=(-100, -40)),
             A.OneOf(
                 [
                     A.Blur(blur_limit=(3, 9)),
@@ -228,11 +228,11 @@ class LGAugmentation(BaseAugmentation):
                     A.ISONoise(),
                     A.ImageCompression(),
                 ],
-                p=0.2,
+                p=0.3,
             ),
             A.Blur(p=0.3, blur_limit=(3, 9)),
-            A.MotionBlur(p=0.2, blur_limit=(3, 25), allow_shifted=False),
-            A.RandomBrightnessContrast(p=0.5, brightness_limit=(-0.4, 0.0), contrast_limit=(-0.3, 0.0)),
+            A.MotionBlur(p=0.3, blur_limit=(3, 25), allow_shifted=False),
+            A.RandomBrightnessContrast(p=0.3, brightness_limit=(-0.4, 0.0), contrast_limit=(-0.3, 0.0)),
             A.CLAHE(p=0.2),
         ]
 
@@ -253,8 +253,7 @@ class myAugmentation(BaseAugmentation):
             ),
             A.Blur(p=0.1, blur_limit=(3, 7)),
             A.MotionBlur(p=0.1, blur_limit=(3, 25), allow_shifted=False),
-            A.RandomBrightnessContrast(
-                p=0.5, brightness_limit=(-0.15, 0.0), contrast_limit=(-0.15, 0.0)),
+            A.RandomBrightnessContrast(p=0.5, brightness_limit=(-0.15, 0.0), contrast_limit=(-0.15, 0.0)),
             A.CLAHE(p=0.2),
         ]
 

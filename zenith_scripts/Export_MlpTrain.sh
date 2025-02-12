@@ -12,5 +12,7 @@ if (( img_save )); then
 else
     python -m mlp.export --method SP --data_name $data_name --scene_name $scene_name \
                         --augment $augmentation --num_workers $num_workers --multiple $multiple
-fi                        
-# bash zenith_scripts/export.sh 7_scenes pgt_7scenes_stairs lg
+fi             
+
+
+

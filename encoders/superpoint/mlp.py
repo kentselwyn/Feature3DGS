@@ -10,13 +10,18 @@ class MLP_module_4_short(nn.Module):
         super().__init__()
         self.MLP    = MLP(in_features=256, out_features=4   , num_cells=[128, 64, 32, 16, 8])
         self.MLP_de = MLP(in_features=4,   out_features=256,  num_cells=[8, 16, 32, 64, 128])
-        # for p in self.parameters():
-        #     p.requires_grad = False
+        for p in self.parameters():
+            p.requires_grad = False
 
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
+        # desc_back = self.MLP_de(desc_mlp)
+        return desc_mlp
+    
+    def decode(self, desc_mlp: torch.Tensor):
         desc_back = self.MLP_de(desc_mlp)
         return desc_back
+
 
 class MLP_module_8_short(nn.Module):
     def __init__(self):
@@ -34,6 +39,7 @@ class MLP_module_8_short(nn.Module):
     def decode(self, desc_mlp: torch.Tensor):
         desc_back = self.MLP_de(desc_mlp)
         return desc_back
+
 
 class MLP_module_16_short(nn.Module):
     def __init__(self):
@@ -55,8 +61,8 @@ class MLP_module_32_short(nn.Module):
         super().__init__()
         self.MLP    = MLP(in_features=256, out_features=32   , num_cells=[128, 64, 32])
         self.MLP_de = MLP(in_features=32,   out_features=256,  num_cells=[32, 64, 128])
-        # for p in self.parameters():
-        #     p.requires_grad = False
+        for p in self.parameters():
+            p.requires_grad = False
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
         # desc_back = self.MLP_de(desc_mlp)
@@ -71,8 +77,8 @@ class MLP_module_64_short(nn.Module):
         super().__init__()
         self.MLP    = MLP(in_features=256, out_features=64   , num_cells=[128, 64, 64])
         self.MLP_de = MLP(in_features=64,   out_features=256,  num_cells=[64, 64, 128])
-        # for p in self.parameters():
-        #     p.requires_grad = False
+        for p in self.parameters():
+            p.requires_grad = False
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
         # desc_back = self.MLP_de(desc_mlp)
@@ -271,14 +277,12 @@ def get_mlp_dataset(dim=16, dataset="pgt_7scenes_chess"):
             model.load_state_dict(ckpt)
     if dataset=="pgt_7scenes_pumpkin":
         if dim==16:
-            "type:SP_time:20250115_031231_dim16_batch64_lr0.0008_epoch5000"
             model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/epoch_852.pt"
             model = MLP_module_16_short()
             ckpt = torch.load(model_path)
             model.load_state_dict(ckpt)
     if dataset=="pgt_7scenes_redkitchen":
         if dim==16:
-            "type:SP_time:20250115_032624_dim16_batch64_lr0.0008_epoch5000"
             model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/epoch_456.pt"
             model = MLP_module_16_short()
             ckpt = torch.load(model_path)
@@ -341,6 +345,55 @@ def get_mlp_dataset(dim=16, dataset="pgt_7scenes_chess"):
         if dim==64:
             model_path = CKPT_FOLDER/f"Cambridge/mlpckpt/type:SP_time:20250204_235020_dim64_batch64_lr0.0008_epoch5000/epoch_981.pt"
             model = MLP_module_64_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    
+    if dataset=="all":
+        if dim==4:
+            model_path = CKPT_FOLDER/f"mlpckpt/type:SP_time:20250211_153429_dim4_batch64_lr0.0008_epoch5000/epoch_150.pt"
+            model = MLP_module_4_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        if dim==8:
+            model_path = CKPT_FOLDER/f"mlpckpt/type:SP_time:20250211_154225_dim8_batch64_lr0.0008_epoch5000/epoch_143.pt"
+            model = MLP_module_8_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        if dim==16:
+            model_path = CKPT_FOLDER/f"mlpckpt/type:SP_time:20250211_154406_dim16_batch64_lr0.0008_epoch5000/epoch_156.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    if dataset=="all_augmy":
+        if dim==4:
+            model_path = CKPT_FOLDER/f"mlpckpt/type:SP_time:20250211_221717_dim4_batch64_lr0.0008_epoch5000_-augmyaug_setlen2/epoch_71.pt"
+            model = MLP_module_4_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        if dim==8:
+            model_path = CKPT_FOLDER/f"mlpckpt/type:SP_time:20250211_223029_dim8_batch64_lr0.0008_epoch5000_-augmyaug_setlen2/epoch_73.pt"
+            model = MLP_module_8_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        if dim==16:
+            model_path = CKPT_FOLDER/f"mlpckpt/type:SP_time:20250211_223219_dim16_batch64_lr0.0008_epoch5000_-augmyaug_setlen2/epoch_76.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    if dataset=="all_auglg":
+        if dim==4:
+            model_path = CKPT_FOLDER/f"mlpckpt/type:SP_time:20250212_004332_dim4_batch64_lr0.0008_epoch5000_-auglg_setlen3/epoch_51.pt"
+            model = MLP_module_4_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        if dim==8:
+            model_path = CKPT_FOLDER/f"/mlpckpt/type:SP_time:20250212_005413_dim8_batch64_lr0.0008_epoch5000_-auglg_setlen3/epoch_35.pt"
+            model = MLP_module_8_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        if dim==16:
+            model_path = CKPT_FOLDER/f"mlpckpt/type:SP_time:20250211_223219_dim16_batch64_lr0.0008_epoch5000_-augmyaug_setlen2/epoch_76.pt"
+            model = MLP_module_16_short()
             ckpt = torch.load(model_path)
             model.load_state_dict(ckpt)
     return model
