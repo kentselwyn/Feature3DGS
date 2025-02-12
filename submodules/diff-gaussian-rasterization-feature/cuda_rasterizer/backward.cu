@@ -438,15 +438,16 @@ __global__ void preprocessCUDA(
 
 
 // Backward version of the rendering procedure. 針對每個tile計算對應的gradient
-template <uint32_t C>
+template <uint32_t C, uint32_t S>
 __global__ void __launch_bounds__(BLOCK_X * BLOCK_Y)
 renderCUDA(
 	const uint2* __restrict__ ranges,
-	const uint32_t* __restrict__ point_list,
-	int W, int H,
+	const uint32_t* __restrict__ point_list, // key|depth pair 共有num rendered個
+	int W, 
+	int H,
 	const float* __restrict__ bg_color,
-	const float2* __restrict__ points_xy_image,
-	const float4* __restrict__ conic_opacity,
+	const float2* __restrict__ points_xy_image, // xy means on the image
+	const float4* __restrict__ conic_opacity, // conic 跟 opacity
 	const float* __restrict__ colors,
 	const float* __restrict__ semantic_feature,
 	const float* __restrict__ score_feature,  ////// score
@@ -455,8 +456,9 @@ renderCUDA(
 	const uint32_t* __restrict__ n_contrib, // 紀錄每個pixel經過了幾個gaussian
 	const float* __restrict__ dL_dpixels,    // input
 	const float* __restrict__ dL_dfeaturepixels,  // input
-	const float* __restrict__ dL_dscorepixels, ////// score
+	const float* __restrict__ dL_dscorepixels, ////// input
 	const float* __restrict__ dL_depths,   // input
+	// below are all outputs
 	float3* __restrict__ dL_dmean2D,
 	float4* __restrict__ dL_dconic2D,
 	float* __restrict__ dL_dopacity,
@@ -464,7 +466,7 @@ renderCUDA(
 	float* __restrict__ dL_dsemantic_feature,  // semantic output
 	float* __restrict__ dL_dscore_feature, ////// score
 	float* __restrict__ dL_dz,       // depth output
-	float* collected_semantic_feature) 
+	float* collected_semantic_feature_non) 
 {
 	// We rasterize again. Compute necessary block info.
 	auto block = cg::this_thread_block();
@@ -489,6 +491,8 @@ renderCUDA(
 	__shared__ float4 collected_conic_opacity[BLOCK_SIZE];
 	__shared__ float collected_colors[C * BLOCK_SIZE];
 	__shared__ float collected_depths[BLOCK_SIZE];
+	__shared__ float collected_semantic_feature[S* BLOCK_SIZE];
+	__shared__ float collected_score_feature[BLOCK_SIZE];
 
 
 	// In the forward, we stored the final value for T, the
@@ -509,7 +513,7 @@ renderCUDA(
 	float dL_dfeaturepixel[NUM_SEMANTIC_CHANNELS];
 	float dL_depth = 0;
 	float dL_dscore;
-	float accum_depth_rec = 0;
+	float accum_score_rec = 0;
 
 
 	if (inside){
@@ -527,7 +531,7 @@ renderCUDA(
 	float last_alpha = 0;
 	float last_color[C] = { 0 };
 	float last_semantic_feature[NUM_SEMANTIC_CHANNELS] = { 0 };
-	float last_depth = 0; 
+	float last_score = 0; 
 
 	// Gradient of pixel coordinate w.r.t. normalized 
 	// screen-space viewport corrdinates (-1 to 1)
@@ -550,6 +554,10 @@ renderCUDA(
 			for (int i = 0; i < C; i++)
 				collected_colors[i * BLOCK_SIZE + block.thread_rank()] = colors[coll_id * C + i];
 			collected_depths[block.thread_rank()] = depths[coll_id];
+			for (int i = 0; i < S; i++)
+				collected_semantic_feature[i * BLOCK_SIZE + block.thread_rank()] = semantic_feature[coll_id * S + i];
+			
+			collected_score_feature[block.thread_rank()] = score_feature[coll_id];
 		}
 		block.sync();
 
@@ -602,10 +610,17 @@ renderCUDA(
 			}
 
 			// 計算alpha gradient時 也加入depth的影響
-			const float c_d = collected_depths[j];
-			accum_depth_rec = last_alpha * last_depth + (1.f - last_alpha) * accum_depth_rec;
-			last_depth = c_d;
-			dL_dalpha += (c_d - accum_depth_rec) * dL_depth; // dL depth=0, 對dL dalpha無影響
+			// const float c_d = collected_depths[j];
+			// accum_depth_rec = last_alpha * last_depth + (1.f - last_alpha) * accum_depth_rec;
+			// last_depth = c_d;
+			// dL_dalpha += (c_d - accum_depth_rec) * dL_depth; // dL depth=0, 對dL dalpha無影響
+
+
+			const float s_d = collected_score_feature[j];
+			accum_score_rec = last_alpha * last_score + (1.f - last_alpha) * accum_score_rec;
+			last_score = s_d;
+			dL_dalpha += (s_d - accum_score_rec) * dL_dscore;
+
 
 			for (int ch = 0; ch < NUM_SEMANTIC_CHANNELS; ch++) 
 			{
@@ -662,8 +677,6 @@ renderCUDA(
 		}
 	}
 }
-
-
 
 
 
@@ -769,10 +782,10 @@ void BACKWARD::render(
 	float* dL_dsemantic_feature, // semantic
 	float* dL_dscore_feature, // score
 	float* dL_dz, // depth
-	float* collected_semantic_feature) 
+	float* collected_semantic_feature_non) 
 	
 {
-	renderCUDA<NUM_CHANNELS> <<<grid, block >>>(
+	renderCUDA<NUM_CHANNELS, NUM_SEMANTIC_CHANNELS> <<<grid, block >>>(
 		ranges,
 		point_list,
 		W, H,
@@ -789,6 +802,7 @@ void BACKWARD::render(
 		dL_dfeaturepixels,
 		dL_dscorepixels, ////
 		dL_depths, 
+		// outputs 
 		dL_dmean2D,
 		dL_dconic2D,
 		dL_dopacity,
@@ -796,6 +810,6 @@ void BACKWARD::render(
 		dL_dsemantic_feature,
 		dL_dscore_feature, ////
 		dL_dz,
-		collected_semantic_feature 
+		collected_semantic_feature_non 
 		);
 }
