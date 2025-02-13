@@ -7,7 +7,7 @@
     ###############################################
     # pgt_7scenes_pumpkin, pgt_7scenes_stairs, pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_redkitchen
     # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-    scene_name="Cambridge_KingsCollege" 
+    scene_name="Cambridge_ShopFacade" 
     ###############################################
     # all
     # pgt_7scenes_pumpkin, augment_pgt_7scenes_stairs, pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_redkitche
@@ -22,6 +22,8 @@
     ###### gaussian training #########################################
     score_loss="L2" # L2, weighted, L1
     score_scale=1
+    render_num=20
+    if_render=1
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Warninggggggggggggggggggggggggggggggggggggggggg
     traing_name_option="UseTrueRender"
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Warninggggggggggggggggggggggggggggggggggggggggg
@@ -42,7 +44,7 @@ start_loc=1
     test_iteration=30000
     sp_th=0.01
     lg_th=0.01
-    kpt_hist=0.95
+    kpt_hist=0.9
     ransac_iters=20000
     kernel_size=15
     stop_kpt_num=50
@@ -94,8 +96,9 @@ fi
 if (( start_train )); then
     python train.py -s "$SOURSE_PATH" -m "$OUT_PATH" -f "$feature_name" --iterations 30000 \
                     --score_loss "$score_loss" --score_scale "$score_scale"
-    view_num=400
-    python render.py -m $OUT_PATH --iteration 30000 --skip_train --view_num $view_num
+    if (( if_render )); then
+        python render.py -m $OUT_PATH --iteration 30000 --skip_train --view_num $render_num
+    fi
 fi
 
 ######################################################################## localization ########################################################################
