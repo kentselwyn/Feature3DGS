@@ -21,10 +21,10 @@ if mlp_dim==16:
     ##############################################################################################
     from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
     ##############################################################################################
-elif mlp_dim==32:
-    from diff_gaussian_rasterization_feature_test_dim32 import GaussianRasterizationSettings, GaussianRasterizer
-elif mlp_dim==64:
-    from diff_gaussian_rasterization_feature_test_dim64 import GaussianRasterizationSettings, GaussianRasterizer
+# elif mlp_dim==32:
+#     from diff_gaussian_rasterization_feature_test_dim32 import GaussianRasterizationSettings, GaussianRasterizer
+# elif mlp_dim==64:
+#     from diff_gaussian_rasterization_feature_test_dim64 import GaussianRasterizationSettings, GaussianRasterizer
 
 # from diff_gaussian_rasterization_feature_test_median_depth import GaussianRasterizationSettings, GaussianRasterizer
 # from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
