@@ -19,7 +19,8 @@ from encoders.superpoint.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from utils.pycolmap_utils import opencv_to_pycolmap_pnp
 from arguments import ModelParams, PipelineParams, get_combined_args
-from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment
+from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment, \
+                                    get_mlp_data_7scenes_Cambridege
 
 
 def localize_set(model_path, name, views, gaussians, pipe_param, background, 
@@ -32,6 +33,8 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
     scene_name = model_path.split('/')[-3]
     if args.mlp_method.startswith("SP"):
         mlp = get_mlp_model(dim = args.mlp_dim, type=args.mlp_method)
+    elif args.mlp_method.startswith("dataset"):
+        mlp = get_mlp_data_7scenes_Cambridege(dim=args.mlp_dim, dataset=args.mlp_method)
     elif args.mlp_method.startswith("all"):
         mlp = get_mlp_dataset(dim = args.mlp_dim, dataset=args.mlp_method)
     elif args.mlp_method.startswith("pgt"):
@@ -112,6 +115,8 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 query_render = gt_im
                 if args.rival:
                     result = loc_utils.img_match2(query_render, db_render, encoder, matcher)
+                elif args.feat_from_img:
+                    result = loc_utils.feat_fromImg_match(query_render, db_score, db_render, encoder, matcher, args)
                 else:
                     result = loc_utils.match_img(query_render, db_score, db_feature, encoder, matcher, mlp, args)
                 if result is None:
@@ -183,7 +188,7 @@ def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
     background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
     conf = {
         "sparse_outputs": True,
-        "dense_outputs": False,
+        "dense_outputs": True,
         "max_num_keypoints": 1024,
         "detection_threshold": args.sp_th,
     }
@@ -220,10 +225,12 @@ if __name__ == "__main__":
     parser.add_argument("--kernel_size", default=7, type=int)
     parser.add_argument("--stop_kpt_num", default=30, type=int)
     parser.add_argument("--ace_ckpt", type=str)
+    parser.add_argument("--feat_from_img", default=0, type=int)
     parser.add_argument("--pnp", default="iters", type=str)
     parser.add_argument("--test_name", required=True, type=str)
     parser.add_argument("--rival", default=0, type=int)
     parser.add_argument("--ace_encoder_path", 
                         default="/home/koki/code/cc/feature_3dgs_2/ace_encoder_pretrained.pt", type=str)
     args = get_combined_args(parser)
+    args.images = "rgb"
     localize(Model_param.extract(args), Pipe_param.extract(args), args)

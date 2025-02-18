@@ -18,25 +18,26 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
 class MLPDataset(Dataset):
-    def __init__(self, h5_file_path):
-        self.h5_file_path = h5_file_path
+    def __init__(self, all_path, h5_file_names):
+        # breakpoint()
         self.data = []
-        self.keypoints = []
-        with h5py.File(self.h5_file_path, 'r') as hfile:
-            root_group = hfile['home']
-            print('start loading.....')
-            def gather_data(group):
-                for key in group.keys():
-                    item = group[key]
-                    if isinstance(item, h5py.Group):
-                        gather_data(item)
-                    elif isinstance(item, h5py.Dataset) and 'descriptors' in key:
-                        desc = group['descriptors'][:]
-                        self.data.append(desc)
-                    elif isinstance(item, h5py.Dataset) and 'dense_descriptors' in key:
-                        desc = group['dense_descriptors'][:]
-                        self.data.append(desc)
-            gather_data(root_group)
+        for h5_name in h5_file_names:
+            h5_path = f"{all_path}/{h5_name}"
+            with h5py.File(h5_path, 'r') as hfile:
+                root_group = hfile['home']
+                print(f'start loading.....{h5_path}')
+                def gather_data(group):
+                    for key in group.keys():
+                        item = group[key]
+                        if isinstance(item, h5py.Group):
+                            gather_data(item)
+                        elif isinstance(item, h5py.Dataset) and 'descriptors' in key:
+                            desc = group['descriptors'][:]
+                            self.data.append(desc)
+                        elif isinstance(item, h5py.Dataset) and 'dense_descriptors' in key:
+                            desc = group['dense_descriptors'][:]
+                            self.data.append(desc)
+                gather_data(root_group)
         print('loaded!')
 
     def __getitem__(self, idx):
@@ -82,7 +83,7 @@ def main(conf):
     best_vloss = 1_000_000.
     l2_loss = nn.MSELoss()
 
-    dataset = MLPDataset(conf.fea_path)
+    dataset = MLPDataset(conf.all_path, conf.desc_names)
     set_seed(conf.train.seed)
 
     dataset_size = len(dataset)
@@ -138,20 +139,27 @@ if __name__=="__main__":
     parser = ArgumentParser()
     parser.add_argument("--dim", type=int, default=16)
     parser.add_argument("--data_name", type=str)
-    parser.add_argument("--scene_name", type=str)
-    parser.add_argument("--desc_name", type=str)
+    parser.add_argument(
+        '--desc_names',
+        nargs='+',  # one or more arguments will be collected into a list
+        type=str,
+        required=True,
+        help='List of descriptor file paths'
+    )
     parser.add_argument("--epochs", type=int, default=4000)
     parser.add_argument("--start_epoch", type=int, default=2500)
     parser.add_argument("--lr", type=float, default=8e-4)
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--num_workers", type=int, default=0)
+    parser.add_argument("--log_name", type=str)
     args = parser.parse_args()
-    all_path = f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/{args.data_name}/{args.scene_name}"
+    all_path = f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/{args.data_name}"
     conf = {
         "dim": args.dim,
+        "all_path": all_path,
         "folder_path": f"{all_path}/mlpckpt",
-        "fea_path": f"{all_path}/desc_data/{args.desc_name}.h5",
-        "out_name": f"type:SP_time:{timestamp}_dim{args.dim}_batch{args.batch_size}_lr{args.lr}_epoch{args.epochs}_desc{args.desc_name}",
+        "desc_names": args.desc_names,
+        "out_name": f"{args.data_name}_type:SP_time:{timestamp}_dim{args.dim}_batch{args.batch_size}_lr{args.lr}_epoch{args.epochs}_{args.log_name}",
         "load_ckpt": None,
         "train":{
             "epochs": args.epochs,

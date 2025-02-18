@@ -411,6 +411,33 @@ def get_mlp_augment(dim=16, dataset=None):
     return model
 
 
+def get_mlp_data_7scenes_Cambridege(dim=16, dataset="dataset_7scenes"):
+    CKPT_FOLDER = Path(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc")
+    if dataset=="dataset_7scenes":
+        if dim==8:
+            model_path = CKPT_FOLDER/f"7_scenes/mlpckpt/7_scenes_type:SP_time:20250215_230700_dim8_batch64_lr0.0008_epoch4000_logNone/epoch_96.pt"
+            model = MLP_module_8_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        if dim==16:
+            model_path = CKPT_FOLDER/f"7_scenes/mlpckpt/7_scenes_type:SP_time:20250215_225922_dim16_batch64_lr0.0008_epoch4000_logNone/epoch_99.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    if dataset=="dataset_Cambridge":
+        if dim==8:
+            model_path = CKPT_FOLDER/f"Cambridge/mlpckpt/Cambridge_type:SP_time:20250215_232032_dim8_batch64_lr0.0008_epoch4000_logNone/epoch_424.pt"
+            model = MLP_module_8_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+        if dim==16:
+            model_path = CKPT_FOLDER/f"Cambridge/mlpckpt/Cambridge_type:SP_time:20250215_231750_dim16_batch64_lr0.0008_epoch4000_logNone/epoch_819.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    return model
+
+
 # python -m encoders.superpoint.mlp
 if __name__=="__main__":
     model = get_mlp_augment(dim=16, dataset="augment_pgt_7scenes_stairs")

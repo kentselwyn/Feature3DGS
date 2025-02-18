@@ -122,7 +122,6 @@ def find_2d3d_correspondences(keypoints, image_features, gaussian_pcd, gaussian_
         update_mask = chunk_max > max_similarity
         max_similarity[update_mask] = chunk_max[update_mask]
         max_indices[update_mask] = chunk_indices[update_mask] + part
-    # breakpoint()
     # print(max_similarity)
     
     # final_mask = max_similarity>0.8
@@ -137,8 +136,6 @@ def find_2d3d_correspondences(keypoints, image_features, gaussian_pcd, gaussian_
     # pcd.points = o3d.utility.Vector3dVector(point_vis)
     # pcd.paint_uniform_color([0, 0, 0])
     # o3d.io.write_point_cloud(f"pcd_match_0_.85.ply", pcd)
-
-    # breakpoint()
     
     return point_vis, keypoints_matched
 
@@ -149,7 +146,6 @@ def get_coord(h=60, w=80):
     grid_y, grid_x = torch.meshgrid(rows, cols, indexing='ij')
     coords = torch.stack((grid_y, grid_x), dim=-1)
     coords_flat = coords.reshape(-1, 2)
-    # breakpoint()
     return coords_flat
 
 
@@ -181,7 +177,6 @@ def find_2d3d_dense(image_features, gaussian_pcd, gaussian_feat, chunk_size=1000
         max_similarity[update_mask] = chunk_max[update_mask]
         max_indices[update_mask] = chunk_indices[update_mask] + part
     # print(max_similarity)
-    # breakpoint()
     final_mask = max_similarity>0.7
     max_indices = max_indices[final_mask]
 
@@ -189,14 +184,11 @@ def find_2d3d_dense(image_features, gaussian_pcd, gaussian_feat, chunk_size=1000
     pt_matched = tmp_coord[final_mask].cpu().numpy().astype(np.float64)
     pt_matched = pt_matched*8
     # keypoints_matched = keypoints[..., :2].cpu().numpy().astype(np.float64)
-    # breakpoint()
     print(point_vis.shape)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(point_vis)
     pcd.paint_uniform_color([0, 0, 0])
     o3d.io.write_point_cloud(f"pcd_match.ply", pcd)
-
-    # breakpoint()
 
     return point_vis, pt_matched
 
@@ -302,6 +294,7 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     kpt_db = find_small_circle_centers(score_db, threshold=kpt_th, kernel_size=args.kernel_size)
     if kpt_db.shape[0] == 0:
         return None
+
     kpt_db = kpt_db.clone().detach()[:, [1, 0]].to(score_db)
     _, h, w = score_db.shape
     scale = torch.tensor([w, h]).to(score_db)
@@ -332,7 +325,6 @@ def img_match2(query_render, db_render, encoder, matcher) -> Tuple[torch.Tensor,
     d1 = {}
     d0['image'] = query_render
     d1['image'] = db_render.unsqueeze(0)
-    # breakpoint()
     p0 = encoder(d0)
     p1 = encoder(d1)
 
@@ -357,3 +349,52 @@ def img_match2(query_render, db_render, encoder, matcher) -> Tuple[torch.Tensor,
     result['kpt0'] = kpt0
     result['kpt1'] = kpt1
     return result
+
+
+def feat_fromImg_match(query_render, score_db, db_render, encoder, matcher, args):
+    d0 = {}
+    d1 = {}
+    d0['image'] = query_render
+    d1['image'] = db_render.unsqueeze(0)
+
+    p0 = encoder(d0)
+    p1 = encoder(d1)
+
+    tmp = {}
+    tmp["keypoints0"] = p0['keypoints']
+    tmp["descriptors0"] = p0['descriptors']
+    tmp["image_size"] = d0['image'][0].shape[1:]
+
+    feature_db = p1["dense_descriptors"][0]
+    if args.kpt_hist is not None:
+        kpt_th = choose_th(score_db, args.kpt_hist)
+    else:
+        kpt_th = args.kpt_th
+    kpt_db = find_small_circle_centers(score_db, threshold=kpt_th, kernel_size=args.kernel_size)
+    if kpt_db.shape[0] == 0:
+        return None
+
+    kpt_db = kpt_db.clone().detach()[:, [1, 0]].to(score_db)
+    _, h, w = score_db.shape
+    scale = torch.tensor([w, h]).to(score_db)
+    feat_db = sample_descriptors_fix_sampling(kpt_db, feature_db, scale)
+    tmp["keypoints1"] = kpt_db.unsqueeze(0)
+    tmp["descriptors1"] = feat_db
+
+    if tmp["keypoints1"].shape[1]==0:
+        return None
+    pred = matcher(tmp)
+
+    m0 = pred['m0']
+    valid = (m0[0] > -1)
+    m0, m1 = tmp["keypoints0"][0][valid].cpu(), tmp["keypoints1"][0][m0[0][valid]].cpu()
+    kpt0, kpt1 = tmp['keypoints0'][0].cpu(), tmp['keypoints1'][0].cpu()
+
+    result = {}
+    result['mkpt0'] = m0
+    result['mkpt1'] = m1
+    result['kpt0'] = kpt0
+    result['kpt1'] = kpt1
+    return result
+    
+
