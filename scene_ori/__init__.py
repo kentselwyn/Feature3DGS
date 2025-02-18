@@ -8,7 +8,6 @@
 #
 # For inquiries contact  george.drettakis@inria.fr
 #
-
 import os
 import random
 import json
@@ -24,7 +23,8 @@ class Scene:
 
     gaussians : GaussianModel
 
-    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, shuffle=True, resolution_scales=[1.0]):
+    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, shuffle=True, 
+                 resolution_scales=[1.0],  load_feature=True, view_num=None):
         """b
         :param path: Path to colmap scene main folder.
         """
@@ -42,7 +42,10 @@ class Scene:
         self.train_cameras = {}
         self.test_cameras = {}
 
-        if os.path.exists(os.path.join(args.source_path, "sparse")):
+        if os.path.exists(os.path.join(args.source_path, "train")):
+            scene_info = sceneLoadTypeCallbacks["Split"](args.source_path, foundation_model=None
+                                                         , load_feature=load_feature, view_num=view_num)
+        elif os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = sceneLoadTypeCallbacks["Colmap"](args.source_path, args.images, args.eval)
         elif os.path.exists(os.path.join(args.source_path, "transforms_train.json")):
             print("Found transforms_train.json file, assuming Blender data set!")
@@ -67,12 +70,12 @@ class Scene:
         if shuffle:
             random.shuffle(scene_info.train_cameras)  # Multi-res consistent random shuffling
             random.shuffle(scene_info.test_cameras)  # Multi-res consistent random shuffling
-
         self.cameras_extent = scene_info.nerf_normalization["radius"]
 
         for resolution_scale in resolution_scales:
-            print("Loading Training Cameras")
-            self.train_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.train_cameras, resolution_scale, args)
+            if load_feature:
+                print("Loading Training Cameras")
+                self.train_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.train_cameras, resolution_scale, args)
             print("Loading Test Cameras")
             self.test_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.test_cameras, resolution_scale, args)
 
@@ -94,4 +97,3 @@ class Scene:
     def getTestCameras(self, scale=1.0):
         return self.test_cameras[scale]
     
-

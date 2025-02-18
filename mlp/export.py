@@ -82,7 +82,7 @@ if __name__=="__main__":
     parser.add_argument("--dense", action='store_true')
     parser.add_argument("--num_workers", type=int, default=4)
     parser.add_argument("--img_save", action="store_true")
-    parser.add_argument("--resize", type=int, default=640)
+    parser.add_argument("--resize", type=int, default=1024)
     parser.add_argument("--n_kpts", type=int, default=1024)
     parser.add_argument("--th", type=float, default=0.01)
     args = parser.parse_args()

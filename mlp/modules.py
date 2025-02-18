@@ -238,7 +238,7 @@ def get_mlp_model(dim = 16, type = "sp"):
     if type=="sp":
         name = "Superpoint"
         if dim==8:
-            model_path = CKPT_FOLDER/name//"short_pair_8/model_20240221_105112_498"
+            model_path = CKPT_FOLDER/name/"short_pair_8/model_20240221_105112_498"
             model = MLP_module_8_short()
             ckpt = torch.load(model_path)
             model.load_state_dict(ckpt)
