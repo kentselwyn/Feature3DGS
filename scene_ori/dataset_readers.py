@@ -11,10 +11,11 @@
 
 import os
 import sys
+import torch
 from PIL import Image
 from typing import NamedTuple
 from scene_ori.colmap_loader import read_extrinsics_text, read_intrinsics_text, qvec2rotmat, \
-    read_extrinsics_binary, read_intrinsics_binary, read_points3D_binary, read_points3D_text
+    read_extrinsics_binary, read_intrinsics_binary, read_points3D_binary, read_points3D_text, read_points3D_nvm
 from utils_ori.graphics_utils import getWorld2View2, focal2fov, fov2focal
 import numpy as np
 import json
@@ -37,6 +38,7 @@ class CameraInfo(NamedTuple):
     image_name: str
     width: int
     height: int
+    intrinsic_params: np.array
 
 class SceneInfo(NamedTuple):
     point_cloud: BasicPointCloud
@@ -110,7 +112,7 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
         image_name = os.path.basename(image_path).split(".")[0]
         image = Image.open(image_path)
 
-        cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+        cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image, intrinsic_params=intr.params,
                               image_path=image_path, image_name=image_name, width=width, height=height)
         cam_infos.append(cam_info)
     sys.stdout.write('\n')
@@ -145,9 +147,6 @@ def storePly(path, xyz, rgb):
     ply_data.write(path)
 
 
-
-
-
 def readColmapSceneInfo(path, images, eval, llffhold=8):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
@@ -160,7 +159,7 @@ def readColmapSceneInfo(path, images, eval, llffhold=8):
         cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
 
-    reading_dir = f"all_images/{images}"
+    reading_dir = f"{images}"
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir))
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
 
@@ -194,6 +193,8 @@ def readColmapSceneInfo(path, images, eval, llffhold=8):
                            nerf_normalization=nerf_normalization,
                            ply_path=ply_path)
     return scene_info
+
+
 
 
 
@@ -279,11 +280,229 @@ def readNerfSyntheticInfo(path, white_background, eval, extension=".png"):
 
 
 
+def readSplit_cams_params(intrinsic_folder, extrinsic_folder):
+
+    intrinsic_files = sorted(os.listdir(intrinsic_folder))
+    extrinsic_files = sorted(os.listdir(extrinsic_folder))
+
+    # Read intrinsics
+
+    with open(f"{intrinsic_folder}/{intrinsic_files[0]}", "r") as fid:
+        K = float(fid.readline())
+
+
+    w2cs = []
+
+    # Read extrincsics
+
+    for file in extrinsic_files:
+
+        with open(f"{extrinsic_folder}/{file}", "r") as fid:
+
+            c2w = []
+
+            while True:
+                line = fid.readline().rstrip()
+
+                if not line:
+                    break
+                
+                c2w+=line.split(' ')
+
+        c2w = np.array([float(x) for x in c2w]).reshape((4,4))
+        w2c = np.linalg.inv(c2w)
+        # RTs
+        w2cs.append(w2c)
+
+    return K, w2cs
+
+@torch.inference_mode()
+def readSplitInfo(path, foundation_model=None, pcd = None, load_feature=True, view_num=None):
+    
+    train_images_folder = os.path.join(path, "train/rgb")
+    train_extrinsic_folder = os.path.join(path, "train/poses")
+    train_intrinsic_folder = os.path.join(path, "train/calibration")
+    # train_feature_folder = os.path.join(path, f"train/{foundation_model}")
+    
+    test_images_folder = os.path.join(path, "test/rgb")
+    test_extrinsic_folder = os.path.join(path, "test/poses")
+    test_intrinsic_folder = os.path.join(path, "test/calibration")
+    # test_feature_folder = os.path.join(path, f"test/{foundation_model}")
+
+    ply_path = os.path.join(path, "out.ply")
+
+    scene_name = path.split("_")[-1]    
+
+    if '7scenes' in path:
+        sfm_path = os.path.join(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7scenes_reference_models", 
+                                scene_name, "old_gt_refined")
+
+    elif 'Cambridge' in path:
+        sfm_path = path
+    
+    else:
+        raise ValueError(f"Unknown dataset: {path}")
+
+    print(sfm_path)
+
+    train_views = sorted(os.listdir(train_images_folder))
+    test_views = sorted(os.listdir(test_images_folder))
+
+    if view_num is not None:
+        train_views = train_views[:view_num]
+        test_views = test_views[:view_num]
+
+    train_cam_infos_unsorted = []
+    test_cam_infos_unsorted = []
+
+    K_train, w2cs_train = readSplit_cams_params(train_intrinsic_folder, train_extrinsic_folder)
+    K_test, w2cs_test = readSplit_cams_params(test_intrinsic_folder, test_extrinsic_folder)
+
+    width, height = Image.open(f"{train_images_folder}/{train_views[0]}").size
+    
+    # model = SuperPoint().cuda()
+    
+    for i, view in enumerate(train_views):
+        sys.stdout.write('\r')
+        sys.stdout.write(f"Reading {i+1} train / {len(train_views)} camera")
+        sys.stdout.flush()
+
+        w2c_sample = w2cs_train[i]
+        
+        R = w2c_sample[:3,:3].T  # R is stored transposed due to 'glm' in CUDA code
+        T = w2c_sample[:3, 3]
+        
+        focal_length_x = K_train
+        FovY = focal2fov(focal_length_x, height)
+        FovX = focal2fov(focal_length_x, width)
+
+        image_path = os.path.join(train_images_folder, view)
+        image_name = os.path.basename(image_path).split(".png")[0].split(".color")[0]
+        image = Image.open(image_path)
+      
+        # tensor_image = PILToTensor()(image)[None].float()
+        # semantic_feature = model.get_descriptors(tensor_image)[0].cpu()
+        
+        # semantic_feature_path = os.path.join(train_feature_folder, image_name) + '_fmap.pt'
+        # semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
+        # if os.path.exists(semantic_feature_path) and load_feature:
+        #     semantic_feature = torch.load(semantic_feature_path)
+        # else:
+        #     semantic_feature = None
+
+
+        # score_feature_path = os.path.join(train_feature_folder, image_name) + '_smap.pt'
+        # score_feature_name = os.path.basename(score_feature_path).split(".")[0]
+        # if os.path.exists(score_feature_path) and load_feature:
+        #     score_feature = torch.load(score_feature_path)
+        # else:
+        #     score_feature = None
+   
+        # cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+        #                     image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1],
+        #                     semantic_feature=semantic_feature)
+        
+        # CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+        #                       image_path=image_path, image_name=image_name, width=image.size[0], height=image.size[1],
+        #                       semantic_feature=semantic_feature,
+        #                       semantic_feature_path=semantic_feature_path,
+        #                       semantic_feature_name=semantic_feature_name)
+        
+        cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+                            image_path=image_path, image_name=image_name,
+                            intrinsic_params=None,
+                            width=width, height=height,)
+        train_cam_infos_unsorted.append(cam_info)
+
+    for i, view in enumerate(test_views):
+        sys.stdout.write('\r')
+        sys.stdout.write(f"Reading {i+1} test / {len(test_views)} camera")
+        sys.stdout.flush()
+
+        w2c_sample = w2cs_test[i]
+
+        R = w2c_sample[:3,:3].T  # R is stored transposed due to 'glm' in CUDA code
+        T = w2c_sample[:3, 3]
+
+        focal_length_x = K_test
+        FovY = focal2fov(focal_length_x, height)
+        FovX = focal2fov(focal_length_x, width)
+
+        image_path = os.path.join(test_images_folder, view)
+        image_name = os.path.basename(image_path).split(".png")[0].split(".color")[0]
+        image = Image.open(image_path)
+
+
+        # semantic_feature_path = os.path.join(test_feature_folder, image_name) + '_fmap.pt'
+        # semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
+        # if os.path.exists(semantic_feature_path) and load_feature:
+        #     semantic_feature = torch.load(semantic_feature_path)
+        # else:
+        #     semantic_feature = None
+
+        # score_feature_path = os.path.join(test_feature_folder, image_name) + '_smap.pt'
+        # score_feature_name = os.path.basename(score_feature_path).split(".")[0]
+        # if os.path.exists(score_feature_path) and load_feature:
+        #     score_feature = torch.load(score_feature_path)
+        # else:
+        #     score_feature = None
+
+
+        cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+                            image_path=image_path, image_name=image_name,
+                            intrinsic_params=None,
+                            width=width, height=height,)
+        test_cam_infos_unsorted.append(cam_info)
+
+
+    train_cam_infos = sorted(train_cam_infos_unsorted, key = lambda x : x.image_name)
+    test_cam_infos = sorted(test_cam_infos_unsorted, key = lambda x : x.image_name)
+
+    print(f"\nTotal cams: {len(train_cam_infos)+len(test_cam_infos)}")
+    nerf_normalization = getNerfppNorm(train_cam_infos)
+
+    if 'Cambridge' in path:
+        nvm_path = os.path.join(sfm_path, "reconstruction.nvm")
+
+        if not os.path.exists(ply_path):
+            print("Converting reconstruction.nvm to .ply, will happen only the first time you open the scene.")
+        try:
+            xyz, rgb= read_points3D_nvm(nvm_path)
+            storePly(ply_path, xyz, rgb)
+        except:
+            print("Error reading reconstruction.nvm file. Please ensure it exists and is in the correct format.")
+
+    else:
+
+        bin_path = os.path.join(sfm_path, "points3D.bin")
+
+        if not os.path.exists(ply_path):
+            print("Converting point3d.bin to .ply, will happen only the first time you open the scene.")
+        try:
+            xyz, rgb, _ = read_points3D_binary(bin_path)
+            storePly(ply_path, xyz, rgb)
+        except:
+            print("Error reading reconstruction.nvm file. Please ensure it exists and is in the correct format.")
+    
+    try:
+        pcd = fetchPly(ply_path)
+    except:
+        print("Error reading .ply file. Using default point cloud.")
+        pcd = None
+    
+
+    scene_info = SceneInfo(point_cloud=pcd,
+                           train_cameras=train_cam_infos,
+                           test_cameras=test_cam_infos,
+                           nerf_normalization=nerf_normalization,
+                           ply_path=ply_path,)
+
+    return scene_info
+
+
 
 sceneLoadTypeCallbacks = {
+    "Split" : readSplitInfo,
     "Colmap": readColmapSceneInfo,
     "Blender" : readNerfSyntheticInfo
 }
-
-
-

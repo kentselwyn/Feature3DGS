@@ -380,14 +380,14 @@ def readSplit_cams_params(intrinsic_folder, extrinsic_folder):
 
 
 @torch.inference_mode()
-def readSplitInfo(path, foundation_model, pcd = None, load_feature=True, view_num=None):
+def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True, view_num=None):
     
-    train_images_folder = os.path.join(path, "train/rgb")
+    train_images_folder = os.path.join(path, f"train/{images}")
     train_extrinsic_folder = os.path.join(path, "train/poses")
     train_intrinsic_folder = os.path.join(path, "train/calibration")
     train_feature_folder = os.path.join(path, f"train/{foundation_model}")
     
-    test_images_folder = os.path.join(path, "test/rgb")
+    test_images_folder = os.path.join(path, f"test/{images}")
     test_extrinsic_folder = os.path.join(path, "test/poses")
     test_intrinsic_folder = os.path.join(path, "test/calibration")
     test_feature_folder = os.path.join(path, f"test/{foundation_model}")
@@ -460,6 +460,8 @@ def readSplitInfo(path, foundation_model, pcd = None, load_feature=True, view_nu
         else:
             score_feature = None
         
+        # breakpoint()
+        
         cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                             image_path=image_path, image_name=image_name,
                             intrinsic_params=None,
@@ -468,6 +470,8 @@ def readSplitInfo(path, foundation_model, pcd = None, load_feature=True, view_nu
                             semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
                             semantic_feature_name=semantic_feature_name, score_feature_name = score_feature_name)
         train_cam_infos_unsorted.append(cam_info)
+
+    # breakpoint()
 
     for i, view in enumerate(test_views):
         sys.stdout.write('\r')
