@@ -1,6 +1,8 @@
 import numpy as np
 import pycolmap
 
+np.random.seed(1000)
+
 def opencv_to_pycolmap_pnp(db_world, q_matched, K, image_width, image_height):
     """
     Convert OpenCV PnP inputs to pycolmap format and estimate pose
@@ -43,7 +45,6 @@ def opencv_to_pycolmap_pnp(db_world, q_matched, K, image_width, image_height):
     estimation_options.ransac.max_num_trials = 10000
     # Set up refinement options
     refinement_options = pycolmap.AbsolutePoseRefinementOptions()
-    
     # Estimate pose
     result = pycolmap.estimate_and_refine_absolute_pose(
         points2D=points2D,

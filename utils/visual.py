@@ -23,7 +23,8 @@ def get_aspan(name = "outdoor"):
     _config = lower_config(config)
 
     aspan = ASpanFormer(config=_config['aspan'])
-    state_dict = torch.load(f"/home/koki/code/cc/image_matching/ml-aspanformer/weights/{name}.ckpt", map_location='cpu')['state_dict']
+    state_dict = torch.load(f"/home/koki/code/cc/image_matching/ml-aspanformer/weights/{name}.ckpt", 
+                            map_location='cpu')['state_dict']
     aspan.load_state_dict(state_dict,strict=False)
     aspan.cuda().eval()
 
