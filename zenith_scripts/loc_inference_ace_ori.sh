@@ -7,7 +7,8 @@ data_name="7_scenes"
 ###############################################
 # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt_7scenes_redkitchen, pgt_7scenes_stairs
 # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-scene_name="pgt_7scenes_fire" 
+scene_name="pgt_7scenes_chess" 
+# scene_name=$1
 ###############################################
 save_match=0
 iteration=30000
@@ -37,7 +38,7 @@ fi
 
 ###############################################
 if (( depth_render )); then
-    test_name="iteration${iteration}_sp${sp_th}_lg${lg_th}"
+    test_name="iteration${iteration}_sp${sp_th}_lg${lg_th}_"
     test_name+="ransaciters${ransac_iters}_"
     test_name+="stop_kpt_num${stop_kpt_num}_pnp_${pnp_option}_ace_DepthRender"
 else
