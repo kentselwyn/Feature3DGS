@@ -27,6 +27,7 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
     tErrs = []
     prior_rErr = []
     prior_tErr = []
+    total_elapsed_time = 0
     device = torch.device("cuda")
     scene_name = model_path.split('/')[-3]
     test_name = args.test_name
@@ -142,7 +143,9 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 # Print the errors
                 print(f"Final Rotation Error: {rotError_final} deg")
                 print(f"Final Translation Error: {transError_final} cm")
-                print(f"elapsed time: {time.time()-start}")
+                elapsed_time = time.time()-start
+                total_elapsed_time += elapsed_time
+                print(f"elapsed time: {elapsed_time}")
                 print()
                 prior_rErr.append(rotError)
                 prior_tErr.append(transError)
@@ -151,11 +154,14 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
     
     error_foler = f'{model_path}/error_logs/{test_name}'
     os.makedirs(error_foler, exist_ok=True)
+    mean_elapsed_time = total_elapsed_time / len(rErrs)
     print('rot len: ',len(prior_rErr))
     print('final rot len: ', len(rErrs))
+    print('mean elapsed time: ', mean_elapsed_time)
     print()
     loc_utils.log_errors(error_foler, name, prior_rErr, prior_tErr, list_text=f"prior", error_text="prior_final")
-    loc_utils.log_errors(error_foler, name, rErrs, tErrs, list_text="warp", error_text="prior_final")
+    loc_utils.log_errors(error_foler, name, rErrs, tErrs, list_text="warp", error_text="prior_final",
+                         elapsed_time=mean_elapsed_time)
 
 
 def localize(model_param:ModelParams, pipe_param:PipelineParams, args):

@@ -48,12 +48,12 @@ def plot_points(img: torch.Tensor, kpts: torch.Tensor):
         if C>1:
             img[1, yi[valid], xi[valid]] = 0.
             img[2, yi[valid], xi[valid]] = 0.
-    # for (yi, xi) in indices1:
-    #     valid = (xi >= 0) & (xi < W) & (yi >= 0) & (yi < H)
-    #     img[0, yi[valid], xi[valid]] = 0.6
-    #     if C>1:
-    #         img[1, yi[valid], xi[valid]] = 0.
-    #         img[2, yi[valid], xi[valid]] = 0.
+    for (yi, xi) in indices1:
+        valid = (xi >= 0) & (xi < W) & (yi >= 0) & (yi < H)
+        img[0, yi[valid], xi[valid]] = 0.6
+        if C>1:
+            img[1, yi[valid], xi[valid]] = 0.
+            img[2, yi[valid], xi[valid]] = 0.
 
 
 def save_all(img:torch.Tensor, kpts:torch.Tensor, desc:torch.Tensor, sp_path:str, outimg_path:str, args):
