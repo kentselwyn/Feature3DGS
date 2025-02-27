@@ -35,7 +35,7 @@ def calculate_pose_errors_ace(gt_pose_44, out_pose):
 
 
 
-def log_errors(log_dir, name, rotation_errors, translation_errors, list_text, error_text):
+def log_errors(log_dir, name, rotation_errors, translation_errors, list_text, error_text, elapsed_time=None):
     total_frames = len(rotation_errors)
     # Remove NaN values from rotation_errors and translation_errors
     rotation_errors = [err for err in rotation_errors if not np.isnan(err)]
@@ -81,6 +81,8 @@ def log_errors(log_dir, name, rotation_errors, translation_errors, list_text, er
         f.write(f'\t1cm/1deg: {pct1:.1f}%\n')
         f.write(f'Median translation error: {median_tErr:.6f} cm\n')
         f.write(f'Median rotation error: {median_rErr:.6f} dg\n')
+        if elapsed_time is not None:
+            f.write(f'Mean elapsed time: {elapsed_time:.6f} s\n')
 
 
 
