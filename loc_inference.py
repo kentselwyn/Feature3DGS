@@ -8,7 +8,7 @@ from utils.match_img import save_matchimg
 from utils.graphics_utils import fov2focal
 from utils.find_depth import project_2d_to_3d
 from utils.vis_scoremap import one_channel_vis
-from gaussian_renderer.__init__median import render
+from gaussian_renderer.__init__loc import render
 from encoders.superpoint.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from arguments import ModelParams, PipelineParams, get_combined_args
