@@ -8,12 +8,18 @@
 #
 # For inquiries contact  george.drettakis@inria.fr
 #
-
+import os
 import torch
 import math
-from diff_gaussian_rasterization_depth import GaussianRasterizationSettings, GaussianRasterizer
+
 from scene_ori.gaussian_model import GaussianModel
 from utils.sh_utils import eval_sh
+depth_render = int(os.getenv("DEPTH_RENSER", "0"))
+
+if depth_render:
+    from diff_gaussian_rasterization_depth import GaussianRasterizationSettings, GaussianRasterizer
+else:
+    from diff_gaussian_rasterization_depth_median import GaussianRasterizationSettings, GaussianRasterizer
 
 
 def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None):
