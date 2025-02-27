@@ -5,15 +5,15 @@
     # Cambridge
     data_name="7_scenes"
     ###############################################
-    # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt7scenes_redkitchen, pgt_7scenes_stairs
+    # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt_7scenes_redkitchen, pgt_7scenes_stairs
     # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-    scene_name="pgt_7scenes_fire" 
+    scene_name="pgt_7scenes_chess" 
     ###############################################
     # all
     # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt_7scenes_redkitchen, pgt_7scenes_stairs
     # Cambridge
     # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-    mlp_method="dataset_7scenes"
+    mlp_method="pgt_7scenes_chess"
     ###### dataset build #########################################
     resize_num=1
     th=0.01
@@ -30,11 +30,14 @@
 {
     ###### gaussian training #########################################
     score_loss="weighted" # L2, weighted, L1
-    score_scale=1
+    # score_loss="L2"
+    score_scale=0.6
     feature_opa=0
+    iterations=30000
     # train_ImgName="imrate:${resize_num}_th:${th}_kptnum:${max_num_keypoints}"
     train_ImgName="rgb"
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Warninggggggggggggggggggggggggggggggggggggggggg
+    # traing_name_option="UseTrueRender_denseless6000_DenseInterval100"
     traing_name_option="UseTrueRender"
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Warninggggggggggggggggggggggggggggggggggggggggg
     # output name
@@ -52,8 +55,8 @@
 
 # ( bash zenith_scripts/DatasetBuild_Train_Loc.sh )
 ########################################################################
-build_data=1
-start_train=1
+build_data=0
+start_train=0
 start_loc=1
 ########################################################################
 
@@ -66,10 +69,10 @@ start_loc=1
     ###########################
     depth_render=1
     ###########################
-    test_iteration=30000
+    test_iteration=$iterations
     sp_th=0.01
     lg_th=0.01
-    kpt_hist=0.98
+    kpt_hist=0.9
     ransac_iters=20000
     kernel_size=15
     stop_kpt_num=50
@@ -112,10 +115,10 @@ fi
 ######################################################################## train ########################################################################
 if (( start_train )); then
     export FEATURE_OPA=$feature_opa
-    python train.py -s "$SOURSE_PATH" -i "$train_ImgName" -m "$OUT_PATH" -f "$feature_name" --iterations 30000 \
+    python train.py -s "$SOURSE_PATH" -i "$train_ImgName" -m "$OUT_PATH" -f "$feature_name" --iterations $iterations \
                     --score_loss "$score_loss" --score_scale "$score_scale"
     if (( if_render )); then
-        python render.py -m $OUT_PATH --iteration 30000 --skip_train --view_num $render_num
+        python render.py -m $OUT_PATH --iteration $iterations --skip_train --view_num $render_num
     fi
 fi
 
