@@ -19,6 +19,7 @@ from encoders.superpoint.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from utils.pycolmap_utils import opencv_to_pycolmap_pnp
 from arguments import ModelParams, PipelineParams, get_combined_args
+from matchers.mast3r.mast3r.model import AsymmetricMASt3R
 
 
 def localize_set(model_path, name, views, gaussians, pipe_param, background, 
@@ -95,49 +96,55 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 db_render = render_pkg["render"]
                 db_depth = render_pkg["depth"]
                 query_render = gt_im
-                if args.rival:
+                if args.match_type==0:
                     result = loc_utils.img_match2(query_render, db_render, encoder, matcher)
-                if result is None:
-                    prior_rErr.append(rotError)
-                    prior_tErr.append(transError)
-                    rErrs.append(rotError)
-                    tErrs.append(transError)
-                    print(f"Rotation Error: {rotError} deg")
-                    print(f"Translation Error: {transError} cm")
-                    continue
-                if not len(result['mkpt1'].cpu())>args.stop_kpt_num:
-                    prior_rErr.append(rotError)
-                    prior_tErr.append(transError)
-                    rErrs.append(rotError)
-                    tErrs.append(transError)
-                    print(f"Rotation Error: {rotError} deg")
-                    print(f"Translation Error: {transError} cm")
-                    continue
-                db_world = project_2d_to_3d(result['mkpt1'].cpu(), db_depth.cpu(), 
-                                            torch.tensor(K, dtype=torch.float32).cpu(), 
-                                            w2c.cpu()).cpu().numpy().astype(np.float64)
-                q_matched = result['mkpt0'].cpu().numpy().astype(np.float64)
-                if args.pnp == "iters":
-                    _, R_final, t_final, _ = cv2.solvePnPRansac(db_world, q_matched, K, distCoeffs=None, 
-                                                                flags=cv2.SOLVEPNP_ITERATIVE, 
-                                                                iterationsCount=args.ransac_iters)
-                    R_final, _ = cv2.Rodrigues(R_final)
-                elif args.pnp == "epnp":
-                    _, R_final, t_final, _ = cv2.solvePnPRansac(db_world, q_matched, K, distCoeffs=None, 
-                                                                flags=cv2.SOLVEPNP_EPNP)
-                    R_final, _ = cv2.Rodrigues(R_final)
-                elif args.pnp == "pycolmap":
-                    R_final, t_final = opencv_to_pycolmap_pnp(db_world, q_matched, K, 
-                                                        view.image_width, view.image_height)
-                rotError_final, transError_final = loc_utils.calculate_pose_errors(gt_R, gt_t, R_final.T, t_final)
-
-                if args.save_match:
-                    result['img0'] = gt_im.squeeze(0).permute(1, 2, 0)
-                    result['img1'] = db_render.squeeze(0).permute(1, 2, 0)
-                    loc_utils.save_matchimg(result, 
-                        f'{match_folder}/{index}_{view.image_name}__(T:{transError:.2f}_R:{rotError:.2f})__(T:{transError_final:.2f}_R:{rotError_final:.2f}).png')
                 
-                print(index)
+                if args.match_type==1:
+                    rotError_final, transError_final = loc_utils.img_match_mast3r(query_render, db_render, matcher, 
+                                                             K, depth_map=db_depth, w2c=w2c, gt_pose_44=gt_pose_44)
+                print(f"time 7: {time.time()-start}")
+                if args.match_type==0:
+                    if result is None:
+                        prior_rErr.append(rotError)
+                        prior_tErr.append(transError)
+                        rErrs.append(rotError)
+                        tErrs.append(transError)
+                        print(f"Rotation Error: {rotError} deg")
+                        print(f"Translation Error: {transError} cm")
+                        continue
+                    if not len(result['mkpt1'].cpu())>args.stop_kpt_num:
+                        prior_rErr.append(rotError)
+                        prior_tErr.append(transError)
+                        rErrs.append(rotError)
+                        tErrs.append(transError)
+                        print(f"Rotation Error: {rotError} deg")
+                        print(f"Translation Error: {transError} cm")
+                        continue
+                    db_world = project_2d_to_3d(result['mkpt1'].cpu(), db_depth.cpu(), 
+                                                torch.tensor(K, dtype=torch.float32).cpu(), 
+                                                w2c.cpu()).cpu().numpy().astype(np.float64)
+                    q_matched = result['mkpt0'].cpu().numpy().astype(np.float64)
+                    if args.pnp == "iters":
+                        _, R_final, t_final, _ = cv2.solvePnPRansac(db_world, q_matched, K, distCoeffs=None, 
+                                                                    flags=cv2.SOLVEPNP_ITERATIVE, 
+                                                                    iterationsCount=args.ransac_iters)
+                        R_final, _ = cv2.Rodrigues(R_final)
+                    elif args.pnp == "epnp":
+                        _, R_final, t_final, _ = cv2.solvePnPRansac(db_world, q_matched, K, distCoeffs=None, 
+                                                                    flags=cv2.SOLVEPNP_EPNP)
+                        R_final, _ = cv2.Rodrigues(R_final)
+                    elif args.pnp == "pycolmap":
+                        R_final, t_final = opencv_to_pycolmap_pnp(db_world, q_matched, K, 
+                                                            view.image_width, view.image_height)
+                    rotError_final, transError_final = loc_utils.calculate_pose_errors(gt_R, gt_t, R_final.T, t_final)
+
+                    if args.save_match:
+                        result['img0'] = gt_im.squeeze(0).permute(1, 2, 0)
+                        result['img1'] = db_render.squeeze(0).permute(1, 2, 0)
+                        loc_utils.save_matchimg(result, 
+                            f'{match_folder}/{index}_{view.image_name}__(T:{transError:.2f}_R:{rotError:.2f})__(T:{transError_final:.2f}_R:{rotError_final:.2f}).png')
+                
+                # print(index)
                 print(f"Rotation Error: {rotError} deg")
                 print(f"Translation Error: {transError} cm")
                 # Print the errors
@@ -147,6 +154,7 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 total_elapsed_time += elapsed_time
                 print(f"elapsed time: {elapsed_time}")
                 print()
+                # breakpoint()
                 prior_rErr.append(rotError)
                 prior_tErr.append(transError)
                 rErrs.append(rotError_final)
@@ -175,8 +183,14 @@ def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
         "max_num_keypoints": 1024,
         "detection_threshold": args.sp_th,
     }
-    encoder = SuperPoint(conf).cuda().eval()
-    matcher = LightGlue({"filter_threshold": args.lg_th ,}).cuda().eval()
+    if args.match_type==0:
+        encoder = SuperPoint(conf).cuda().eval()
+        matcher = LightGlue({"filter_threshold": args.lg_th ,}).cuda().eval()
+    elif args.match_type==1:
+        model_name = "naver/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric"
+        encoder = None
+        matcher = AsymmetricMASt3R.from_pretrained(model_name).cuda().eval()
+    
     encoder_state_dict = torch.load(args.ace_encoder_path, map_location="cpu")
     head_state_dict = torch.load(args.ace_ckpt, map_location="cpu")
     ace_network = Regressor.create_from_split_state_dict(encoder_state_dict, head_state_dict).cuda().eval()
@@ -205,7 +219,7 @@ if __name__ == "__main__":
     parser.add_argument("--ace_ckpt", type=str)
     parser.add_argument("--pnp", default="iters", type=str)
     parser.add_argument("--test_name", required=True, type=str)
-    parser.add_argument("--rival", default=1, type=int)
+    parser.add_argument("--match_type", default=0, type=int)
     parser.add_argument("--ace_encoder_path", 
                         default="/home/koki/code/cc/feature_3dgs_2/ace_encoder_pretrained.pt", type=str)
     args = get_combined_args(parser)

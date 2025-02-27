@@ -2,12 +2,18 @@ import os
 import numpy as np
 import cv2
 import math
+import time
 import torch
 import pickle
 import open3d as o3d
 from typing import Tuple
 import torch.nn.functional as F
 from utils.match_img import extract_kpt, sample_descriptors_fix_sampling, save_matchimg, find_small_circle_centers
+from matchers.mast3r.mast3r.fast_nn import fast_reciprocal_NNs
+from matchers.mast3r.dust3r.dust3r.inference import inference
+from matchers.mast3r.dust3r.dust3r.utils.image import convert_tensor_to_dust3r_format
+import torchvision.transforms as T
+from matchers.mast3r.utils.functions import *
 
 
 def calculate_pose_errors(R_gt, t_gt, R_est, t_est):
@@ -400,3 +406,102 @@ def feat_fromImg_match(query_render, score_db, db_render, encoder, matcher, args
     return result
     
 
+
+original_size = (480, 640)
+def img_match_mast3r(query_render, db_render, model, K, depth_map, w2c, gt_pose_44):
+    s=time.time()
+    image1_tensor = query_render
+    image2_tensor = db_render.unsqueeze(0)
+    image1 = convert_tensor_to_dust3r_format(image1_tensor, size=512, idx=0)
+    image2 = convert_tensor_to_dust3r_format(image2_tensor, size=512, idx=1)
+    print(f"time 1: {time.time()-s} s")
+    
+    images = [image1, image2]
+    output = inference([tuple(images)], model, device = 'cuda', batch_size=1, verbose=False)
+    view1, pred1 = output['view1'], output['pred1']
+    view2, pred2 = output['view2'], output['pred2']
+    print(f"time 2: {time.time()-s} s")
+
+    desc1, desc2 = pred1['desc'].squeeze(0).detach(), pred2['desc'].squeeze(0).detach()
+    # find 2D-2D matches between the two images
+    matches_im0, matches_im1 = fast_reciprocal_NNs(desc1, desc2, subsample_or_initxy1=8,
+                                                device='cuda', dist='dot', block_size=2**13)
+    
+    print(f"time 3: {time.time()-s} s")
+
+    # ignore small border around the edge
+    H0, W0 = view1['true_shape'][0]
+    
+    valid_matches_im0 = (matches_im0[:, 0] >= 3) & (matches_im0[:, 0] < int(W0) - 3) & (
+        matches_im0[:, 1] >= 3) & (matches_im0[:, 1] < int(H0) - 3)
+
+    H1, W1 = view2['true_shape'][0]
+    valid_matches_im1 = (matches_im1[:, 0] >= 3) & (matches_im1[:, 0] < int(W1) - 3) & (
+        matches_im1[:, 1] >= 3) & (matches_im1[:, 1] < int(H1) - 3)
+
+    valid_matches = valid_matches_im0 & valid_matches_im1
+    matches_im0, matches_im1 = matches_im0[valid_matches], matches_im1[valid_matches]
+
+    scale_x = original_size[1] / W0.item()
+    scale_y = original_size[0] / H0.item()
+    for pixel in matches_im1:
+        pixel[0] *= scale_x
+        pixel[1] *= scale_y
+    for pixel in matches_im0:
+        pixel[0] *= scale_x
+        pixel[1] *= scale_y
+    dist_eff = np.array([0,0,0,0], dtype=np.float32)
+
+    predict_c2w_ini = np.linalg.inv(w2c.cpu().detach().numpy())
+    predict_w2c_ini = w2c.cpu().detach().numpy()
+    initial_rvec, _ = cv2.Rodrigues(predict_c2w_ini[:3,:3].astype(np.float32))
+    initial_tvec = predict_c2w_ini[:3,3].astype(np.float32)
+    gt_c2w_pose = gt_pose_44.cpu().detach().numpy()
+    K_inv = np.linalg.inv(K)
+    depth_map = depth_map.squeeze(0).cpu().detach().numpy()
+    height, width = depth_map.shape
+    x_coords, y_coords = np.meshgrid(np.arange(width), np.arange(height))
+    x_flat = x_coords.flatten()
+    y_flat = y_coords.flatten()
+    depth_flat = depth_map.flatten()
+    x_normalized = (x_flat - K[0, 2]) / K[0, 0]
+    y_normalized = (y_flat - K[1, 2]) / K[1, 1]
+    X_camera = depth_flat * x_normalized
+    Y_camera = depth_flat * y_normalized
+    Z_camera = depth_flat
+    points_camera = np.vstack((X_camera, Y_camera, Z_camera, np.ones_like(X_camera)))
+    points_world = predict_c2w_ini @ points_camera
+    X_world = points_world[0, :]
+    Y_world = points_world[1, :]
+    Z_world = points_world[2, :]
+    points_3D = np.vstack((X_world, Y_world, Z_world))
+    scene_coordinates_gs = points_3D.reshape(3, original_size[0], original_size[1])
+    points_3D_at_pixels = np.zeros((matches_im0.shape[0], 3))
+    for i, (x, y) in enumerate(matches_im0):
+        points_3D_at_pixels[i] = scene_coordinates_gs[:, y, x]
+    
+    print(f"time 4: {time.time()-s} s")
+    if matches_im1.shape[0] >= 4:
+        success, rvec, tvec, inliers = cv2.solvePnPRansac(points_3D_at_pixels.astype(np.float32), 
+                                                          matches_im1.astype(np.float32), 
+                                                          K, dist_eff,rvec=initial_rvec,tvec=initial_tvec, 
+                                                          useExtrinsicGuess=True, reprojectionError=1.0,
+                                                          iterationsCount=2000,flags=cv2.SOLVEPNP_EPNP)
+        print(f"time 5: {time.time()-s} s")
+        R = perform_rodrigues_transformation(rvec)
+        trans = -R.T @ np.matrix(tvec)
+        predict_c2w_refine = np.eye(4)
+        predict_c2w_refine[:3,:3] = R.T
+        predict_c2w_refine[:3,3] = trans.reshape(3)
+        ini_rot_error,ini_translation_error=cal_campose_error(predict_c2w_ini, gt_c2w_pose)
+        refine_rot_error,refine_translation_error=cal_campose_error(predict_c2w_refine, gt_c2w_pose)
+
+        combined_list = rotmat2qvec(np.linalg.inv(predict_c2w_refine)[:3,:3]).tolist() + \
+            np.linalg.inv(predict_c2w_refine)[:3,3].tolist()
+        output_line = ' '.join(map(str, combined_list))
+        # print(output_line)
+        print(f"time 6: {time.time()-s} s")
+        # print(f"translation error: {refine_translation_error} cm")
+        # print(f"rotation error: {refine_rot_error} deg")
+
+    return refine_rot_error, refine_translation_error

@@ -3,19 +3,17 @@
     ###############################################
     # 7_scenes
     # Cambridge
-    data_name="Cambridge"
+    data_name="7_scenes"
     ###############################################
-    # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt7scenes_redkitchen, pgt_7scenes_stairs
+    # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt_7scenes_redkitchen, pgt_7scenes_stairs
     # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-    # scene_name="Cambridge_OldHospital" 
-    scene_name=$1
+    scene_name="pgt_7scenes_chess" 
     ###############################################
     # all
     # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt_7scenes_redkitchen, pgt_7scenes_stairs
     # Cambridge
     # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-    # mlp_method="Cambridge_OldHospital"
-    mlp_method=$1
+    mlp_method="pgt_7scenes_chess"
     ###### dataset build #########################################
     resize_num=1
     th=0.01
@@ -28,10 +26,11 @@
     feat_name="${mlp_method}_imrate:${resize_num}_th:${th}_"
     feat_name+="mlpdim:${mlp_dim}_kptnum:${max_num_keypoints}_rgb"
 }
-# ( bash zenith_scripts/DatasetBuild_Train_Loc2.sh )
+# ( bash zenith_scripts/DatasetBuild_Train_Loc.sh )
 {
     ###### gaussian training #########################################
     score_loss="weighted" # L2, weighted, L1
+    # score_loss="L2"
     score_scale=0.6
     feature_opa=0
     iterations=30000
@@ -54,26 +53,26 @@
 }
 
 
-# ( bash zenith_scripts/DatasetBuild_Train_Loc2.sh )
+# ( bash zenith_scripts/DatasetBuild_Train_Loc.sh )
 ########################################################################
-build_data=1
-start_train=1
+build_data=0
+start_train=0
 start_loc=1
 ########################################################################
 
 
 ##### localization parameters ######################################################################## 
 {
-    rival=0
-    save_match=0
-    feat_from_img=0  # use score from gaussian, feature from image
+    # 0:ours, 1:feat_from_img(# use score from gaussian, feature from image), 2:rival, 3:mast3r
+    match_type=0
     ###########################
-    depth_render=0
+    save_match=0
+    depth_render=1
     ###########################
     test_iteration=$iterations
     sp_th=0.01
     lg_th=0.01
-    kpt_hist=0.95
+    kpt_hist=0.9
     ransac_iters=20000
     kernel_size=15
     stop_kpt_num=50
@@ -88,11 +87,11 @@ start_loc=1
         test_name+="DepthRender"
     fi
 
-    if (( feat_from_img )); then
+    if [ "$match_type" -eq 1 ]; then
         test_name+="FeatFromImg"
     fi
 
-    if (( rival )); then
+    if [ "$match_type" -eq 2 ]; then
         test_name+="_rival_000"
     fi
 }
@@ -142,12 +141,12 @@ if (( start_loc )); then
                                     --mlp_dim $mlp_dim --mlp_method $mlp_method --lg_th $lg_th \
                                     --kernel_size $kernel_size --sp_th $sp_th --ransac_iters $ransac_iters \
                                     --stop_kpt_num $stop_kpt_num --pnp $pnp_option --kpt_hist $kpt_hist \
-                                    --test_name "$test_name" --rival "$rival" --feat_from_img "$feat_from_img"
+                                    --test_name "$test_name" --match_type "$match_type"
     else
         python loc_inference_ace.py -m $OUT_PATH --ace_ckpt $ace_ckpt --iteration $test_iteration \
                                     --mlp_dim $mlp_dim --mlp_method $mlp_method --lg_th $lg_th \
                                     --kernel_size $kernel_size --sp_th $sp_th --ransac_iters $ransac_iters \
                                     --stop_kpt_num $stop_kpt_num --pnp $pnp_option --kpt_hist $kpt_hist \
-                                    --test_name "$test_name" --rival "$rival" --feat_from_img "$feat_from_img"
+                                    --test_name "$test_name" --match_type "$match_type"
     fi
 fi

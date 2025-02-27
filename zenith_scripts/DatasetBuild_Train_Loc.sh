@@ -63,10 +63,10 @@ start_loc=1
 
 ##### localization parameters ######################################################################## 
 {
-    rival=0
-    save_match=0
-    feat_from_img=0  # use score from gaussian, feature from image
+    # 0:ours, 1:feat_from_img(# use score from gaussian, feature from image), 2:rival, 3:mast3r
+    match_type=0
     ###########################
+    save_match=0
     depth_render=1
     ###########################
     test_iteration=$iterations
@@ -87,11 +87,11 @@ start_loc=1
         test_name+="DepthRender"
     fi
 
-    if (( feat_from_img )); then
+    if [ "$match_type" -eq 1 ]; then
         test_name+="FeatFromImg"
     fi
 
-    if (( rival )); then
+    if [ "$match_type" -eq 2 ]; then
         test_name+="_rival_000"
     fi
 }
@@ -141,12 +141,12 @@ if (( start_loc )); then
                                     --mlp_dim $mlp_dim --mlp_method $mlp_method --lg_th $lg_th \
                                     --kernel_size $kernel_size --sp_th $sp_th --ransac_iters $ransac_iters \
                                     --stop_kpt_num $stop_kpt_num --pnp $pnp_option --kpt_hist $kpt_hist \
-                                    --test_name "$test_name" --rival "$rival" --feat_from_img "$feat_from_img"
+                                    --test_name "$test_name" --match_type "$match_type"
     else
         python loc_inference_ace.py -m $OUT_PATH --ace_ckpt $ace_ckpt --iteration $test_iteration \
                                     --mlp_dim $mlp_dim --mlp_method $mlp_method --lg_th $lg_th \
                                     --kernel_size $kernel_size --sp_th $sp_th --ransac_iters $ransac_iters \
                                     --stop_kpt_num $stop_kpt_num --pnp $pnp_option --kpt_hist $kpt_hist \
-                                    --test_name "$test_name" --rival "$rival" --feat_from_img "$feat_from_img"
+                                    --test_name "$test_name" --match_type "$match_type"
     fi
 fi

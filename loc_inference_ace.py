@@ -116,12 +116,14 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 db_feature = render_pkg["feature_map"]
                 db_depth = render_pkg["depth"]
                 query_render = gt_im
-                if args.rival:
-                    result = loc_utils.img_match2(query_render, db_render, encoder, matcher)
-                elif args.feat_from_img:
-                    result = loc_utils.feat_fromImg_match(query_render, db_score, db_render, encoder, matcher, args)
-                else:
+                if args.match_type==0:
                     result = loc_utils.match_img(query_render, db_score, db_feature, encoder, matcher, mlp, args)
+                elif args.match_type==1:
+                    result = loc_utils.feat_fromImg_match(query_render, db_score, db_render, encoder, matcher, args)
+                elif args.match_type==2:
+                    result = loc_utils.img_match2(query_render, db_render, encoder, matcher)
+                elif args.match_type==3:
+                    result = loc_utils.img_match_mast3r(query_render, db_render, matcher)
                 if result is None:
                     prior_rErr.append(rotError)
                     prior_tErr.append(transError)
@@ -200,8 +202,12 @@ def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
         "max_num_keypoints": 1024,
         "detection_threshold": args.sp_th,
     }
-    encoder = SuperPoint(conf).cuda().eval()
-    matcher = LightGlue({"filter_threshold": args.lg_th ,}).cuda().eval()
+    if args.match_type != 3:
+        encoder = SuperPoint(conf).cuda().eval()
+        matcher = LightGlue({"filter_threshold": args.lg_th ,}).cuda().eval()
+    elif args.match_type == 3:
+        encoder = None
+        # matcher = 
     encoder_state_dict = torch.load(args.ace_encoder_path, map_location="cpu")
     head_state_dict = torch.load(args.ace_ckpt, map_location="cpu")
     ace_network = Regressor.create_from_split_state_dict(encoder_state_dict, head_state_dict).cuda().eval()
@@ -233,10 +239,9 @@ if __name__ == "__main__":
     parser.add_argument("--kernel_size", default=7, type=int)
     parser.add_argument("--stop_kpt_num", default=30, type=int)
     parser.add_argument("--ace_ckpt", type=str)
-    parser.add_argument("--feat_from_img", default=0, type=int)
+    parser.add_argument("--match_type", default=0, type=int)
     parser.add_argument("--pnp", default="iters", type=str)
     parser.add_argument("--test_name", required=True, type=str)
-    parser.add_argument("--rival", default=0, type=int)
     parser.add_argument("--ace_encoder_path", 
                         default="/home/koki/code/cc/feature_3dgs_2/ace_encoder_pretrained.pt", type=str)
     args = get_combined_args(parser)
