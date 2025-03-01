@@ -7,13 +7,13 @@
     ###############################################
     # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt_7scenes_redkitchen, pgt_7scenes_stairs
     # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-    scene_name="pgt_7scenes_chess" 
+    scene_name="pgt_7scenes_pumpkin" 
     ###############################################
     # all
     # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt_7scenes_redkitchen, pgt_7scenes_stairs
     # Cambridge
     # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-    mlp_method="pgt_7scenes_chess"
+    mlp_method="pgt_7scenes_pumpkin"
     ###### dataset build #########################################
     resize_num=1
     th=0.01
@@ -56,7 +56,7 @@
 # ( bash zenith_scripts/DatasetBuild_Train_Loc.sh )
 ########################################################################
 build_data=0
-start_train=0
+start_train=1
 start_loc=1
 ########################################################################
 

@@ -8,20 +8,20 @@
     ###############################################
     # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt_7scenes_redkitchen, pgt_7scenes_stairs
     # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-    scene_name="pgt_7scenes_chess" 
+    scene_name="pgt_7scenes_office" 
     # scene_name=$1
     ###############################################
     save_match=0
     iteration=30000
-    sp_th=0.01
-    lg_th=0.01
+    sp_th=0.0
+    lg_th=0.0
     ransac_iters=20000
     stop_kpt_num=50
     pnp_option="pycolmap" #iters, epnp, pycolmap
     depth_render=1
 
     # 0:sp,lg, 1:mast3r
-    match_type=1
+    match_type=0
 }
 
 ###############################################

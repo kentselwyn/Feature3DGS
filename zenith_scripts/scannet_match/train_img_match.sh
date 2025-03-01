@@ -1,14 +1,10 @@
 # bash zenith_scripts/train.sh
-# SOURSE_PATH="/home/koki/code/cc/feature_3dgs_2/img_match/scannet_test/scene0757_00/sfm_sample"
 SOURSE_PATH=$1
-
-score_loss=L2
-img_name=$3
-feature_name="features/$2"
-out_name="$2"
-score_scale=$4
-
-
+out_name=$2
+score_loss=$3
+img_name=$4
+feature_name="features/$5"
+score_scale=$6
 
 OUT_PATH="$SOURSE_PATH/outputs/$out_name"
 
