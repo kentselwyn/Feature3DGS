@@ -142,11 +142,3 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             'feature_map': feature_map,
             'score_map': score_map,
             "depth": depth} ###d
-
-
-
-
-
-
-
-

@@ -2,23 +2,24 @@ import os
 import torch
 import random
 import time
-from scene_ori import Scene
+from scene import Scene
 from argparse import Namespace
-from gaussian_renderer.__init__ori import render
-from utils.match_img import img_match2
-from scene_ori.gaussian_model import GaussianModel
+from gaussian_renderer import render
+import torch.nn.functional as F
+from utils.match_img import score_feature_match
+from scene.gaussian_model import GaussianModel
 from matchers.lightglue import LightGlue
-from encoders.superpoint.superpoint import SuperPoint
 
 
-scenes = ['0708_00', '0713_00', '0724_00']
-outputs=[2, 6]
+# python eval_speed.py
+
+scenes = ['0713_00']
+outputs=['test_fea_score:l2_0.1']
 s_len = len(scenes)
 
 
-
-SP_THRESHOLD = 0.01
 LG_THRESHOLD = 0.01
+SP_THRESHOLD = 0.01
 SCORE_KPT_THRESHOLD_HIGH = 0.1
 SCORE_KPT_THRESHOLD_LOW = 0.05
 KERNEL_SIZE_LOW = 3
@@ -28,14 +29,6 @@ KERNEL_SIZE_HIGH = 7
 matcher = LightGlue({
             "filter_threshold": LG_THRESHOLD#0.01,
         }).to("cuda").eval()
-
-conf = {
-    "sparse_outputs": True,
-    "dense_outputs": True,
-    "max_num_keypoints": 1024,
-    "detection_threshold": SP_THRESHOLD #0.01,
-}
-encoder = SuperPoint(conf).to("cuda").eval()
 
 
 def get_arg_dict(cfgfile_string, model_path):
@@ -56,18 +49,17 @@ class PipelineParams():
         self.compute_cov3D_python = False
         self.debug = False
 
-NAME = f"sp:{SP_THRESHOLD}_lg:{LG_THRESHOLD}_kpt(h):{SCORE_KPT_THRESHOLD_HIGH}_kpt(l):{SCORE_KPT_THRESHOLD_LOW}_kernal(h):{KERNEL_SIZE_HIGH}_imaqge"
+NAME = f"sp:{SP_THRESHOLD}_lg:{LG_THRESHOLD}_kpt(h):{SCORE_KPT_THRESHOLD_HIGH}_kpt(l):{SCORE_KPT_THRESHOLD_LOW}_kernal(h):{KERNEL_SIZE_HIGH}_feature"
 over_all_result = f'match_speed_{NAME}.txt'
 if os.path.exists(over_all_result):
     os.remove(over_all_result)
 
-
-
 for out in outputs:
+    
     pipe_param = PipelineParams()
     view_num = 0
     elapsed = 0
-
+    
     for i in range(s_len):
         aggregate_list = []
 
@@ -91,7 +83,7 @@ for out in outputs:
         bg_color = [1,1,1] if args.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
-
+        gt_feature_map = cams[0].semantic_feature
         data = {}
         data['experi_index'] = out
         random.seed(0)
@@ -109,17 +101,24 @@ for out in outputs:
                 st = time.time()
                 r_pkg0 = render(view0, gaussians, pipe_param, background)
                 r_pkg1 = render(view1, gaussians, pipe_param, background)
+                f0 = r_pkg0["feature_map"]
+                f1 = r_pkg1['feature_map']
+                f0 = F.interpolate(f0.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
+                f1 = F.interpolate(f1.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0)
+                data['s0'] = r_pkg0['score_map']
+                data['ft0'] = f0
+                data['s1'] = r_pkg1['score_map']
+                data['ft1'] = f1
+                en = time.time()
+                # print("first: ",en-st)
 
-                img0 = r_pkg0['render']
-                img1 = r_pkg1['render']
-                data={}
-                data['img0'] = img0
-                data['img1'] = img1
-                img_match2(data, encoder=encoder, matcher=matcher)
-
-                
+                st = time.time()
+                score_feature_match(data, args, matcher)
+                en = time.time()
+                # print("second: ",en-st)
         end = time.time()
         elapsed += end-start
+    
     print('elapsed time: ', elapsed)
     print()
     with open(over_all_result, 'a') as file:
@@ -128,6 +127,3 @@ for out in outputs:
         file.write(f'view num: {view_num}\n')
         file.write(f'fps: {view_num/elapsed}\n')
         file.write('\n\n')
-                
-
-# python eval_speed_ori.py

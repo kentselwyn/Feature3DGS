@@ -7,37 +7,23 @@ from PIL import Image
 from copy import deepcopy
 from itertools import chain
 from utils.comm import gather
-from typing import NamedTuple
-from omegaconf import OmegaConf
 from dataclasses import dataclass
-from matchers.superglue import SuperGlue
 from utils.metrics import aggregate_metrics
-from matchers.MNN import NearestNeighborMatcher
 from utils.metrics_match import compute_metrics
 from matchers.lightglue import LightGlue
-from encoders.superpoint.superpoint import SuperPoint
-from eval.eval import print_eval_to_file, save_matchimg
-from utils.match_img import score_feature_match, score_feature_aliked
-from scene.colmap_loader import read_extrinsics_binary, read_intrinsics_binary
+from z_scannet1500.utils.utils import print_eval_to_file, save_matchimg
+from utils.match_img import score_feature_match
+from scene.colmap_loader import read_intrinsics_binary
+from encoders.superpoint.mlp import get_mlp_model
 
-
-
+ROOT_PATH = "/home/koki/code/cc/feature_3dgs_2/data/img_match"
 SP_THRESHOLD = 0.01
-
-
-
-# matcher2 = SuperGlue({}).to("cuda").eval()
-
-
-
 conf = {
     "sparse_outputs": True,
     "dense_outputs": True,
     "max_num_keypoints": 1024,
     "detection_threshold": SP_THRESHOLD #0.01,
 }
-# encoder = SuperPoint(conf).to("cuda").eval()
-
 
 def flattenList(x):
     return list(chain(*x))
@@ -47,20 +33,12 @@ def dump_pair():
     path = "/home/koki/code/cc/feature_3dgs_2/img_match/scannet_test_1500_info/test.npz"
     x = dict(np.load(path))
     z=x['name']
-
     pair_dict = {}
     leng = int(len(z)/15)
-
     for i in range(leng):
-        # print(f'========={z[15 *i, 0]}===========')
-        # print(z[15*i: 15*(i+1), 2:])
         pairs = z[15*i: 15*(i+1), 2:]
-        # for j in range(15):
         pair_dict[int(z[15 *i, 0])-707] = pairs
     intrin = dict(np.load("/home/koki/code/cc/feature_3dgs_2/img_match/scannet_test_1500_info/intrinsics.npz"))
-
-    # with open('/home/koki/code/cc/feature_3dgs_2/img_match/pairs.pkl', 'wb') as f:
-    #     pickle.dump(pair_dict, f)
 
 
 def read_mat_txt(path):
@@ -71,26 +49,18 @@ def read_mat_txt(path):
     return mat
 
 
-
 def c2w_to_w2c(T_cw):
-    # Extract the rotation (R) and translation (t) components from the 4x4 matrix
-    R = T_cw[:3, :3]  # Top-left 3x3 part is the rotation matrix
-    t = T_cw[:3, 3]   # Top-right 3x1 part is the translation vector
-
+    R = T_cw[:3, :3]
+    t = T_cw[:3, 3]
     R_inv = R.T        
     t_inv = -R_inv @ t
-
-    # Construct the world-to-camera matrix
-    T_wc = np.eye(4)   # Start with an identity matrix
+    T_wc = np.eye(4)
     T_wc[:3, :3] = R_inv
     T_wc[:3, 3] = t_inv
     return T_wc
 
 
-
-
 def match_eval(args):
-    ROOT_PATH = "/home/koki/code/cc/feature_3dgs_2/img_match"
     LG_THRESHOLD = 0.01
     out_name = f"{args.feature_name}"
     scene_path = '/'.join((args.input).split('/')[:-1])
@@ -107,10 +77,10 @@ def match_eval(args):
         input_dim = 128
         LG_THRESHOLD = 0.0
     matcher1 = LightGlue({
-                "filter_threshold": LG_THRESHOLD ,#0.01,
-                "weights": weight,
-                "input_dim": input_dim,
-            }).to("cuda").eval()
+        "filter_threshold": LG_THRESHOLD ,#0.01,
+        "weights": weight,
+        "input_dim": input_dim,
+    }).to("cuda").eval()
     
     matchers = [matcher1]
     with open(F'{ROOT_PATH}/pairs.pkl', 'rb') as f:
@@ -140,6 +110,7 @@ def match_eval(args):
         return poses
     
     aggregate_list = []
+    mlp = get_mlp_model(args.mlp_dim, type=args.method).to("cuda")
     for match_idx, matcher in enumerate(matchers):
         if match_idx==0:
             match_result = f"{scene_path}/sfm_sample/outputs/{out_name}/{args.match_name}/LG"
@@ -148,10 +119,8 @@ def match_eval(args):
             match_result = f"{scene_path}/sfm_sample/outputs/{out_name}/{args.match_name}/SG"
             os.makedirs(f"{match_result}/images", exist_ok=True)
         poses = read_pose(scene_pair)
-        # pair_name = pair_folders[0]
         pairs = my_dict[scene_num]
         leng = len(pairs)
-        
         txt_file = f"{match_result}/out.txt"
         if os.path.exists(txt_file):
             os.remove(txt_file)
@@ -159,7 +128,6 @@ def match_eval(args):
         for idx in range(leng):
             data = {}
             pair = pairs[idx]
-
             T0 = c2w_to_w2c(poses[int(pair[0])])
             T1 = c2w_to_w2c(poses[int(pair[1])])
             img0 = np.array(Image.open(f"{scene_out}/image_renders/{pair[0]}.png"))
@@ -173,12 +141,9 @@ def match_eval(args):
             T_0to1 = torch.tensor(np.matmul(T1, np.linalg.inv(T0)), dtype=torch.float)
             T_1to0 = T_0to1.inverse()
             fm_name = f"{scene_path}_score_feature_{idx}_{pair[0]}_{pair[1]}"
-
             data = {
                 "img0": img0,
                 "img1": img1,
-                # "img_orig0": img_orig0,
-                # "img_orig1": img_orig1,
                 "s0": s0,
                 "s1": s1,
                 "ft0": f0,
@@ -190,12 +155,14 @@ def match_eval(args):
                 "identifiers": [fm_name],
             }
             data_fm = deepcopy(data)
-            # args = OmegaConf.create(args)
-            kpt_exist = score_feature_match(data_fm, args=args, matcher=matcher)
+            _ = score_feature_match(data_fm, args=args, matcher=matcher, mlp=mlp)
             fm_path = f"{match_result}/images/{idx}_score_feature_{pair[0]}_{pair[1]}.png"
             compute_metrics(data_fm)
             print_eval_to_file(data_fm, fm_name, threshold=5e-4, file_path=txt_file)
-            save_matchimg(data_fm, fm_path)
+            data_fm["matcher"] = "ours+LG"
+
+            if args.save_img:
+                save_matchimg(data_fm, fm_path)
             keys = ['epi_errs', 'R_errs', 't_errs', 'inliers', 'identifiers']
             eval_data = {}
             for k in keys:
@@ -209,7 +176,6 @@ def match_eval(args):
         formatted_metrics = pprint.pformat(val_metrics_4tb)
         with open(txt_file, 'a') as file:
             file.write(formatted_metrics)
-        
         with open(f'{match_result}/matching.pkl', 'wb') as file:
             pickle.dump(aggregate_list, file)
     return aggregate_list
@@ -226,8 +192,6 @@ class Eval_params():
     match_name: str
     histogram_th: float
 
-# ls -l /home/koki/code/cc/feature_3dgs_2/scannet/test | grep '^d' | wc -l
-# find /path/to/directory -maxdepth 1 -type f | wc -l
 
 # python eval_scannet1500.py
 if __name__=="__main__":
@@ -239,6 +203,6 @@ if __name__=="__main__":
         kernel_size=7,
         mlp_dim=8,
         match_name="match_test_his_0.97",
-        histogram_th=0.97
+        histogram_th=0.9
     )
     match_eval(eval_param)

@@ -97,7 +97,7 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
     first_iter = 0
     tb_writer = prepare_output_and_logger(model_param)
     gaussians = GaussianModel(model_param.sh_degree)
-    scene = Scene(model_param, gaussians)
+    scene = Scene(model_param, gaussians, test_feature_load=False)
 
     # 2D semantic feature map CNN decoder
     viewpoint_stack = scene.getTrainCameras().copy()

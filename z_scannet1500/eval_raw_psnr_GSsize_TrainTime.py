@@ -3,21 +3,14 @@ import json
 import pickle
 import pprint
 from pathlib import Path
-from z_scannet1500.compute_eval_feature import get_elapsed_time_for_tag
-
-
-
-
+from z_scannet1500.eval_ours_all import get_elapsed_time_for_tag
 
 
 def compute_eval(out_name = "raw_imrate:1"):
     all_path = "/home/koki/code/cc/feature_3dgs_2/img_match/scannet_test"
     folders = os.listdir(all_path)
     folders = sorted(folders, key= lambda f:int(f[5:9]))
-
-
     folders = [os.path.join(all_path, f, f"sfm_sample/outputs/{out_name}/match_result_superpoint_image_renders/LG") for f in folders]
-
     gauss_list = {
         "ssim": 0,
         "lpips": 0,
@@ -28,7 +21,6 @@ def compute_eval(out_name = "raw_imrate:1"):
 
     for path in folders:
         print(path)
-
         with open(f"{path}/results.json", 'r') as f:
             r_file = json.load(f)
             gauss_list['ssim'] += r_file["ours_8000"]["SSIM"]
@@ -65,7 +57,6 @@ def compute_eval(out_name = "raw_imrate:1"):
     print(minutes, seconds)
     pprint.pprint(gauss_list)
 
-
     save_folder = f"/home/koki/code/cc/feature_3dgs_2/z_result"
     os.makedirs(save_folder, exist_ok=True)
     file_name = out_name.replace(':', '_')
@@ -84,8 +75,5 @@ def compute_eval(out_name = "raw_imrate:1"):
 
 
 # python compute_eval_image.py
-compute_eval()
-
-
-
-
+if __name__=="__main__":
+    compute_eval()

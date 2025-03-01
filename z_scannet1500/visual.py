@@ -8,11 +8,12 @@ from copy import deepcopy
 from dataclasses import dataclass
 from utils.metrics_match import compute_metrics
 from scene.colmap_loader import read_intrinsics_binary
-from eval.eval import save_matchimg, read_scannet_gray
+from z_scannet1500.utils.match_utils import save_matchimg
+from z_scannet1500.utils.utils import read_scannet_gray
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from matchers.ASpanFormer.aspanformer import ASpanFormer
-from eval.eval_scannet1500 import read_mat_txt, c2w_to_w2c
+from z_scannet1500.utils.match_utils import read_mat_txt, c2w_to_w2c
 from utils.match_img import score_feature_match, encoder_img_match, semi_img_match
 
 

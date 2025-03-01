@@ -12,9 +12,6 @@ import numpy as np
 import seaborn as sns
 
 
-
-
-
 def cm_ranking(sc, ths=[512, 1024, 2048, 4096]):
     ls = sc.shape[0]
     colors = ["red", "yellow", "lime", "cyan", "blue"]
@@ -51,10 +48,6 @@ def cm_BlRdGn(x_):
     return out
 
 
-
-
-
-
 def plot_images(imgs, titles=None, cmaps="gray", dpi=100, pad=0.5, adaptive=True):
     """Plot a set of images horizontally.
     Args:
@@ -82,7 +75,6 @@ def plot_images(imgs, titles=None, cmaps="gray", dpi=100, pad=0.5, adaptive=True
             ax.set_title(titles[i])
     fig.tight_layout(pad=pad)
     return fig
-
 
 
 def plot_image_grid(
@@ -141,7 +133,6 @@ def plot_image_grid(
         return all_axes
 
 
-
 def plot_keypoints(kpts, colors="lime", point_size=4, axes=None, a=1.0):
     """Plot keypoints for existing images.
     Args:
@@ -157,8 +148,6 @@ def plot_keypoints(kpts, colors="lime", point_size=4, axes=None, a=1.0):
         axes = plt.gcf().axes
     for ax, k, c, alpha in zip(axes, kpts, colors, a):
         ax.scatter(k[:, 0], k[:, 1], c=c, s=point_size, linewidths=0, alpha=alpha)
-
-
 
 
 def plot_matches(kpts0, kpts1, color=None, line_width=1.5, point_size=4, alpha=1.0, labels=None, axes=None):
@@ -204,7 +193,6 @@ def plot_matches(kpts0, kpts1, color=None, line_width=1.5, point_size=4, alpha=1
         ax1.scatter(
             kpts1[:, 0], kpts1[:, 1], c=color, s=point_size,
             label=None if labels is None or len(labels) == 0 else labels[1],)
-
 
 
 def plot_matches2(kpts0, kpts1, color=None, line_width=1.5, point_size=4, alpha=1.0, labels=None, 
@@ -285,11 +273,6 @@ def plot_matches2(kpts0, kpts1, color=None, line_width=1.5, point_size=4, alpha=
             bbox=dict(facecolor='black', alpha=0.5, edgecolor='none'),
             zorder=3  # Ensure captions are in front of all other elements
         )
-
-
-
-
-
 
 
 def plot_matches3(kpts0, kpts1, color=None, line_width=1.5, point_size=4, alpha=1.0, labels=None, 
@@ -377,14 +360,6 @@ def plot_matches3(kpts0, kpts1, color=None, line_width=1.5, point_size=4, alpha=
 
 
 
-
-
-
-
-
-
-
-
 if __name__=="__main__":
     values = np.linspace(0, 1, 256)
 
@@ -398,11 +373,6 @@ if __name__=="__main__":
     plt.axis('off')
     # plt.show()
     plt.imsave('colormap.png', [colors], format='png')
-
-
-
-
-
 
 
 def add_text(
@@ -517,12 +487,6 @@ def plot_epipolar_lines(points0, points1, F, color="b", axes=None, labels=None, 
             )
 
 
-
-
-
-
-
-
 def plot_heatmaps(heatmaps, vmin=0.0, vmax=None, cmap="Spectral", a=0.5, axes=None):
     if axes is None:
         axes = plt.gcf().axes
@@ -538,11 +502,6 @@ def plot_heatmaps(heatmaps, vmin=0.0, vmax=None, cmap="Spectral", a=0.5, axes=No
         )
         artists.append(art)
     return artists
-
-
-
-
-
 
 
 def save_plot(path, **kw):
@@ -595,9 +554,3 @@ def plot_cumulative(
     plt.tight_layout()
 
     return plt.gcf()
-
-
-
-
-
-

@@ -8,7 +8,6 @@
 #
 # For inquiries contact  george.drettakis@inria.fr
 #
-
 import os
 import sys
 import json
@@ -53,8 +52,6 @@ class SceneInfo(NamedTuple):
     semantic_feature_dim: int 
 
 
-
-
 def getNerfppNorm(cam_info):
     def get_center_and_diag(cam_centers):
         cam_centers = np.hstack(cam_centers)
@@ -79,9 +76,6 @@ def getNerfppNorm(cam_info):
     return {"translate": translate, "radius": radius}
 
 
-
-
-
 def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_feature_folder):
     cam_infos = []
     for idx, key in enumerate(cam_extrinsics):
@@ -94,7 +88,6 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
         intr = cam_intrinsics[extr.camera_id]
         height = intr.height
         width = intr.width
-
         uid = intr.id
         R = np.transpose(qvec2rotmat(extr.qvec))
         T = np.array(extr.tvec)
@@ -117,10 +110,8 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
         image = Image.open(image_path) 
 
         # feature_name = os.path.basename(semantic_feature_folder)
-
         semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap.pt'
         semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
-
 
         if os.path.exists(semantic_feature_path):
             semantic_feature = torch.load(semantic_feature_path)
@@ -147,10 +138,6 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
     return cam_infos
 
 
-
-
-
-
 def fetchPly(path):
     plydata = PlyData.read(path)
     vertices = plydata['vertex']
@@ -164,21 +151,15 @@ def storePly(path, xyz, rgb):
     dtype = [('x', 'f4'), ('y', 'f4'), ('z', 'f4'),
             ('nx', 'f4'), ('ny', 'f4'), ('nz', 'f4'),
             ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]
-    
     normals = np.zeros_like(xyz)
 
     elements = np.empty(xyz.shape[0], dtype=dtype)
     attributes = np.concatenate((xyz, normals, rgb), axis=1)
     elements[:] = list(map(tuple, attributes))
-
     # Create the PlyData object and write to file
     vertex_element = PlyElement.describe(elements, 'vertex')
     ply_data = PlyData([vertex_element])
     ply_data.write(path)
-
-
-
-
 
 
 def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=None, llffhold=8, load_feature=True):
@@ -193,14 +174,12 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
         cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
 
-    
     image_dir = f"{images}"
     semantic_feature_dir = f"{foundation_model}"
 
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, 
                                            images_folder=os.path.join(path, image_dir), semantic_feature_folder=os.path.join(path, semantic_feature_dir))
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
-
     if cam_infos[0].semantic_feature is not None:
         semantic_feature_dim = cam_infos[0].semantic_feature.shape[0]
     else:
@@ -214,7 +193,6 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
         test_cam_infos = []
 
     nerf_normalization = getNerfppNorm(train_cam_infos)
-
     ply_path = os.path.join(path, "sparse/0/points3D.ply")
     bin_path = os.path.join(path, "sparse/0/points3D.bin")
     txt_path = os.path.join(path, "sparse/0/points3D.txt")
@@ -236,9 +214,6 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
                            ply_path=ply_path,
                            semantic_feature_dim=semantic_feature_dim) 
     return scene_info
-
-
-
 
 
 def readCamerasFromTransforms(path, transformsfile, white_background, semantic_feature_folder, extension=".png"): 
@@ -291,7 +266,6 @@ def readCamerasFromTransforms(path, transformsfile, white_background, semantic_f
     return cam_infos
 
 
-
 def readNerfSyntheticInfo(path, foundation_model, white_background, eval, extension=".png", load_feature=True): 
     if foundation_model =='sam':
         semantic_feature_dir = "sam_embeddings" 
@@ -302,7 +276,6 @@ def readNerfSyntheticInfo(path, foundation_model, white_background, eval, extens
     train_cam_infos = readCamerasFromTransforms(path, "transforms_train.json", white_background, semantic_feature_folder=os.path.join(path, semantic_feature_dir)) 
     print("Reading Test Transforms")
     test_cam_infos = readCamerasFromTransforms(path, "transforms_test.json", white_background, semantic_feature_folder=os.path.join(path, semantic_feature_dir)) 
-    
     if not eval:
         train_cam_infos.extend(test_cam_infos)
         test_cam_infos = []
@@ -335,52 +308,35 @@ def readNerfSyntheticInfo(path, foundation_model, white_background, eval, extens
     return scene_info
 
 
-
-
-
-
-
-
 def readSplit_cams_params(intrinsic_folder, extrinsic_folder):
 
     intrinsic_files = sorted(os.listdir(intrinsic_folder))
     extrinsic_files = sorted(os.listdir(extrinsic_folder))
-
     # Read intrinsics
-
     with open(f"{intrinsic_folder}/{intrinsic_files[0]}", "r") as fid:
         K = float(fid.readline())
 
-
     w2cs = []
-
     # Read extrincsics
-
     for file in extrinsic_files:
-
         with open(f"{extrinsic_folder}/{file}", "r") as fid:
-
             c2w = []
-
             while True:
                 line = fid.readline().rstrip()
-
                 if not line:
                     break
                 
                 c2w+=line.split(' ')
-
         c2w = np.array([float(x) for x in c2w]).reshape((4,4))
         w2c = np.linalg.inv(c2w)
         # RTs
         w2cs.append(w2c)
-
     return K, w2cs
 
 
-
 @torch.inference_mode()
-def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True, view_num=None):
+def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True, 
+                  view_num=None, test_feature_load=True):
     
     train_images_folder = os.path.join(path, f"train/{images}")
     train_extrinsic_folder = os.path.join(path, "train/poses")
@@ -494,18 +450,17 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
 
         semantic_feature_path = os.path.join(test_feature_folder, image_name) + '_fmap.pt'
         semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
-        if os.path.exists(semantic_feature_path) and load_feature:
+        if os.path.exists(semantic_feature_path) and load_feature and test_feature_load:
             semantic_feature = torch.load(semantic_feature_path)
         else:
             semantic_feature = None
 
         score_feature_path = os.path.join(test_feature_folder, image_name) + '_smap.pt'
         score_feature_name = os.path.basename(score_feature_path).split(".")[0]
-        if os.path.exists(score_feature_path) and load_feature:
+        if os.path.exists(score_feature_path) and load_feature and test_feature_load:
             score_feature = torch.load(score_feature_path)
         else:
             score_feature = None
-
 
         cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                             image_path=image_path, image_name=image_name,
@@ -515,7 +470,6 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
                             semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
                             semantic_feature_name=semantic_feature_name, score_feature_name = score_feature_name)
         test_cam_infos_unsorted.append(cam_info)
-
 
     train_cam_infos = sorted(train_cam_infos_unsorted, key = lambda x : x.image_name)
     test_cam_infos = sorted(test_cam_infos_unsorted, key = lambda x : x.image_name)
@@ -567,13 +521,8 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
     return scene_info
 
 
-
-
-
-
 sceneLoadTypeCallbacks = {
     "Colmap": readColmapSceneInfo,
     "Blender" : readNerfSyntheticInfo,
     "Split" : readSplitInfo
 }
-

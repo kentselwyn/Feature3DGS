@@ -18,13 +18,12 @@ from utils.system_utils import searchForMaxIteration
 from utils.camera_utils import cameraList_from_camInfos, camera_to_JSON
 
 
-
 class Scene:
 
     gaussians : GaussianModel
 
     def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, shuffle=True, 
-                 resolution_scales=[1.0], load_feature=True, view_num=None): 
+                 resolution_scales=[1.0], load_feature=True, view_num=None, test_feature_load=True): 
         """b
         :param path: Path to colmap scene main folder.
         """
@@ -44,7 +43,8 @@ class Scene:
 
         if os.path.exists(os.path.join(args.source_path, "train")):
             scene_info = sceneLoadTypeCallbacks["Split"](args.source_path, images=args.images, foundation_model=args.foundation_model, 
-                                                         load_feature=load_feature, view_num=view_num)
+                                                         load_feature=load_feature, view_num=view_num, 
+                                                         test_feature_load=test_feature_load)
         elif os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = sceneLoadTypeCallbacks["Colmap"](path=args.source_path, foundation_model=args.foundation_model, 
                                                           eval=args.eval, images=args.images)
