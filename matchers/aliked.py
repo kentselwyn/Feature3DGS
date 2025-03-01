@@ -5,7 +5,7 @@ import torchvision
 from torch import nn
 from torch.nn.modules.utils import _pair
 from torchvision.models import resnet
-from .base_model import BaseModel
+from encoders.base_model import BaseModel
 
 
 
