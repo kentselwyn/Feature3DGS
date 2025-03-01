@@ -14,7 +14,7 @@ from scene.gaussian_model import GaussianModel
 from utils.comm import gather
 from utils.metrics import aggregate_metrics
 from itertools import chain
-from encoders.superpoint.lightglue import LightGlue
+from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 import pprint
 

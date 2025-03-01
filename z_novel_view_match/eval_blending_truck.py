@@ -8,7 +8,7 @@ from copy import deepcopy
 from visual import get_aspan, Eval_params
 from utils.metrics import aggregate_metrics
 from utils.metrics_match import compute_metrics
-from encoders.superpoint.lightglue import LightGlue
+from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from eval.eval_scannet1500 import flattenList, gather
 from eval.eval import save_matchimg, read_scannet_gray

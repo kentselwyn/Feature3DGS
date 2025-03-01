@@ -7,7 +7,7 @@ from argparse import Namespace
 from gaussian_renderer.__init__ori import render
 from utils.match_img import img_match2
 from scene_ori.gaussian_model import GaussianModel
-from encoders.superpoint.lightglue import LightGlue
+from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 
 

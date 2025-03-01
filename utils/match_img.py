@@ -13,7 +13,7 @@ from torchvision import transforms
 from encoders.disk_kornia import DISK
 from skimage.measure import label, regionprops
 from encoders.superpoint.mlp import get_mlp_model
-from encoders.superpoint.lightglue import LightGlue
+from matchers.lightglue import LightGlue
 import matchers.ASpanFormer.demo_utils as demo_utils
 from utils.viz2d import plot_image_grid, plot_keypoints, plot_matches
 
@@ -29,9 +29,6 @@ def extract_kpt(score: torch.Tensor, threshold = 0.3):
     regions = regionprops(labels)
     centroids = [region.centroid for region in regions]
     end = time.time()
-
-    # print("elapsed time:", end-start)
-    
     centroids = torch.tensor(centroids, dtype=torch.float32)
     return centroids
 
@@ -49,7 +46,6 @@ def find_small_circle_centers(score_map, threshold, kernel_size=3):
     """
     # Ensure the score map is on the GPU
     score_map = score_map.cuda()
-
     # Apply max pooling with a small kernel to find local maxima
     pooled = F.max_pool2d(score_map, kernel_size=kernel_size, stride=1, padding=kernel_size // 2)
 
@@ -206,24 +202,16 @@ def score_feature_match(data, args, matcher):
     if args.histogram_th is not None:
         th0 = choose_th(data['s0'], args)
         th1 = choose_th(data['s1'], args)
-        # print(th0)
-        # print(th1)
     else:
         th0 = args.score_kpt_th
         th1 = args.score_kpt_th
 
     kpt0 = find_small_circle_centers(data['s0'], threshold=th0, kernel_size=args.kernel_size)
     kpt1 = find_small_circle_centers(data['s1'], threshold=th1, kernel_size=args.kernel_size)
-
-    # print(kpt0.shape)
-    # print(kpt1.shape)
-    # print()
     en = time.time()
-    # print("first: ",en-st)
 
     if kpt0.dim()<2:
         return False
-
     st = time.time()
     kpt0 = kpt0.clone().detach()[:, [1, 0]].to(data['ft0'])
     kpt1 = kpt1.clone().detach()[:, [1, 0]].to(data['ft1'])
@@ -246,14 +234,10 @@ def score_feature_match(data, args, matcher):
 
     pred = matcher(tmp)
     en = time.time()
-    # print("third: ",en-st)
-
     m0 = pred['m0']
     valid = (m0[0] > -1)
 
     m0, m1 = tmp["keypoints0"][0][valid].cpu(), tmp["keypoints1"][0][m0[0][valid]].cpu()
-
-
     data['mkpt0'] = m0
     data['mkpt1'] = m1
     data['kpt0'] = kpt0

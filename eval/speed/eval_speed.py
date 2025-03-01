@@ -8,7 +8,7 @@ from gaussian_renderer import render
 import torch.nn.functional as F
 from utils.match_img import score_feature_match
 from scene.gaussian_model import GaussianModel
-from encoders.superpoint.lightglue import LightGlue
+from matchers.lightglue import LightGlue
 
 
 # python eval_speed.py

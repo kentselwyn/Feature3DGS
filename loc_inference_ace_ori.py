@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 from utils_ori.graphics_utils import fov2focal
 from utils.find_depth import project_2d_to_3d
 from gaussian_renderer.__init__ori import render
-from encoders.superpoint.lightglue import LightGlue
+from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from utils.pycolmap_utils import opencv_to_pycolmap_pnp
 from arguments import ModelParams, PipelineParams, get_combined_args

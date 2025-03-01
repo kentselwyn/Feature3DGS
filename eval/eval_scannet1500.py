@@ -14,7 +14,7 @@ from matchers.superglue import SuperGlue
 from utils.metrics import aggregate_metrics
 from matchers.MNN import NearestNeighborMatcher
 from utils.metrics_match import compute_metrics
-from encoders.superpoint.lightglue import LightGlue
+from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from eval.eval import print_eval_to_file, save_matchimg
 from utils.match_img import score_feature_match, score_feature_aliked
@@ -92,10 +92,7 @@ def c2w_to_w2c(T_cw):
 def match_eval(args):
     ROOT_PATH = "/home/koki/code/cc/feature_3dgs_2/img_match"
     LG_THRESHOLD = 0.01
-    # all_scene_path = f"{ROOT_PATH}/scannet_test"
     out_name = f"{args.feature_name}"
-    # scene_num = 50
-    # pair_path = f"{ROOT_PATH}/scannet_test_1500"
     scene_path = '/'.join((args.input).split('/')[:-1])
     scene_num = int((args.input).split('/')[-2][5:9])-707
 
@@ -109,7 +106,6 @@ def match_eval(args):
         weight = "aliked"
         input_dim = 128
         LG_THRESHOLD = 0.0
-    
     matcher1 = LightGlue({
                 "filter_threshold": LG_THRESHOLD ,#0.01,
                 "weights": weight,
@@ -117,15 +113,6 @@ def match_eval(args):
             }).to("cuda").eval()
     
     matchers = [matcher1]
-
-
-    # folders = os.listdir(all_scene_path)
-    # folders = sorted(folders, key=lambda f: int(f[5:9]))
-
-
-    # scene_folders = [os.path.join(all_scene_path, f) for f in folders]
-    # pair_folders = [os.path.join(pair_path, f) for f in folders]
-
     with open(F'{ROOT_PATH}/pairs.pkl', 'rb') as f:
         my_dict = pickle.load(f)
 
@@ -143,40 +130,31 @@ def match_eval(args):
     if args.image_folder=="images_s2":
         K[:2, :] = K[:2, :] * 0.5
 
-
     def read_pose(scene_pair):
         poses = {}
         pose_paths = os.listdir(scene_pair)
         pose_paths = [os.path.join(scene_pair, p) for p in pose_paths]
         for pose_p in pose_paths:
             pose = read_mat_txt(pose_p)
-            poses[int(pose_p.split('/')[-1].split('.')[0])] = pose
-        
+            poses[int(pose_p.split('/')[-1].split('.')[0])] = pose        
         return poses
     
-
     aggregate_list = []
     for match_idx, matcher in enumerate(matchers):
-
         if match_idx==0:
             match_result = f"{scene_path}/sfm_sample/outputs/{out_name}/{args.match_name}/LG"
             os.makedirs(f"{match_result}/images", exist_ok=True)
         else:
             match_result = f"{scene_path}/sfm_sample/outputs/{out_name}/{args.match_name}/SG"
             os.makedirs(f"{match_result}/images", exist_ok=True)
-
-
         poses = read_pose(scene_pair)
         # pair_name = pair_folders[0]
         pairs = my_dict[scene_num]
         leng = len(pairs)
         
-
-
         txt_file = f"{match_result}/out.txt"
         if os.path.exists(txt_file):
             os.remove(txt_file)
-
 
         for idx in range(leng):
             data = {}
@@ -212,44 +190,30 @@ def match_eval(args):
                 "identifiers": [fm_name],
             }
             data_fm = deepcopy(data)
-
             # args = OmegaConf.create(args)
-
-            # if args.method == "SP":
             kpt_exist = score_feature_match(data_fm, args=args, matcher=matcher)
-            
             fm_path = f"{match_result}/images/{idx}_score_feature_{pair[0]}_{pair[1]}.png"
-
             compute_metrics(data_fm)
             print_eval_to_file(data_fm, fm_name, threshold=5e-4, file_path=txt_file)
             save_matchimg(data_fm, fm_path)
-            
-
             keys = ['epi_errs', 'R_errs', 't_errs', 'inliers', 'identifiers']
             eval_data = {}
             for k in keys:
                 eval_data[k] = data_fm[k]
             aggregate_list.append(eval_data)
-            
-
         metrics = {k: flattenList(gather(flattenList([_me[k] for _me in aggregate_list]))) for k in aggregate_list[0]}
         val_metrics_4tb = aggregate_metrics(metrics, 5e-4)
         print(f"{scene_path}")
         pprint.pprint(val_metrics_4tb)
         print()
-
         formatted_metrics = pprint.pformat(val_metrics_4tb)
         with open(txt_file, 'a') as file:
             file.write(formatted_metrics)
         
         with open(f'{match_result}/matching.pkl', 'wb') as file:
             pickle.dump(aggregate_list, file)
-        
-        
     return aggregate_list
     
-
-
 
 @dataclass
 class Eval_params():
@@ -278,4 +242,3 @@ if __name__=="__main__":
         histogram_th=0.97
     )
     match_eval(eval_param)
-

@@ -11,7 +11,7 @@ from scene.cameras import Camera
 from plyfile import PlyData
 from argparse import ArgumentParser
 from arguments import ModelParams, PipelineParams, get_combined_args, get_args
-from encoders.superpoint.lightglue import LightGlue
+from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from utils.match_img import score_feature_one
 from eval.eval import save_matchimg, backproject_depth, umeyama_alignment, compute_registration_error_w_scale

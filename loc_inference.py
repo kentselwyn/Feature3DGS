@@ -9,11 +9,10 @@ from utils.graphics_utils import fov2focal
 from utils.find_depth import project_2d_to_3d
 from utils.vis_scoremap import one_channel_vis
 from gaussian_renderer.__init__loc import render
-from encoders.superpoint.lightglue import LightGlue
+from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from arguments import ModelParams, PipelineParams, get_combined_args
 from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment
-
 
 
 def choose_th(score, histogram_th):
@@ -155,9 +154,6 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background, arg
     print()
     log_errors(error_foler, name, prior_rErr, prior_tErr, f"prior")
     log_errors(error_foler, name, rErrs, tErrs, "warp")
-
-
-
 
 
 def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
