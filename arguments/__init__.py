@@ -99,6 +99,24 @@ class OptimizationParams(ParamGroup):
         super().__init__(parser, "Optimization Parameters")
 
 
+class iComMaParams(ParamGroup):
+    def __init__(self, parser):
+        self.OVERLAY = True
+        self.camera_pose_lr = 0.00008 # learning rate
+        self.lambda_LoFTR = 0.8 # balance coefficient
+        # self.lambda_LoFTR = 0
+        self.confidence_threshold_LoFTR = 0.2 # Matching points below the threshold will be discarded.
+        self.min_matching_points = 5 # The matching module will be deprecated if there are too few detected matching points.
+        self.pose_estimation_iter = 300 # Number of iterations.
+        self.compute_grad_cov2d = True
+        self.deprecate_matching = False # Whether to deprecate the matching module from the beginning.
+        self.LoFTR_ckpt_path = "LoFTR/ckpt/indoor_ds_new.ckpt"
+        self.LoFTR_temp_bug_fix = False # set to False when using the old ckpt
+        
+        self.transform = None
+        self.estimated = None
+        super().__init__(parser, "iComMa Parameters")
+
 
 
 def get_combined_args(parser : ArgumentParser):
