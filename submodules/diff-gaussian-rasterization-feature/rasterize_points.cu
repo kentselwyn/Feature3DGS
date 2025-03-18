@@ -75,7 +75,6 @@ RasterizeGaussiansCUDA(
   auto float_opts = means3D.options().dtype(torch::kFloat32);
   torch::Tensor out_color = torch::full({NUM_CHANNELS, H, W}, 0.0, float_opts);
   torch::Tensor out_depth = torch::full({1, H, W}, 0.0, float_opts);
-
   torch::Tensor radii = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
 
 
@@ -241,7 +240,8 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Te
 	  debug);
   }
 
-  return std::make_tuple(dL_dmeans2D, dL_dcolors, dL_dsemantic_feature, dL_score_feature, dL_dopacity, dL_dmeans3D, dL_dcov3D, dL_dsh, dL_dscales, dL_drotations); /***/ /**********/
+  return std::make_tuple(dL_dmeans2D, dL_dcolors, dL_dsemantic_feature, dL_score_feature, dL_dopacity, 
+  dL_dmeans3D, dL_dcov3D, dL_dsh, dL_dscales, dL_drotations); /***/ /**********/
 }
 
 

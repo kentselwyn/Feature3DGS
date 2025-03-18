@@ -39,7 +39,6 @@ def run_scannet(start, end, args, test_list=None):
     folders = os.listdir(all_path)
     folders = sorted(folders, key=lambda f: int(f[5:9]))
     folders = [os.path.join(all_path, f, 'sfm_sample') for f in folders]
-
     if test_list is None:
         if end is not None:
             folders = folders[start: end]
@@ -50,13 +49,20 @@ def run_scannet(start, end, args, test_list=None):
         for id in test_list:
             tmp.append(folders[id])
         folders = tmp
-    feature_name = f"{args.method}_imrate:{args.resize_num}_th:{args.th}_mlpdim:{args.mlp_dim}_"+\
-                    f"kptnum:{int(args.max_num_keypoints)}_score{args.score_scale}"
-    if args.resize_num == 1:
-        args.image_folder = "images"
+    args.feature_name = f"{args.method}_imrate:{args.resize_num}_th:{args.th}_mlpdim:{args.mlp_dim}_"+\
+                    f"kptnum:{int(args.max_num_keypoints)}"
+    args.out_name = f"{args.method}_imrate:{args.resize_num}_th:{args.th}_mlpdim:{args.mlp_dim}_"+\
+                    f"kptnum:{int(args.max_num_keypoints)}_Score{args.score_loss}_ScoreScale{args.score_scale}"
+    if args.Output_PostName is not None:
+        args.out_name += args.Output_PostName
+    args.match_name = f"MatchResult_KptKernalSize{args.kernel_size}_"
+    args.match_name += f"KptHist{args.histogram_th}_LGth{args.LG_THRESHOLD}"
+    
+    if args.resize_num==2:
+        args.images = "images_s2"
     else:
-        args.image_folder = f"images_s{args.resize_num}"
-    args.feature_name = feature_name
+        args.images = "images"
+
     aggregate_list = []
     gauss_result = []
     traing_time = []
@@ -67,48 +73,54 @@ def run_scannet(start, end, args, test_list=None):
         print(f"processing {fold_path}...")
         scene_num = int(fold_path.split('/')[-2][5:9])
         args.input = fold_path
+        args.source_path = args.input
 
         ################ build features for gaussians
         torch.cuda.empty_cache()
+        args.output_images = "None"
         if not os.path.exists(f"{args.input}/features/{args.feature_name}"):
             dataset_build.main(args)
-        elif len(os.listdir(f"{args.input}/features/{args.feature_name}"))==0:
+        elif len(os.listdir(f"{args.input}/features/{args.feature_name}")) != \
+                len(os.listdir(f"{args.input}/{args.images}"))*2:
             dataset_build.main(args)
-
         torch.cuda.empty_cache()
         
         ################ train gaussians
-        gaussian_path = f"{args.input}/outputs/{args.feature_name}/point_cloud/iteration_8000/point_cloud.ply"
+        gaussian_path = f"{args.input}/outputs/{args.out_name}/point_cloud/iteration_8000/point_cloud.ply"
         if not os.path.exists(gaussian_path):
             st = time.time()
-            command = ['bash', 'zenith_scripts/scannet_match/train.sh', args.input,
-                       args.feature_name, args.image_folder, args.score_scale]
+            command = ['bash', 'zenith_scripts/scannet_match/train.sh', args.input, args.feature_name, 
+                       args.out_name, args.images, args.score_loss, args.score_scale, args.mlp_dim]
+            command = [str(x) for x in command]
             subprocess.run(command, check=True)
             en = time.time()
             traing_time.append((scene_num, en-st))
-            os.makedirs(f'{args.input}/outputs/{args.feature_name}/{args.match_name}/LG', exist_ok=True)
-            with open(f'{args.input}/outputs/{args.feature_name}/{args.match_name}/LG/Training_time.pkl', 'wb') as file:
+            os.makedirs(f'{args.input}/outputs/{args.out_name}/{args.match_name}/LG', exist_ok=True)
+            with open(f'{args.input}/outputs/{args.out_name}/{args.match_name}/LG/SceneNum_TrainingTime.pkl', 'wb') as file:
                 pickle.dump((scene_num, en-st), file)
         torch.cuda.empty_cache()
         
         ################ render gaussians
-        if not os.path.exists(f"{args.input}/outputs/{args.feature_name}/rendering/pairs/ours_8000/score_tensors"):
-            command = ['bash', 'zenith_scripts/scannet_match/render.sh', args.input, args.feature_name, args.image_folder]
+        if not os.path.exists(f"{args.input}/outputs/{args.out_name}/rendering/pairs/ours_8000/score_tensors"):
+            command = ['bash', 'zenith_scripts/scannet_match/render.sh', args.input, 
+                       args.out_name, args.images, args.mlp_dim]
+            command = [str(x) for x in command]
             subprocess.run(command, check=True)
-        elif len(os.listdir(f"{args.input}/outputs/{args.feature_name}/rendering/pairs/ours_8000/score_tensors"))==0:
-            command = ['bash', 'zenith_scripts/scannet_match/render.sh', args.input, args.feature_name, args.image_folder]
+        elif len(os.listdir(f"{args.input}/outputs/{args.out_name}/rendering/pairs/ours_8000/score_tensors"))==0:
+            command = ['bash', 'zenith_scripts/scannet_match/render.sh', args.input, 
+                       args.out_name, args.images, args.mlp_dim]
+            command = [str(x) for x in command]
             subprocess.run(command, check=True)
         torch.cuda.empty_cache()
         
         ################ start matching evaluation
         tmp_list = match_eval(args)
         aggregate_list.extend(tmp_list)
-        tmp_g_result = metrics_gauss.evaluate([f"{args.input}/outputs/{args.feature_name}/rendering"], args)
+        tmp_g_result = metrics_gauss.evaluate([f"{args.input}/outputs/{args.out_name}/rendering"], args)
         gauss_result.append((scene_num, tmp_g_result))
         
         if os.path.exists(f"{args.input}/features/{args.feature_name}"):
             shutil.rmtree(f"{args.input}/features/{args.feature_name}")
-
         torch.cuda.empty_cache()
     if args.final_save:
         now = time.time()
@@ -122,26 +134,35 @@ def run_scannet(start, end, args, test_list=None):
             pickle.dump(traing_time, file)
 
 
-# python -m z_scannet1500.scannet1500 --mlp_dim 8  --method SP --resize_num 1
-# python -m z_scannet1500.scannet1500 --mlp_dim 16 --method SP --resize_num 1
+# python -m z_scannet1500.scannet1500 --mlp_dim 8  --method SP --resize_num 1 --save_img --score_loss weighted
+# python -m z_scannet1500.scannet1500 --mlp_dim 16 --method SP --resize_num 1 --save_img --score_loss weighted
+#############
 # python -m z_scannet1500.scannet1500 --mlp_dim 8  --method SP_scannet --resize_num 2
-# python -m z_scannet1500.scannet1500 --mlp_dim 16 --method SP --resize_num 2
+# python -m z_scannet1500.scannet1500 --mlp_dim 8  --method SP --resize_num 2 --save_img --score_loss L2
+# python -m z_scannet1500.scannet1500 --mlp_dim 8  --method SP --resize_num 2 --save_img --score_loss weighted
+#############
+# python -m z_scannet1500.scannet1500 --mlp_dim 16 --method SP --resize_num 2 --save_img --score_loss weighted
 if __name__=="__main__":
-    start = 707-707
-    end = 752-707
-    # r_list = [721, 754, 776]
-    # r_list = [r-707 for r in r_list]
+    # 707-806
+    start = 799-707
+    end = 800-707
     parser = argparse.ArgumentParser()
-    parser.add_argument("--resize_num", default=1,)
-    parser.add_argument("--mlp_dim", type=int, default=16,)
-    parser.add_argument("--th", type=float, default=0.01,)
-    parser.add_argument("--max_num_keypoints", type=float, default=1024,)
     parser.add_argument("--method", required=True,)
+    parser.add_argument("--resize_num", type=int, default=1,)
+    parser.add_argument("--th", type=float, default=0.01,)
+    parser.add_argument("--mlp_dim", type=int, default=16,)
+    parser.add_argument("--max_num_keypoints", type=float, default=1024,)
+    parser.add_argument("--score_loss", required=True) # L2, weighted
+    parser.add_argument("--score_scale", default=0.6)
+
     parser.add_argument("--kernel_size",default=15)
     parser.add_argument("--score_kpt_th", default=0.01)
     parser.add_argument("--histogram_th", default=0.9)
-    parser.add_argument("--score_scale", default=0.6)
+    
     parser.add_argument("--final_save", type=int, default=0)
-    parser.add_argument("--match_name", default="match_result",)
+    parser.add_argument("--match_name", type=str,)
+    parser.add_argument('--save_img', action='store_true', help='Save the image')
+    parser.add_argument("--LG_THRESHOLD", default=0.01)
+    parser.add_argument("--Output_PostName", type=str,)
     args = parser.parse_args()
     run_scannet(start, end ,args, test_list=None)

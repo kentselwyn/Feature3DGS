@@ -12,18 +12,18 @@ def run_ImgMatch(args):
                     f"kptnum:{int(args.max_num_keypoints)}_score{args.score_scale}"
     args.feature_name = feature_name
     if args.resize_num == 1:
-        args.image_folder = "images"
+        args.images = "images"
     else:
-        args.image_folder = f"images_s{args.resize_num}"
+        args.images = f"images_s{args.resize_num}"
     for fold_path in folders:
         print(f"processing {fold_path}...")
         args.input = fold_path
         _ = match_eval(args)
 
-# python -m z_scannet1500.match_script --mlp_dim 8  --method SP --resize_num 1
-# python -m z_scannet1500.match_script --mlp_dim 16 --method SP --resize_num 1
-# python -m z_scannet1500.match_script --mlp_dim 8  --method SP_scannet --resize_num 2
-# python -m z_scannet1500.match_script --mlp_dim 16 --method SP --resize_num 2
+# nohup python -m z_scannet1500.match_script --mlp_dim 8 --method SP --resize_num 1 > out.txt 2>&1 &
+# nohup python -m z_scannet1500.match_script --mlp_dim 16 --method SP --resize_num 1 > out2.txt 2>&1 &
+# nohup python -m z_scannet1500.match_script --mlp_dim 8  --method SP_scannet --resize_num 2 > out3.txt 2>&1 &
+# nohup python -m z_scannet1500.match_script --mlp_dim 16 --method SP --resize_num 2 > out4.txt 2>&1 &
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--resize_num", default=1,)

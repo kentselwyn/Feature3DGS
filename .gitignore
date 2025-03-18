@@ -40,3 +40,6 @@ zz_pcd/
 log_**
 test_imgs2/
 # mast3r/
+image_pairs/
+z_result/
+matchers/LoFTR
