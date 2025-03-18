@@ -7,6 +7,7 @@ import torch
 import pickle
 import open3d as o3d
 from typing import Tuple
+from matchers.LoFTR.utils.utils import rgb2loftrgray
 import torch.nn.functional as F
 from utils.match_img import extract_kpt, sample_descriptors_fix_sampling, save_matchimg, find_small_circle_centers
 from matchers.mast3r.mast3r.fast_nn import fast_reciprocal_NNs
@@ -14,6 +15,7 @@ from matchers.mast3r.dust3r.dust3r.inference import inference
 from matchers.mast3r.dust3r.dust3r.utils.image import convert_tensor_to_dust3r_format
 import torchvision.transforms as T
 from matchers.mast3r.utils.functions import *
+from utils.match_img import semi_img_match
 
 
 def calculate_pose_errors(R_gt, t_gt, R_est, t_est):
@@ -21,16 +23,24 @@ def calculate_pose_errors(R_gt, t_gt, R_est, t_est):
     rotError = np.matmul(R_est.T, R_gt)
     rotError = cv2.Rodrigues(rotError)[0]
     rotError = np.linalg.norm(rotError) * 180 / np.pi
-
     # Calculate translation error
     transError = np.linalg.norm(t_gt - t_est.squeeze(1)) * 100  # Convert to cm
+    return rotError, transError
+
+
+def calculate_pose_errors2(R_gt, t_gt, R_est, t_est):
+    # Calculate rotation error
+    rotError = np.matmul(R_est.T, R_gt)
+    rotError = cv2.Rodrigues(rotError)[0]
+    rotError = np.linalg.norm(rotError) * 180 / np.pi
+    # Calculate translation error
+    transError = np.linalg.norm(t_gt - t_est) * 100  # Convert to cm
     return rotError, transError
 
 
 def calculate_pose_errors_ace(gt_pose_44, out_pose):
     # Calculate translation error.
     t_err = float(torch.norm(gt_pose_44[0:3, 3] - out_pose[0:3, 3]))*100
-
     # Rotation error.
     gt_R = gt_pose_44[0:3, 0:3].numpy()
     out_R = out_pose[0:3, 0:3].numpy()
@@ -70,6 +80,8 @@ def log_errors(log_dir, name, rotation_errors, translation_errors, list_text, er
     print(f'\t1cm/1deg: {pct1:.1f}%')
     print(f'\tmedian_rErr: {median_rErr:.3f} deg')
     print(f'\tmedian_tErr: {median_tErr:.3f} cm')
+    if elapsed_time is not None:
+        print(f'Mean elapsed time: {elapsed_time:.6f} s\n')
 
     # Log median errors to separate files
     # log_dir = os.path.join(model_path, 'error_log_f_3')
@@ -161,7 +173,6 @@ def find_2d3d_dense(image_features, gaussian_pcd, gaussian_feat, chunk_size=1000
     # print(image_features.shape)
     # print(gaussian_pcd.shape)
     # print(gaussian_feat.shape)
-
     c, h, w = image_features.shape
     device = image_features.device
 
@@ -234,14 +245,6 @@ def find_gaussian_score_opa(gaussians):
     filtered_scores = scores[mask0]
     save_pcd(filtered_points, '0')
     print(filtered_points.shape)
-
-    # th1 = choose_th(feature=filtered_scores, histogram_th=0.95)
-    # mask1 = (filtered_scores>th1).squeeze(-1)
-    # filtered_points = filtered_points[mask1]
-    # filtered_feature = filtered_feature[mask1]
-    # save_pcd(filtered_points, name='1')
-    # print(filtered_points.shape)
-
     return filtered_points, filtered_feature
 
 
@@ -287,13 +290,20 @@ def find_2d3d_lg(img_kpts, img_feat, gs_pts, gs_feat, matcher, width, height, gt
 def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     tmp = {}
     tmp["image"] = render_q
+    stt = time.time()
     tmp_pred = encoder(tmp)
+    x = time.time()
+    print("sp time: ",x-stt)
     desc = tmp_pred["descriptors"]
-    gt_feature = mlp.decode(mlp(desc))
+    compressed_gt_feature = mlp(desc)
+    gt_feature = mlp.decode(compressed_gt_feature)
+    
     # query
     kpt_q = tmp_pred["keypoints"]
     feat_q = gt_feature
     # db
+    print("mlp time: ",time.time()-x)
+    x = time.time()
     if args.kpt_hist is not None:
         kpt_th = choose_th(score_db, args.kpt_hist)
     else:
@@ -302,7 +312,8 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     kpt_db = find_small_circle_centers(score_db, threshold=kpt_th, kernel_size=args.kernel_size)
     if kpt_db.shape[0] == 0:
         return None
-
+    print("find small circle time: ", time.time()-x)
+    x = time.time()
     kpt_db = kpt_db.clone().detach()[:, [1, 0]].to(score_db)
     _, h, w = score_db.shape
     scale = torch.tensor([w, h]).to(score_db)
@@ -310,6 +321,8 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     feat_db = mlp.decode(feat_db)
     kpt_db = kpt_db.unsqueeze(0)
     # match
+    print("sample descriptor time: ", time.time()-x)
+    x = time.time()
     data = {}
     data["keypoints0"] = kpt_q
     data["keypoints1"] = kpt_db
@@ -317,6 +330,7 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     data["descriptors1"] = feat_db
     data["image_size"] = score_db.shape[1:]
     pred = matcher(data)
+    print("match time: ", time.time()-x)
     m0 = pred['m0']
     valid = (m0[0] > -1)
     m0, m1 = data["keypoints0"][0][valid].cpu(), data["keypoints1"][0][m0[0][valid]].cpu()
@@ -326,6 +340,66 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     result['kpt0'] = kpt_q[0].cpu()
     result['kpt1'] = kpt_db[0].cpu()
     return result
+
+
+def match_img_feature(render_q, score_db, feature_db, encoder, matcher, mlp, args):
+    tmp = {}
+    tmp["image"] = render_q
+    stt = time.time()
+    tmp_pred = encoder(tmp)
+    x = time.time()
+    print("sp time: ",x-stt)
+    desc = tmp_pred["descriptors"]
+    compressed_gt_feature = mlp(desc)
+    gt_feature = mlp.decode(compressed_gt_feature)
+    # breakpoint()
+    dense_desc = tmp_pred["dense_descriptors"].squeeze(0).permute(1,2,0)
+    compressed_dense_desc = mlp(dense_desc)
+    decoded_dense_desc = mlp.decode(compressed_dense_desc).permute(2,0,1)
+    compressed_dense_desc = compressed_dense_desc.permute(2,0,1)
+    # query
+    kpt_q = tmp_pred["keypoints"]
+    feat_q = gt_feature
+    # db
+    print("mlp time: ",time.time()-x)
+    x = time.time()
+    if args.kpt_hist is not None:
+        kpt_th = choose_th(score_db, args.kpt_hist)
+    else:
+        kpt_th = args.kpt_th
+    # kpt_db = extract_kpt(score_db, threshold=kpt_th)
+    kpt_db = find_small_circle_centers(score_db, threshold=kpt_th, kernel_size=args.kernel_size)
+    if kpt_db.shape[0] == 0:
+        return None
+    print("find small circle time: ", time.time()-x)
+    x = time.time()
+    kpt_db = kpt_db.clone().detach()[:, [1, 0]].to(score_db)
+    _, h, w = score_db.shape
+    scale = torch.tensor([w, h]).to(score_db)
+    feat_db = sample_descriptors_fix_sampling(kpt_db, feature_db, scale)
+    feat_db = mlp.decode(feat_db)
+    kpt_db = kpt_db.unsqueeze(0)
+    # match
+    print("sample descriptor time: ", time.time()-x)
+    x = time.time()
+    data = {}
+    data["keypoints0"] = kpt_q
+    data["keypoints1"] = kpt_db
+    data["descriptors0"] = feat_q
+    data["descriptors1"] = feat_db
+    data["image_size"] = score_db.shape[1:]
+    pred = matcher(data)
+    print("match time: ", time.time()-x)
+    m0 = pred['m0']
+    valid = (m0[0] > -1)
+    m0, m1 = data["keypoints0"][0][valid].cpu(), data["keypoints1"][0][m0[0][valid]].cpu()
+    result = {}
+    result['mkpt0'] = m0
+    result['mkpt1'] = m1
+    result['kpt0'] = kpt_q[0].cpu()
+    result['kpt1'] = kpt_db[0].cpu()
+    return result, compressed_dense_desc, decoded_dense_desc
+
 
 
 def img_match2(query_render, db_render, encoder, matcher) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -484,7 +558,8 @@ def img_match_mast3r(query_render, db_render, model, K, depth_map, w2c, gt_pose_
     if matches_im1.shape[0] >= 4:
         success, rvec, tvec, inliers = cv2.solvePnPRansac(points_3D_at_pixels.astype(np.float32), 
                                                           matches_im1.astype(np.float32), 
-                                                          K, dist_eff,rvec=initial_rvec,tvec=initial_tvec, 
+                                                          K, dist_eff,
+                                                          rvec=initial_rvec, tvec=initial_tvec, 
                                                           useExtrinsicGuess=True, reprojectionError=1.0,
                                                           iterationsCount=2000,flags=cv2.SOLVEPNP_EPNP)
         print(f"time 5: {time.time()-s} s")
@@ -503,5 +578,36 @@ def img_match_mast3r(query_render, db_render, model, K, depth_map, w2c, gt_pose_
         print(f"time 6: {time.time()-s} s")
         # print(f"translation error: {refine_translation_error} cm")
         # print(f"rotation error: {refine_rot_error} deg")
-
     return refine_rot_error, refine_translation_error
+
+
+def img_match_loftr(query_render, db_render, matcher):
+    img0 = rgb2loftrgray(query_render.squeeze(0))
+    img1 = rgb2loftrgray(db_render)
+    batch = {'image0':img0, 'image1': img1}
+    matcher(batch)
+    mkpts0 = batch['mkpts0_f']
+    mkpts1 = batch['mkpts1_f']
+    mconf = batch['mconf']
+
+    batch["mkpt0"] = batch['mkpts0_f']
+    batch["mkpt1"] = batch['mkpts1_f']
+    batch["img0"] = (img0.cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
+    batch["img1"] = (img1["render"].cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
+    breakpoint()
+
+
+def img_match_aspan(query_render, db_render, matcher):
+    st = time.time()
+    matcher_name = "ASpanFormer"
+    with torch.no_grad():
+        img0 = rgb2loftrgray(query_render.squeeze(0))
+        img1 = rgb2loftrgray(db_render)
+        data = {
+            "img0": img0.cuda(),
+            "img1": img1.cuda(),
+        }
+        print("time1:", time.time()-st)
+        semi_img_match(data, matcher)
+        print("time2:", time.time()-st)
+    return data

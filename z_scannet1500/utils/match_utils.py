@@ -62,7 +62,7 @@ def c2w_to_w2c(T_cw):
 
 def match_eval(args):
     LG_THRESHOLD = 0.01
-    out_name = f"{args.feature_name}"
+    out_name = f"{args.out_name}"
     scene_path = '/'.join((args.input).split('/')[:-1])
     scene_num = int((args.input).split('/')[-2][5:9])-707
 
@@ -97,7 +97,7 @@ def match_eval(args):
     K[2, 2] = 1.
     K = torch.tensor(K).float()
 
-    if args.image_folder=="images_s2":
+    if args.resize_num==2:
         K[:2, :] = K[:2, :] * 0.5
 
     def read_pose(scene_pair):
@@ -160,7 +160,6 @@ def match_eval(args):
             compute_metrics(data_fm)
             print_eval_to_file(data_fm, fm_name, threshold=5e-4, file_path=txt_file)
             data_fm["matcher"] = "ours+LG"
-
             if args.save_img:
                 save_matchimg(data_fm, fm_path)
             keys = ['epi_errs', 'R_errs', 't_errs', 'inliers', 'identifiers']
@@ -183,7 +182,7 @@ def match_eval(args):
 
 @dataclass
 class Eval_params():
-    feature_name:str
+    out_name:str
     input: str
     method: str
     score_kpt_th: float
@@ -196,7 +195,7 @@ class Eval_params():
 # python eval_scannet1500.py
 if __name__=="__main__":
     eval_param = Eval_params(
-        feature_name="SP_imrate:1_th:0.01_mlpdim:8_kptnum:1024_score0.6",
+        out_name="SP_imrate:1_th:0.01_mlpdim:8_kptnum:1024_score0.6",
         input="/home/koki/code/cc/feature_3dgs_2/img_match/scannet_test/scene0805_00/sfm_sample",
         method="SP",
         score_kpt_th=0.01,

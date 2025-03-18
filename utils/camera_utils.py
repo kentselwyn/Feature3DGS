@@ -48,15 +48,10 @@ def loadCam(args, id, cam_info, resolution_scale):
         resolution = (int(orig_w / scale), int(orig_h / scale))
 
     resized_image_rgb = PILtoTorch(cam_info.image, resolution)
-
-
     gt_image = resized_image_rgb[:3, ...]
     loaded_mask = None
-
     if resized_image_rgb.shape[1] == 4:
         loaded_mask = resized_image_rgb[3:4, ...]
-    
-    
     ###
     gt_score_feature = cam_info.score_feature
     intrinsic_params = cam_info.intrinsic_params

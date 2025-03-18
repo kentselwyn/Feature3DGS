@@ -390,7 +390,7 @@ class LightGlue(nn.Module):
                 state_dict = {k.replace(*pattern): v for k, v in state_dict.items()}
             self.load_state_dict(state_dict, strict=False)
             # print(state_dict)
-            print("loded! ")
+            print("lightglue loded! ")
 
     def compile(self, mode="reduce-overhead"):
         if self.conf.width_confidence != -1:
