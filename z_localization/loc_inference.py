@@ -133,7 +133,8 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background, arg
         db_world = project_2d_to_3d(result['mkpt1'].cpu(), db_depth.cpu(), torch.tensor(K, dtype=torch.float32).cpu(), 
                                     w2c.cpu()).cpu().numpy().astype(np.float64)
         q_matched = result['mkpt0'].cpu().numpy().astype(np.float64)
-        _, R_final, t_final, _ = cv2.solvePnPRansac(db_world, q_matched, K, distCoeffs=None, flags=cv2.SOLVEPNP_ITERATIVE, iterationsCount=args.ransac_iters)
+        _, R_final, t_final, _ = cv2.solvePnPRansac(db_world, q_matched, K, distCoeffs=None, 
+                                                    flags=cv2.SOLVEPNP_ITERATIVE, iterationsCount=args.ransac_iters)
         R_final, _ = cv2.Rodrigues(R_final)
         rotError_final, transError_final = calculate_pose_errors(gt_R, gt_t, R_final.T, t_final)
 
@@ -186,6 +187,6 @@ if __name__ == "__main__":
     parser.add_argument("--sp_th", default=0.01, type=float)
     parser.add_argument("--lg_th", default=0.01, type=float)
     parser.add_argument("--kpt_th", default=0.01, type=float)
-    parser.add_argument("--kpt_hist", default=0.98, type=float)
+    parser.add_argument("--kpt_hist", default=0.9, type=float)
     args = get_combined_args(parser)
     localize(Model_param.extract(args), Pipe_param.extract(args), args)

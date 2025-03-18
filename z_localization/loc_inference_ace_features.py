@@ -13,24 +13,31 @@ import utils.loc_utils as loc_utils
 from torch.cuda.amp import autocast
 from scene import Scene, GaussianModel
 from torch.utils.data import DataLoader
+from scene_icom.cameras import Camera_Pose
 from utils.graphics_utils import fov2focal
 from utils.find_depth import project_2d_to_3d
-from gaussian_renderer.__init__loc import render
+from gaussian_renderer.__init__icom import render
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from utils.pycolmap_utils import opencv_to_pycolmap_pnp
 from arguments import ModelParams, PipelineParams, get_combined_args
 from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment, \
                                     get_mlp_data_7scenes_Cambridege
+from arguments import iComMaParams
+from utils.loss_utils import l1_loss, ssim, l2_loss, weighted_l2
+import torch.nn.functional as F
+import torch.optim as optim
 
 random.seed(100)
 
 def localize_set(model_path, name, views, gaussians, pipe_param, background, 
-                 args, encoder, matcher, ace_network, ace_test_loader):
+                 args, encoder, matcher, ace_network, ace_test_loader, icom_params:iComMaParams):
     rErrs = []
     tErrs = []
     prior_rErr = []
     prior_tErr = []
+    render_rErr = []
+    render_tErr = []
     total_elapsed_time = 0
     device = torch.device("cuda")
     scene_name = model_path.split('/')[-3]
@@ -51,29 +58,33 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
     mlp = mlp.to("cuda").eval()
     test_name = args.test_name
     print(scene_name)
+    matrix = torch.eye(4)
+    # view = views[0]
+    
     if args.save_match:
         match_folder = f'{model_path}/match_imgs/{test_name}'
         os.makedirs(match_folder, exist_ok=True)
-    with torch.no_grad():
-        for index, (image_B1HW, _, gt_pose_B44, _, intrinsics_B33, _, _, filenames) in enumerate(ace_test_loader):
-            view = views[index]
-            start = time.time()
-            gt_im = view.original_image[0:3, :, :].cuda().unsqueeze(0)
-            image_B1HW = image_B1HW.to(device, non_blocking=True)
-            K = np.eye(3)
-            focal_length = fov2focal(view.FoVx, view.image_width)
-            K[0, 0] = K[1, 1] = focal_length
-            K[0, 2] = view.image_width / 2
-            K[1, 2] = view.image_height / 2
-            gt_R = view.R # c2w rotation
-            gt_t = view.T # w2c translation
-            # Predict scene coordinates.
-            with autocast(enabled=True):
-                scene_coordinates_B3HW = ace_network(image_B1HW)
-            scene_coordinates_B3HW = scene_coordinates_B3HW.float().cpu()
-
-            for _, (scene_coordinates_3HW, gt_pose_44, intrinsics_33, frame_path) in \
-                            enumerate(zip(scene_coordinates_B3HW, gt_pose_B44, intrinsics_B33, filenames)):
+    
+    for index, (image_B1HW, _, gt_pose_B44, _, intrinsics_B33, _, _, filenames) in enumerate(ace_test_loader):
+        view = views[index]
+        start = time.time()
+        gt_im = view.original_image[0:3, :, :].cuda().unsqueeze(0)
+        image_B1HW = image_B1HW.to(device, non_blocking=True)
+        K = np.eye(3)
+        focal_length = fov2focal(view.FoVx, view.image_width)
+        K[0, 0] = K[1, 1] = focal_length
+        K[0, 2] = view.image_width / 2
+        K[1, 2] = view.image_height / 2
+        gt_R = view.R # c2w rotation
+        gt_t = view.T # w2c translation
+        # Predict scene coordinates.
+        with autocast(enabled=True):
+            scene_coordinates_B3HW = ace_network(image_B1HW)
+        scene_coordinates_B3HW = scene_coordinates_B3HW.float().cpu()
+        print("ace coord time: ", time.time()-start)
+        for _, (scene_coordinates_3HW, gt_pose_44, intrinsics_33, frame_path) in \
+                        enumerate(zip(scene_coordinates_B3HW, gt_pose_B44, intrinsics_B33, filenames)):
+            with torch.no_grad():
                 print(f"{index}, {view.image_name}")
                 focal_length = intrinsics_33[0, 0].item()
                 ppX = intrinsics_33[0, 2].item()
@@ -82,7 +93,7 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 
                 frame_name = Path(frame_path).name
                 out_pose = torch.zeros((4, 4))
-
+                st0 = time.time()
                 inlier_count = dsacstar.forward_rgb(
                     scene_coordinates_3HW.unsqueeze(0),
                     out_pose,
@@ -97,8 +108,11 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 )
                 # out_R = out_pose[0:3, 0:3].numpy()
                 # out_t = out_pose[0:3, 3].numpy()
+                # st0 = time.time()
                 rotError, transError = loc_utils.calculate_pose_errors_ace(
                     gt_pose_44, out_pose)
+                print("ace dsacstar time: ", time.time()-st0)
+                print("ace time cdf: ", time.time()-start)
 
                 out_R = out_pose[0:3, 0:3].numpy() # c2w rotation
                 out_t = out_pose[0:3, 3].numpy() # c2w translation
@@ -109,21 +123,26 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 w2c[:3, :3] = torch.from_numpy(R_inv).float()
                 w2c[:3, 3] = torch.from_numpy(t_inv).float()
                 view.update_RT(out_R, t_inv)
-
-                render_pkg = render(view, gaussians, pipe_param, background)
+                # st0 = time.time()
+                render_pkg = render(view, gaussians, pipe_param, background, compute_grad_cov2d=False)
                 db_render = render_pkg["render"]
                 db_score = render_pkg["score_map"]
                 db_feature = render_pkg["feature_map"]
                 db_depth = render_pkg["depth"]
+                print("render time: ",time.time()-start)
                 query_render = gt_im
+                st0 = time.time()
                 if args.match_type==0:
-                    result = loc_utils.match_img(query_render, db_score, db_feature, encoder, matcher, mlp, args)
+                    result, compressed_gt_feature, decoded_gt_feature = \
+                        loc_utils.match_img_feature(query_render, db_score, db_feature, encoder, matcher, mlp, args)
                 elif args.match_type==1:
                     result = loc_utils.feat_fromImg_match(query_render, db_score, db_render, encoder, matcher, args)
                 elif args.match_type==2:
                     result = loc_utils.img_match2(query_render, db_render, encoder, matcher)
                 elif args.match_type==3:
                     result = loc_utils.img_match_mast3r(query_render, db_render, matcher)
+                elif args.match_type==4:
+                    result = loc_utils.img_match_loftr(query_render, db_render, matcher)
                 if result is None:
                     prior_rErr.append(rotError)
                     prior_tErr.append(transError)
@@ -139,11 +158,17 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                     tErrs.append(transError)
                     print(f"Rotation Error: {rotError} deg")
                     print(f"Translation Error: {transError} cm")
+                    total_elapsed_time += time.time()-start
                     continue
+                print("image match cdf time: ",time.time()-start)
+                st0 = time.time()
                 db_world = project_2d_to_3d(result['mkpt1'].cpu(), db_depth.cpu(), 
                                             torch.tensor(K, dtype=torch.float32).cpu(), 
                                             w2c.cpu()).cpu().numpy().astype(np.float64)
+                # st0 = time.time()
+                print("project time: ", time.time()-st0)
                 q_matched = result['mkpt0'].cpu().numpy().astype(np.float64)
+                st0 = time.time()
                 if args.pnp == "iters":
                     _, R_final, t_final, _ = cv2.solvePnPRansac(db_world, q_matched, K, distCoeffs=None, 
                                                                 flags=cv2.SOLVEPNP_ITERATIVE, 
@@ -156,6 +181,8 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 elif args.pnp == "pycolmap":
                     R_final, t_final = opencv_to_pycolmap_pnp(db_world, q_matched, K, 
                                                         view.image_width, view.image_height)
+                print("ransac time: ", time.time()-st0)
+                # gt_R:c2w, R_final:w2c, t_final:w2c
                 rotError_final, transError_final = loc_utils.calculate_pose_errors(gt_R, gt_t, R_final.T, t_final)
 
                 if args.save_match:
@@ -170,15 +197,79 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 # Print the errors
                 print(f"Final Rotation Error: {rotError_final} deg")
                 print(f"Final Translation Error: {transError_final} cm")
-                elapsed_time = time.time()-start
-                total_elapsed_time += elapsed_time
-                print(f"elapsed time: {elapsed_time}")
-                print()
+                
                 prior_rErr.append(rotError)
                 prior_tErr.append(transError)
                 rErrs.append(rotError_final)
                 tErrs.append(transError_final)
-    
+            # view.update_RT(R_final, t_final.squeeze(1))
+            # R_final = np.eye(3)
+            # t_final = np.zeros([3,1])
+            start_pose_w2c = torch.zeros((4,4)).cuda()
+            start_pose_w2c[:3, :3] = torch.from_numpy(R_final).T
+            start_pose_w2c[:3, 3] = torch.from_numpy(t_final.squeeze(1))
+            start_pose_w2c[3, 3] = 1.
+            # matrix = matrix.cuda()
+            camera_pose = Camera_Pose(
+                            start_pose_w2c=start_pose_w2c,
+                            FoVx=view.FoVx, 
+                            FoVy=view.FoVy,
+                            image_width=view.image_width, 
+                            image_height=view.image_height)
+            camera_pose.cuda()
+            optimizer = optim.Adam(camera_pose.parameters(),lr = icom_params.camera_pose_lr)
+            # compressed_gt_feature = compressed_gt_feature.detach()
+            gt_img = query_render.squeeze(0)
+            # compressed_gt_feature = torch.ones([3,60,80], device="cuda").float()
+            for _ in range(20):
+                render_pkg = render(camera_pose, gaussians, pipe_param, background, compute_grad_cov2d=True)
+                # render_feature = render_pkg['feature_map']
+                rendering = render_pkg["render"]
+                # render_feature = F.interpolate(
+                #     render_feature.unsqueeze(0),
+                #     size=(compressed_gt_feature.clone().shape[1], compressed_gt_feature.clone().shape[2]),
+                #     mode='bilinear', align_corners=True
+                # ).squeeze(0)
+                loss_comparing = l1_loss(rendering, gt_img)
+                # print(loss_comparing)
+                # print(camera_pose.w.grad)
+                optimizer.zero_grad()
+                loss_comparing.backward()
+                optimizer.step()
+                camera_pose(start_pose_w2c)
+            r_final = camera_pose.pose_w2c.cpu().detach().numpy()
+            # rr_final = r_final.inverse()
+            
+            RR = r_final[:3, :3].astype(np.float64)
+            TT = r_final[:3, 3].astype(np.float64)
+            # RR_inv = RR.T # w2c rotation
+            # TT_inv = -RR @ TT # w2c translation
+            rotError_re, transError_re = loc_utils.calculate_pose_errors2(gt_R, gt_t, RR, TT)
+            render_rErr.append(rotError_re)
+            render_tErr.append(transError_re)
+            # # print('refined:')
+            # # print(RR_inv)
+            # # print()
+            # # print(TT)
+            # # print('final: ')
+            # # print(R_final)
+            # # print()
+            # # print(t_final.squeeze(1))
+            # # print('gt: ')
+            # # print(gt_R.T)
+            # # print()
+            # # print(gt_t)
+            # # print('error: ')
+            print(f"refined Rotation Error: {rotError_re} deg")
+            print(f"refined Translation Error: {transError_re} cm")
+            # print(rotError_re)
+            # print()
+            # print(transError_re)
+            # breakpoint()
+            elapsed_time = time.time()-start
+            total_elapsed_time += elapsed_time
+            print(f"elapsed time: {elapsed_time}")
+            print()
     error_foler = f'{model_path}/error_logs/{test_name}'
     os.makedirs(error_foler, exist_ok=True)
     mean_elapsed_time = total_elapsed_time / len(rErrs)
@@ -189,9 +280,11 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
     loc_utils.log_errors(error_foler, name, prior_rErr, prior_tErr, list_text=f"prior", error_text="prior_final")
     loc_utils.log_errors(error_foler, name, rErrs, tErrs, list_text="warp", error_text="prior_final", 
                          elapsed_time=mean_elapsed_time)
+    loc_utils.log_errors(error_foler, name, render_rErr, render_tErr, list_text="img refine", error_text="prior_final", 
+                         elapsed_time=mean_elapsed_time)
 
 
-def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
+def localize(model_param:ModelParams, pipe_param:PipelineParams, args, icom_params):
     gaussians = GaussianModel(model_param.sh_degree)
     scene = Scene(model_param, gaussians, load_iteration=args.iteration, shuffle=False, load_feature=False)
     bg_color = [1,1,1] if model_param.white_background else [0, 0, 0]
@@ -219,7 +312,8 @@ def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
     )
     testset_loader = DataLoader(testset, shuffle=False, num_workers=0)
     localize_set(model_param.model_path, "test", scene.getTestCameras(), 
-                 gaussians, pipe_param, background, args, encoder, matcher, ace_network, testset_loader)
+                 gaussians, pipe_param, background, args, 
+                 encoder, matcher, ace_network, testset_loader, icom_params)
 
 
 if __name__ == "__main__":
@@ -245,5 +339,6 @@ if __name__ == "__main__":
     parser.add_argument("--ace_encoder_path", 
                         default="/home/koki/code/cc/feature_3dgs_2/ace_encoder_pretrained.pt", type=str)
     args = get_combined_args(parser)
+    icom_params = iComMaParams(parser)
     args.images = "rgb"
-    localize(Model_param.extract(args), Pipe_param.extract(args), args)
+    localize(Model_param.extract(args), Pipe_param.extract(args), args, icom_params)

@@ -2,14 +2,13 @@ import os
 import torch
 import argparse
 import torch.nn.functional as F
-from encoders.aliked import ALIKED
+from matchers.aliked import ALIKED
 from utils.utils import load_image2
 from encoders.disk_kornia import DISK
 from utils.vis_scoremap import one_channel_vis
 from encoders.superpoint.superpoint import SuperPoint
 from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment,\
                                     get_mlp_data_7scenes_Cambridege
-import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 
@@ -70,15 +69,7 @@ def save_all(img:torch.Tensor, kpts:torch.Tensor, desc:torch.Tensor, sp_path:str
     torch.save(score, f"{sp_path}_smap.pt")
     score_vis = one_channel_vis(score)
     # score_vis.save(os.path.join(sp_path + "_smap_vis.png"))
-
     if outimg_path != "None":
-        # plt.imshow(img)
-        # # plt.scatter(kpts[:,0],kpts[:,1], c="red", s=1, marker="o")
-        # plt.plot(kpts[:, 0], kpts[:, 1], 'ro', markersize=1)  # 'ro' means red circles
-        # plt.axis('off')
-        # plt.savefig(f"{outimg_path}_kpt.png", bbox_inches='tight', pad_inches=0)
-        # plt.close()
-        # breakpoint()
         img = img.copy()
         if img.dtype == np.float32 or img.dtype == np.float64:
             img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX)  # Normalize to 0-255
@@ -87,7 +78,6 @@ def save_all(img:torch.Tensor, kpts:torch.Tensor, desc:torch.Tensor, sp_path:str
             cv2.circle(img, (int(x), int(y)), radius=1, color=(255, 0, 0), thickness=-1)
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         cv2.imwrite(f"{outimg_path}.color.png", img_rgb)
-        # breakpoint()
     
 
 def main(args):
@@ -140,7 +130,10 @@ def main(args):
     for t in target_images:
         print(f"Processing '{t}'...")
         img_name = t.split(os.sep)[-1].split(".")[0]
-        resize_num = int(args.resize_num)
+        #############################################################
+        # resize_num = int(args.resize_num)
+        resize_num = 1
+        #############################################################
         img_tensor = load_image2(t, resize=resize_num).to("cuda").unsqueeze(0)
         data = {}
         data["image"] = img_tensor
