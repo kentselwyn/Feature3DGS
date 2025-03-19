@@ -55,6 +55,7 @@ def loadCam(args, id, cam_info, resolution_scale):
     ###
     gt_score_feature = cam_info.score_feature
     intrinsic_params = cam_info.intrinsic_params
+    intrinsic_model = cam_info.intrinsic_model
 
 
     return Camera(colmap_id=cam_info.uid, R=cam_info.R, T=cam_info.T, 
@@ -64,6 +65,7 @@ def loadCam(args, id, cam_info, resolution_scale):
                   semantic_feature = gt_semantic_feature,
                   score_feature = gt_score_feature, #
                   intrinsic_params = intrinsic_params,
+                  intrinsic_model = intrinsic_model,
                   data_device="cpu") 
 
 

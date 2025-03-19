@@ -20,6 +20,7 @@ class Camera(nn.Module):
                  semantic_feature,
                  score_feature, #
                  intrinsic_params,
+                 intrinsic_model,
                  trans=np.array([0.0, 0.0, 0.0]), 
                  scale=1.0, 
                  data_device = "cpu"
@@ -65,9 +66,9 @@ class Camera(nn.Module):
         self.full_proj_transform = (self.world_view_transform.unsqueeze(0).bmm(self.projection_matrix.unsqueeze(0))).squeeze(0)
         self.camera_center = self.world_view_transform.inverse()[3, :3]
         self.extrinsic_matrix = getWorld2View2(R, T, trans, scale)
-
+        
         if intrinsic_params is not None:
-            K = getIntrinsicMatrix(intrinsic_params)
+            K = getIntrinsicMatrix(intrinsic_params, intrinsic_model)
             self.intrinsic_matrix = K
             self.intrinsic_params = intrinsic_params
     def update_RT(self, R, t):

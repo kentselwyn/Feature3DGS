@@ -339,7 +339,8 @@ def render_sets(model_param : ModelParams, iteration : int, pipe_param : Pipelin
         gaussians = GaussianModel(model_param.sh_degree)
         if view_num==-1:
             view_num = None
-        scene = Scene(model_param, gaussians, load_iteration=iteration, shuffle=False, view_num=view_num, load_feature=True)
+        scene = Scene(model_param, gaussians, load_iteration=iteration, shuffle=False, view_num=view_num, 
+                      load_feature=True)
 
         bg_color = [1,1,1] if model_param.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")

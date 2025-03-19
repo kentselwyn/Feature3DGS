@@ -42,6 +42,7 @@ class CameraInfo(NamedTuple):
     score_feature_path: str
     score_feature_name: str
     intrinsic_params: np.array
+    intrinsic_model: str
 
 class SceneInfo(NamedTuple):
     point_cloud: BasicPointCloud
@@ -106,6 +107,8 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
             assert False, "Colmap camera model not handled: only undistorted datasets (PINHOLE or SIMPLE_PINHOLE cameras) supported!"
 
         image_path = os.path.join(images_folder, os.path.basename(extr.name))
+        if not os.path.exists(image_path):
+            image_path = os.path.join(images_folder, extr.name.replace('/', '-'))
         image_name = os.path.basename(image_path).split(".")[0]
         image = Image.open(image_path) 
 
@@ -113,21 +116,24 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
         semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap.pt'
         semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
 
-        if os.path.exists(semantic_feature_path):
-            semantic_feature = torch.load(semantic_feature_path)
-        else:
+        try:
+            semantic_feature = torch.load(semantic_feature_path) if os.path.exists(semantic_feature_path) else None
+        except FileNotFoundError:
+            print("semantic file not found!")
             semantic_feature = None
 
         score_feature_path = os.path.join(semantic_feature_folder, image_name) + '_smap.pt'
         score_feature_name = os.path.basename(score_feature_path).split(".")[0]
-        if os.path.exists(score_feature_path):
-            score_feature = torch.load(score_feature_path)
-        else:
+        try:
+            score_feature = torch.load(score_feature_path) if os.path.exists(score_feature_path) else None
+        except:
+            print("score file not found!")
             score_feature = None
 
         cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                             image_path=image_path, image_name=image_name,
                             intrinsic_params=intr.params,
+                            intrinsic_model=intr.model,
                             width=width, height=height,
                             semantic_feature=semantic_feature,           score_feature = score_feature,
                             semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
@@ -162,7 +168,7 @@ def storePly(path, xyz, rgb):
     ply_data.write(path)
 
 
-def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=None, llffhold=8, load_feature=True):
+def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=None, llffhold=8, load_feature=True, view_num=None):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.bin")
@@ -188,9 +194,71 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
     if eval:
         train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 2] # avoid 1st to be test view
         test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 2]
+        if view_num is not None:
+            train_cam_infos = train_cam_infos[:view_num]
+            test_cam_infos = test_cam_infos[:view_num]
     else:
+        test_cam_infos_unsorted = []
         train_cam_infos = cam_infos
         test_cam_infos = []
+        if True:
+            t_path = str(Path(path).parent)
+            test_images_folder = os.path.join(t_path, f"test/{images}")
+            test_extrinsic_folder = os.path.join(t_path, "test/poses")
+            test_intrinsic_folder = os.path.join(t_path, "test/calibration")
+            test_feature_folder = os.path.join(t_path, f"test/{foundation_model}")
+            test_views = os.listdir(test_images_folder)
+            width, height = Image.open(f"{test_images_folder}/{test_views[0]}").size
+            K_test, w2cs_test = readSplit_cams_params(test_intrinsic_folder, test_extrinsic_folder)
+            for i, view in enumerate(test_views):
+                print(view)
+                sys.stdout.write('\r')
+                sys.stdout.write(f"Reading {i+1} test / {len(test_views)} camera")
+                sys.stdout.flush()
+
+                w2c_sample = w2cs_test[i]
+
+                R = w2c_sample[:3,:3].T  # R is stored transposed due to 'glm' in CUDA code
+                T = w2c_sample[:3, 3]
+
+                focal_length_x = K_test
+                FovY = focal2fov(focal_length_x, height)
+                FovX = focal2fov(focal_length_x, width)
+
+                image_path = os.path.join(test_images_folder, view)
+                image_name = os.path.basename(image_path).split(".png")[0].split(".color")[0]
+                image = Image.open(image_path)
+
+
+                semantic_feature_path = os.path.join(test_feature_folder, image_name) + '_fmap.pt'
+                semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
+                if os.path.exists(semantic_feature_path) and load_feature:
+                    semantic_feature = torch.load(semantic_feature_path)
+                else:
+                    semantic_feature = None
+
+                score_feature_path = os.path.join(test_feature_folder, image_name) + '_smap.pt'
+                score_feature_name = os.path.basename(score_feature_path).split(".")[0]
+                if os.path.exists(score_feature_path) and load_feature:
+                    score_feature = torch.load(score_feature_path)
+                else:
+                    score_feature = None
+
+                cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+                                    image_path=image_path, image_name=image_name,
+                                    intrinsic_params=None,
+                                    intrinsic_model=None,
+                                    width=width, height=height,
+                                    semantic_feature=semantic_feature,           score_feature = score_feature,
+                                    semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
+                                    semantic_feature_name=semantic_feature_name, score_feature_name = score_feature_name)
+                test_cam_infos_unsorted.append(cam_info)
+            # test_cam_infos = sorted(test_cam_infos_unsorted, key = lambda x : x.image_name)
+            test_cam_infos = test_cam_infos_unsorted
+
+        if view_num is not None:
+            train_cam_infos = train_cam_infos[:view_num]
+            test_cam_infos = test_cam_infos[:view_num]
 
     nerf_normalization = getNerfppNorm(train_cam_infos)
     ply_path = os.path.join(path, "sparse/0/points3D.ply")
@@ -421,6 +489,7 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
         cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                             image_path=image_path, image_name=image_name,
                             intrinsic_params=None,
+                            intrinsic_model=None,
                             width=width, height=height,
                             semantic_feature=semantic_feature,           score_feature = score_feature,
                             semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
@@ -465,6 +534,7 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
         cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                             image_path=image_path, image_name=image_name,
                             intrinsic_params=None,
+                            intrinsic_model=None,
                             width=width, height=height,
                             semantic_feature=semantic_feature,           score_feature = score_feature,
                             semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
@@ -521,8 +591,22 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
     return scene_info
 
 
+
+
+
+def readColmapSceneInfoGScpr(path: str, foundation_model: str, eval: bool, 
+                             images=None, llffhold=8, load_feature=True):
+    pass
+
+
+
+
+
+
+
 sceneLoadTypeCallbacks = {
     "Colmap": readColmapSceneInfo,
     "Blender" : readNerfSyntheticInfo,
-    "Split" : readSplitInfo
+    "Split" : readSplitInfo,
+    "Colmap_gscpr": readColmapSceneInfoGScpr,
 }
