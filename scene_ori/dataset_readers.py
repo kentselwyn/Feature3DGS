@@ -109,6 +109,8 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
             assert False, "Colmap camera model not handled: only undistorted datasets (PINHOLE or SIMPLE_PINHOLE cameras) supported!"
 
         image_path = os.path.join(images_folder, os.path.basename(extr.name))
+        if not os.path.exists(image_path):
+            image_path = os.path.join(images_folder, extr.name.replace('/', '-'))
         image_name = os.path.basename(image_path).split(".")[0]
         image = Image.open(image_path)
 
@@ -167,8 +169,79 @@ def readColmapSceneInfo(path, images, eval, llffhold=8):
         train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 2] # avoid first image in test set
         test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 2]
     else:
+        test_cam_infos_unsorted = []
         train_cam_infos = cam_infos
         test_cam_infos = []
+        if True:
+            t_path = str(Path(path).parent)
+            test_images_folder = os.path.join(t_path, f"test/{images}")
+            test_extrinsic_folder = os.path.join(t_path, "test/poses")
+            test_intrinsic_folder = os.path.join(t_path, "test/calibration")
+            # breakpoint()
+            # test_feature_folder = os.path.join(t_path, f"test/{foundation_model}")
+            test_views = os.listdir(test_images_folder)
+            width, height = Image.open(f"{test_images_folder}/{test_views[0]}").size
+            # K_test, w2cs_test = readColmap_cams_params(test_intrinsic_folder, test_extrinsic_folder)
+            intrinsic_files = os.listdir(test_intrinsic_folder)
+            with open(f"{test_intrinsic_folder}/{intrinsic_files[0]}", "r") as fid:
+                K_test = float(fid.readline())
+            for i, view in enumerate(test_views):
+                sys.stdout.write('\r')
+                sys.stdout.write(f"Reading {i+1} test / {len(test_views)} camera")
+                sys.stdout.flush()
+
+
+                v_name = view.split('.')[0]
+                with open(f"{test_extrinsic_folder}/{v_name}.pose.txt", "r") as fid:
+                    c2w = []
+                    while True:
+                        line = fid.readline().rstrip()
+                        if not line:
+                            break
+                        c2w+=line.split(' ')
+                c2w = np.array([float(x) for x in c2w]).reshape((4,4))
+                w2c = np.linalg.inv(c2w)
+
+
+                w2c_sample = w2c
+
+                R = w2c_sample[:3,:3].T  # R is stored transposed due to 'glm' in CUDA code
+                T = w2c_sample[:3, 3]
+
+                focal_length_x = K_test
+                FovY = focal2fov(focal_length_x, height)
+                FovX = focal2fov(focal_length_x, width)
+
+                image_path = os.path.join(test_images_folder, view)
+                image_name = os.path.basename(image_path).split(".png")[0].split(".color")[0]
+                image = Image.open(image_path)
+
+
+                # semantic_feature_path = os.path.join(test_feature_folder, image_name) + '_fmap.pt'
+                # semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
+                # if os.path.exists(semantic_feature_path):
+                #     semantic_feature = torch.load(semantic_feature_path)
+                # else:
+                #     semantic_feature = None
+                #     breakpoint()
+
+                # score_feature_path = os.path.join(test_feature_folder, image_name) + '_smap.pt'
+                # score_feature_name = os.path.basename(score_feature_path).split(".")[0]
+                # if os.path.exists(score_feature_path) and load_feature:
+                #     score_feature = torch.load(score_feature_path)
+                # else:
+                #     score_feature = None
+                #     breakpoint()
+                
+                # breakpoint()
+                cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+                            image_path=image_path, image_name=image_name,
+                            intrinsic_params=None,
+                            width=width, height=height,)
+                test_cam_infos_unsorted.append(cam_info)
+                # breakpoint()
+            test_cam_infos = sorted(test_cam_infos_unsorted, key = lambda x : x.image_name)
+            # test_cam_infos = test_cam_infos_unsorted
 
     nerf_normalization = getNerfppNorm(train_cam_infos)
 

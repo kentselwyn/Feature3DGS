@@ -58,6 +58,7 @@ class ModelParams(ParamGroup):
         self.score_scale = 1.0
         self.eval = False
         self.speedup = False ###
+        self.load_testcam = 1
         self.render_items = ['RGB', 'Depth', 'Edge', 'Normal', 'Curvature', 'Feature Map', 'Score Map']
         super().__init__(parser, "Loading Parameters", sentinel)
 

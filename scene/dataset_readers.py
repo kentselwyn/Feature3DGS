@@ -77,7 +77,7 @@ def getNerfppNorm(cam_info):
     return {"translate": translate, "radius": radius}
 
 
-def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_feature_folder):
+def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_feature_folder, load_feature):
     cam_infos = []
     for idx, key in enumerate(cam_extrinsics):
         sys.stdout.write('\r')
@@ -116,18 +116,20 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, semantic_fe
         semantic_feature_path = os.path.join(semantic_feature_folder, image_name) + '_fmap.pt'
         semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
 
-        try:
+        if os.path.exists(semantic_feature_path) and load_feature:
+        # try:
             semantic_feature = torch.load(semantic_feature_path) if os.path.exists(semantic_feature_path) else None
-        except FileNotFoundError:
-            print("semantic file not found!")
+        # except FileNotFoundError:
+        else:
+            # print("semantic file not found!")
             semantic_feature = None
 
         score_feature_path = os.path.join(semantic_feature_folder, image_name) + '_smap.pt'
         score_feature_name = os.path.basename(score_feature_path).split(".")[0]
-        try:
+        if os.path.exists(score_feature_path) and load_feature:
             score_feature = torch.load(score_feature_path) if os.path.exists(score_feature_path) else None
-        except:
-            print("score file not found!")
+        else:
+            # print("score file not found!")
             score_feature = None
 
         cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
@@ -192,7 +194,7 @@ def readColmap_cams_params(intrinsic_folder, extrinsic_folder):
     return K, w2cs
 
 
-def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=None, llffhold=8, load_feature=True, view_num=None):
+def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=None, llffhold=8, load_feature=True, view_num=None, load_testcam=True):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.bin")
@@ -208,7 +210,8 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
     semantic_feature_dir = f"{foundation_model}"
 
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, 
-                                           images_folder=os.path.join(path, image_dir), semantic_feature_folder=os.path.join(path, semantic_feature_dir))
+                                           images_folder=os.path.join(path, image_dir), semantic_feature_folder=os.path.join(path, semantic_feature_dir),
+                                           load_feature = load_feature)
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
     if cam_infos[0].semantic_feature is not None:
         semantic_feature_dim = cam_infos[0].semantic_feature.shape[0]
@@ -219,13 +222,15 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
         train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 2] # avoid 1st to be test view
         test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 2]
         if view_num is not None:
+            random.shuffle(train_cam_infos)
+            random.shuffle(test_cam_infos)
             train_cam_infos = train_cam_infos[:view_num]
             test_cam_infos = test_cam_infos[:view_num]
     else:
         test_cam_infos_unsorted = []
         train_cam_infos = cam_infos
         test_cam_infos = []
-        if True:
+        if load_testcam:
             t_path = str(Path(path).parent)
             test_images_folder = os.path.join(t_path, f"test/{images}")
             test_extrinsic_folder = os.path.join(t_path, "test/poses")
@@ -271,10 +276,12 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
 
                 semantic_feature_path = os.path.join(test_feature_folder, image_name) + '_fmap.pt'
                 semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
+                # breakpoint()
                 if os.path.exists(semantic_feature_path) and load_feature:
                     semantic_feature = torch.load(semantic_feature_path)
                 else:
                     semantic_feature = None
+                    # breakpoint()
 
                 score_feature_path = os.path.join(test_feature_folder, image_name) + '_smap.pt'
                 score_feature_name = os.path.basename(score_feature_path).split(".")[0]
@@ -282,6 +289,9 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
                     score_feature = torch.load(score_feature_path)
                 else:
                     score_feature = None
+                    # breakpoint()
+                
+                # breakpoint()
 
                 cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                                     image_path=image_path, image_name=image_name,
@@ -297,6 +307,8 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
             # test_cam_infos = test_cam_infos_unsorted
 
         if view_num is not None:
+            random.shuffle(train_cam_infos)
+            random.shuffle(test_cam_infos)
             train_cam_infos = train_cam_infos[:view_num]
             test_cam_infos = test_cam_infos[:view_num]
 
@@ -441,10 +453,11 @@ def readSplit_cams_params(intrinsic_folder, extrinsic_folder):
         w2cs.append(w2c)
     return K, w2cs
 
+import random
 
 @torch.inference_mode()
 def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True, 
-                  view_num=None, test_feature_load=True):
+                  view_num=None, test_feature_load=True, load_semantic_feature=True):
     
     train_images_folder = os.path.join(path, f"train/{images}")
     train_extrinsic_folder = os.path.join(path, "train/poses")
@@ -476,6 +489,8 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
     test_views = sorted(os.listdir(test_images_folder))
 
     if view_num is not None:
+        random.shuffle(train_views)
+        random.shuffle(test_views)
         train_views = train_views[:view_num]
         test_views = test_views[:view_num]
 
@@ -511,7 +526,7 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
         # semantic_feature = model.get_descriptors(tensor_image)[0].cpu()
         semantic_feature_path = os.path.join(train_feature_folder, image_name) + '_fmap.pt'
         semantic_feature_name = os.path.basename(semantic_feature_path).split(".")[0]
-        if os.path.exists(semantic_feature_path) and load_feature:
+        if os.path.exists(semantic_feature_path) and load_feature and load_semantic_feature:
             semantic_feature = torch.load(semantic_feature_path)
         else:
             semantic_feature = None
