@@ -22,6 +22,7 @@ from utils.pycolmap_utils import opencv_to_pycolmap_pnp
 from arguments import ModelParams, PipelineParams, get_combined_args
 from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment, \
                                     get_mlp_data_7scenes_Cambridege
+from scipy.spatial.transform import Rotation as R
 
 random.seed(100)
 
@@ -96,7 +97,6 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                     100,
                     ace_network.OUTPUT_SUBSAMPLE,
                 )
-                # out_R = out_pose[0:3, 0:3].numpy()
                 # out_t = out_pose[0:3, 3].numpy()
                 # st0 = time.time()
                 rotError, transError = loc_utils.calculate_pose_errors_ace(
@@ -107,12 +107,25 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 out_R = out_pose[0:3, 0:3].numpy() # c2w rotation
                 out_t = out_pose[0:3, 3].numpy() # c2w translation
 
-                R_inv = out_R.T # w2c rotation
-                t_inv = -R_inv @ out_t # w2c translation
+                trans_noise = np.random.normal(scale=0.01, size=(3,))  # 假設 1cm 擾動
+
+
+                out_t_perturbed = out_t + trans_noise
+
+                angle_noise_deg = np.random.normal(scale=1.0, size=3)         # 每個軸都有小角度擾動
+                angle_noise_rad = np.radians(angle_noise_deg)
+                rot_noise = R.from_euler('xyz', angle_noise_rad).as_matrix()
+
+
+                out_R_perturbed = rot_noise @ out_R
+
+                R_inv_perturbed = out_R_perturbed.T
+                t_inv_perturbed = -R_inv_perturbed @ out_t_perturbed # w2c translation
+                
                 w2c = torch.eye(4, 4, device='cuda')
-                w2c[:3, :3] = torch.from_numpy(R_inv).float()
-                w2c[:3, 3] = torch.from_numpy(t_inv).float()
-                view.update_RT(out_R, t_inv)
+                w2c[:3, :3] = torch.from_numpy(R_inv_perturbed).float()
+                w2c[:3, 3] = torch.from_numpy(t_inv_perturbed).float()
+                view.update_RT(out_R_perturbed, t_inv_perturbed)
                 # st0 = time.time()
                 render_pkg = render(view, gaussians, pipe_param, background)
                 db_render = render_pkg["render"]

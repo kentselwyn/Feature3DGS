@@ -203,7 +203,9 @@ def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
     encoder_state_dict = torch.load(args.ace_encoder_path, map_location="cpu")
     head_state_dict = torch.load(args.ace_ckpt, map_location="cpu")
     ace_network = Regressor.create_from_split_state_dict(encoder_state_dict, head_state_dict).cuda().eval()
-    scene_path = Path(args.source_path)
+    ########################################################
+    scene_path = Path(args.source_path).parent
+    ########################################################
     testset = CamLocDataset(
         scene_path / "test",
         mode=0,  # Default for ACE, we don't need scene coordinates/RGB-D.

@@ -12,6 +12,7 @@ from torchvision import transforms
 from skimage.measure import label, regionprops
 from encoders.superpoint.mlp import get_mlp_model
 from utils.viz2d import plot_image_grid, plot_keypoints, plot_matches
+from scipy.ndimage import gaussian_filter
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -24,8 +25,78 @@ def extract_kpt(score: torch.Tensor, threshold = 0.3):
     regions = regionprops(labels)
     centroids = [region.centroid for region in regions]
     end = time.time()
-    centroids = torch.tensor(centroids, dtype=torch.float32)
+    centroids = torch.tensor(centroids, dtype=torch.float16)
     return centroids
+
+
+def render_gaussian_kpt_map(kpts: torch.Tensor, shape: tuple, sigma=2.0):
+    """
+    將 keypoints 轉為 2D Gaussian heatmap
+    - kpts: Tensor of shape [N, 2], (y, x)
+    - shape: (H, W)
+    - sigma: Gaussian sigma
+    Return:
+    - map: Tensor of shape [1, H, W]
+    """
+    H, W = shape
+    heatmap = np.zeros((H, W), dtype=np.float32)
+
+    # 對每個 keypoint 畫一個 Gaussian
+    for y, x in kpts.long():
+        if 0 <= y < H and 0 <= x < W:
+            temp_map = np.zeros_like(heatmap)
+            temp_map[y, x] = 1.0
+            temp_map = gaussian_filter(temp_map, sigma=sigma)
+            heatmap += temp_map
+
+    # 正規化到 [0, 1]
+    if heatmap.max() > 0:
+        heatmap /= heatmap.max()
+
+    heatmap = torch.tensor(heatmap, dtype=torch.float32).unsqueeze(0)  # [1, H, W]
+    return heatmap
+
+
+
+
+
+def generate_gaussian_kernel(size=7, sigma=1.0):
+    """產生 2D Gaussian kernel"""
+    x = torch.arange(size).float() - size // 2
+    y = torch.arange(size).float() - size // 2
+    xx, yy = torch.meshgrid(x, y, indexing='ij')
+    kernel = torch.exp(-(xx**2 + yy**2) / (2 * sigma**2))
+    kernel /= kernel.sum()
+    return kernel
+
+def fast_render_gaussian_kpt_map(kpts: torch.Tensor, shape: tuple, sigma=1.5, kernel_size=7, device="cpu"):
+    """
+    更快速地產生 Gaussian map
+    - kpts: [N, 2] (y, x)
+    - shape: (H, W)
+    """
+    H, W = shape
+    heatmap = torch.zeros((1, H, W), device=device)
+
+    # 產生 Gaussian kernel（例如 7x7）
+    kernel = generate_gaussian_kernel(kernel_size, sigma).to(device)
+
+    offset = kernel_size // 2
+    kpts = kpts.long()
+
+    for y, x in kpts:
+        if offset <= y < H - offset and offset <= x < W - offset:
+            heatmap[0, y - offset: y + offset + 1, x - offset: x + offset + 1] += kernel
+
+    # 可選：正規化到 [0, 1]
+    if heatmap.max() > 0:
+        heatmap /= heatmap.max()
+
+    return heatmap
+
+
+
+
 
 
 def find_small_circle_centers(score_map, threshold, kernel_size=3):
