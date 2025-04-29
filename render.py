@@ -99,25 +99,27 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
     makedirs(saved_score_path, exist_ok=True)
 
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
+        print(view.image_name)
         render_pkg = render(view, gaussians, pipe_param, background)
+
         gt = view.original_image[0:3, :, :]
         gt_feature_map = view.semantic_feature.cuda() 
-        torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, '{0:05d}'.format(idx) + ".png")) 
-        torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+        torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, view.image_name + ".png")) 
+        torchvision.utils.save_image(gt, os.path.join(gts_path, view.image_name + ".png"))
 
         ############## visualize feature map
         feature_map = render_pkg["feature_map"][:16]
         feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
 
         feature_map_vis = feature_visualize_saving(feature_map)
-        Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
+        Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(feature_map_path, view.image_name + "_feature_vis.png"))
         
         gt_feature_map_vis = feature_visualize_saving(gt_feature_map)
-        Image.fromarray((gt_feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(gt_feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
+        Image.fromarray((gt_feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(gt_feature_map_path, view.image_name + "_feature_vis.png"))
 
         # save feature map
         feature_map = feature_map.cpu().numpy().astype(np.float16)
-        torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, '{0:05d}'.format(idx) + "_fmap.pt"))
+        torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, view.image_name + "_fmap.pt"))
         #############
 
         ############# score map
@@ -127,12 +129,12 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
                                   size=(gt_score_map.shape[1], gt_score_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
         
         score_map_vis = one_channel_vis(score_map)
-        score_map_vis.save(os.path.join(score_map_path, '{0:05d}'.format(idx) + "_score_vis.png"))
+        score_map_vis.save(os.path.join(score_map_path, view.image_name + "_score_vis.png"))
         gt_score_map_vis = one_channel_vis(gt_score_map)
-        gt_score_map_vis.save(os.path.join(gt_score_map_path, '{0:05d}'.format(idx) + "_score_vis.png"))
+        gt_score_map_vis.save(os.path.join(gt_score_map_path, view.image_name + "_score_vis.png"))
         # save feature map
         score_map = score_map.cpu().numpy().astype(np.float16)
-        torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, '{0:05d}'.format(idx) + "_smap.pt"))
+        torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, view.image_name + "_smap.pt"))
         #############
 
 
@@ -181,7 +183,7 @@ def render_novel_views(model_path, name, iteration, views, gaussians, pipe_param
         view.full_proj_transform = (view.world_view_transform.unsqueeze(0).bmm(view.projection_matrix.unsqueeze(0))).squeeze(0)
         view.camera_center = view.world_view_transform.inverse()[3, :3]
         render_pkg = render(view, gaussians, pipe_param, background)
-        torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, '{0:05d}'.format(idx) + ".png")) 
+        torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, view.image_name + ".png")) 
         ########## visualize feature map
         gt_feature_map = view.semantic_feature.cuda()
         feature_map = render_pkg["feature_map"]
@@ -191,11 +193,11 @@ def render_novel_views(model_path, name, iteration, views, gaussians, pipe_param
             feature_map = cnn_decoder(feature_map)
         feature_map_vis = feature_visualize_saving(feature_map)
         Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8))\
-            .save(os.path.join(feature_map_path,'{0:05d}'.format(idx) + "_feature_vis.png"))
+            .save(os.path.join(feature_map_path,view.image_name + "_feature_vis.png"))
 
         # save feature map
         feature_map = feature_map.cpu().numpy().astype(np.float16)
-        torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, '{0:05d}'.format(idx) + "_fmap_CxHxW.pt"))
+        torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, view.image_name + "_fmap_CxHxW.pt"))
         ##########
 
         ########## visualize score map
@@ -203,10 +205,10 @@ def render_novel_views(model_path, name, iteration, views, gaussians, pipe_param
         score_map = render_pkg['score_map']
         score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], gt_score_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
         score_map_vis = one_channel_vis(score_map)
-        score_map_vis.save(os.path.join(score_map_path, '{0:05d}'.format(idx) + "_score_vis.png"))
+        score_map_vis.save(os.path.join(score_map_path, view.image_name + "_score_vis.png"))
         
         score_map = score_map.cpu().numpy().astype(np.float16)
-        torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, '{0:05d}'.format(idx) + "_smap_CxHxW.pt"))
+        torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, view.image_name + "_smap_CxHxW.pt"))
 
 
 # render pairs

@@ -168,6 +168,30 @@ def storePly(path, xyz, rgb):
     ply_data.write(path)
 
 
+def readColmap_cams_params(intrinsic_folder, extrinsic_folder):
+    intrinsic_files = os.listdir(intrinsic_folder)
+    extrinsic_files = os.listdir(extrinsic_folder)
+    # Read intrinsics
+    with open(f"{intrinsic_folder}/{intrinsic_files[0]}", "r") as fid:
+        K = float(fid.readline())
+
+    w2cs = []
+    # Read extrincsics
+    for file in extrinsic_files:
+        with open(f"{extrinsic_folder}/{file}", "r") as fid:
+            c2w = []
+            while True:
+                line = fid.readline().rstrip()
+                if not line:
+                    break
+                c2w+=line.split(' ')
+        c2w = np.array([float(x) for x in c2w]).reshape((4,4))
+        w2c = np.linalg.inv(c2w)
+        # RTs
+        w2cs.append(w2c)
+    return K, w2cs
+
+
 def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=None, llffhold=8, load_feature=True, view_num=None):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
@@ -209,14 +233,29 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
             test_feature_folder = os.path.join(t_path, f"test/{foundation_model}")
             test_views = os.listdir(test_images_folder)
             width, height = Image.open(f"{test_images_folder}/{test_views[0]}").size
-            K_test, w2cs_test = readSplit_cams_params(test_intrinsic_folder, test_extrinsic_folder)
+            # K_test, w2cs_test = readColmap_cams_params(test_intrinsic_folder, test_extrinsic_folder)
+            intrinsic_files = os.listdir(test_intrinsic_folder)
+            with open(f"{test_intrinsic_folder}/{intrinsic_files[0]}", "r") as fid:
+                K_test = float(fid.readline())
             for i, view in enumerate(test_views):
-                print(view)
                 sys.stdout.write('\r')
                 sys.stdout.write(f"Reading {i+1} test / {len(test_views)} camera")
                 sys.stdout.flush()
 
-                w2c_sample = w2cs_test[i]
+
+                v_name = view.split('.')[0]
+                with open(f"{test_extrinsic_folder}/{v_name}.pose.txt", "r") as fid:
+                    c2w = []
+                    while True:
+                        line = fid.readline().rstrip()
+                        if not line:
+                            break
+                        c2w+=line.split(' ')
+                c2w = np.array([float(x) for x in c2w]).reshape((4,4))
+                w2c = np.linalg.inv(c2w)
+
+
+                w2c_sample = w2c
 
                 R = w2c_sample[:3,:3].T  # R is stored transposed due to 'glm' in CUDA code
                 T = w2c_sample[:3, 3]
@@ -253,8 +292,9 @@ def readColmapSceneInfo(path: str, foundation_model: str, eval: bool, images=Non
                                     semantic_feature_path=semantic_feature_path, score_feature_path = score_feature_path, 
                                     semantic_feature_name=semantic_feature_name, score_feature_name = score_feature_name)
                 test_cam_infos_unsorted.append(cam_info)
-            # test_cam_infos = sorted(test_cam_infos_unsorted, key = lambda x : x.image_name)
-            test_cam_infos = test_cam_infos_unsorted
+                # breakpoint()
+            test_cam_infos = sorted(test_cam_infos_unsorted, key = lambda x : x.image_name)
+            # test_cam_infos = test_cam_infos_unsorted
 
         if view_num is not None:
             train_cam_infos = train_cam_infos[:view_num]
@@ -484,8 +524,6 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
         else:
             score_feature = None
         
-        # breakpoint()
-        
         cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                             image_path=image_path, image_name=image_name,
                             intrinsic_params=None,
@@ -496,7 +534,6 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
                             semantic_feature_name=semantic_feature_name, score_feature_name = score_feature_name)
         train_cam_infos_unsorted.append(cam_info)
 
-    # breakpoint()
 
     for i, view in enumerate(test_views):
         sys.stdout.write('\r')
@@ -587,7 +624,6 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
                            nerf_normalization=nerf_normalization,
                            ply_path=ply_path,
                            semantic_feature_dim=semantic_feature_dim)
-    # breakpoint()
     return scene_info
 
 

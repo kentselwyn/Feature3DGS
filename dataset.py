@@ -104,7 +104,7 @@ class CamLocDataset(Dataset):
         root_dir = Path(root_dir)
 
         # Main folders.
-        rgb_dir = root_dir / 'rgb'
+        rgb_dir = root_dir / 'images'
         pose_dir = root_dir / 'poses'
         calibration_dir = root_dir / 'calibration'
 
