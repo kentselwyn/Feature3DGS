@@ -159,3 +159,18 @@ def render_net_image(render_pkg, render_items, render_mode, camera):
     if net_image.shape[0]==1:
         net_image = colormap(net_image)
     return net_image
+
+def get_resolution_from_longest_edge(
+    height, width, longest_edge=640
+):
+    
+    if (height > width):
+        scale = longest_edge / height
+        new_height = longest_edge
+        new_width = int(width * scale)
+    else:
+        scale = longest_edge / width
+        new_width = longest_edge
+        new_height = int(height * scale)
+    
+    return new_height, new_width

@@ -9,7 +9,9 @@
 # For inquiries contact  george.drettakis@inria.fr
 #
 import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 import torch
+import pickle
 import sklearn
 import torchvision
 import numpy as np
@@ -28,9 +30,12 @@ from utils.general_utils import PILtoTorch
 from utils.general_utils import safe_state
 from gaussian_renderer import GaussianModel
 from utils.graphics_utils import getWorld2View2
-from utils.vis_scoremap import one_channel_vis
+from utils.vis_scoremap import one_channel_vis, overlay_scoremap
 from arguments import ModelParams, PipelineParams, get_combined_args
 
+from scene.kpdetector import KpDetector, simple_nms
+from encoders.superpoint.mlp import get_mlp_model
+from encoders.superpoint.superpoint import SuperPoint
 
 # utils
 def feature_visualize_saving(feature):
@@ -87,6 +92,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
     score_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_renders")
     gt_score_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_gt")
     saved_score_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_tensors")
+
     makedirs(render_path, exist_ok=True)
     makedirs(gts_path, exist_ok=True)
 
@@ -98,6 +104,38 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
     makedirs(gt_score_map_path, exist_ok=True)
     makedirs(saved_score_path, exist_ok=True)
 
+    # # Superpoint
+    conf = {
+        "sparse_outputs": True,
+        "dense_outputs": True,
+        "max_num_keypoints": 1024,
+        "detection_threshold": 0.01,
+    }
+    model = SuperPoint(conf).eval().cuda()
+
+    # Get detector
+    detector_ckpt_path = os.path.join(model_path, "detector", "{}_detector.pth".format(30_000))
+    detector = KpDetector(model.conf.descriptor_dim)
+    detector.load_state_dict(torch.load(detector_ckpt_path))
+    detector.eval().cuda()
+
+    # Ground-truth Landmarks
+    landmark_path = os.path.join(model_path, "detector", "sampled_index.pt")
+    sampled_idx = torch.load(landmark_path).cuda()
+    # Sample the Gaussians
+    landmarks = GaussianModel(
+        gaussians.max_sh_degree,
+    )
+    landmarks._xyz = gaussians.get_xyz[sampled_idx]
+    landmarks._features_dc = gaussians._features_dc[sampled_idx]
+    landmarks._features_rest = gaussians._features_rest[sampled_idx]
+    landmarks._scaling = gaussians.get_scaling[sampled_idx]
+    landmarks._rotation = gaussians.get_rotation[sampled_idx]
+    landmarks._opacity = gaussians.get_opacity[sampled_idx]
+
+    landmarks._semantic_feature = gaussians.get_semantic_feature[sampled_idx]
+    landmarks._score_feature = gaussians.get_score_feature[sampled_idx]
+
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
         render_pkg = render(view, gaussians, pipe_param, background)
         gt = view.original_image[0:3, :, :]
@@ -105,11 +143,50 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, '{0:05d}'.format(idx) + ".png")) 
         torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
 
-        ############## visualize feature map
-        feature_map = render_pkg["feature_map"][:16]
-        feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
+        gt_img = view.original_image.cuda()
+        gt_fmap = model({"image" : gt_img.unsqueeze(0)})["dense_descriptors"]
+        gt_fmap = F.interpolate(
+            gt_fmap,
+            size=(gt.shape[1], gt.shape[2]),
+            mode="bilinear",
+            align_corners=False,
+        ).squeeze(0)
+        gt_fmap = F.normalize(gt_fmap, dim=0, p=2)
 
-        feature_map_vis = feature_visualize_saving(feature_map)
+        ############ Detector heatmap
+        heatmap = detector(gt_fmap)
+        
+        # Postprocess
+        boundary = 5
+        heatmap[0, :boundary, :] = heatmap[0, -boundary:, :] = heatmap[0, :, :boundary] = heatmap[0, :, -boundary:] = 0
+
+        heatmap_vis = one_channel_vis(heatmap)
+        heatmap_vis.save(os.path.join(render_path, '{0:05d}'.format(idx) + "_heatmap_vis.png"))
+
+        for radius in range(0, 21, 2):
+            kp_scores_after_nms = simple_nms(
+                heatmap, nms_radius=radius
+            ).flatten()
+            _, kp_ids = torch.topk(
+                kp_scores_after_nms, 512
+            )
+            pos_mask = kp_scores_after_nms > 0
+            kp_ids = kp_ids[pos_mask[kp_ids]]
+            kp_mask = torch.zeros_like(kp_scores_after_nms, dtype=torch.bool)
+            kp_mask[kp_ids] = True
+            kp_mask_vis = one_channel_vis(kp_mask.reshape(heatmap.shape[1], heatmap.shape[2]))
+            kp_mask_vis.save(os.path.join(render_path, '{0:05d}'.format(idx) + f"_kp_mask_vis_radius_{radius}.png"))
+
+            kp_overlay_vis = overlay_scoremap(
+                (gt_img.cpu().numpy() * 255).astype(np.uint8).transpose(1, 2, 0),
+                kp_mask.cpu().to(torch.uint8).numpy().reshape(heatmap.shape[1], heatmap.shape[2]),
+            )
+            kp_overlay_vis.save(os.path.join(render_path, '{0:05d}'.format(idx) + f"_kp_overlay_vis_radius_{radius}.png"))
+
+        ############## visualize feature map
+        feature_map = gt_fmap.permute(2, 0, 1)
+        feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
+        feature_map_vis = feature_visualize_saving(feature_map[:16])
         Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(feature_map_path, '{0:05d}'.format(idx) + "_feature_vis.png"))
         
         gt_feature_map_vis = feature_visualize_saving(gt_feature_map)

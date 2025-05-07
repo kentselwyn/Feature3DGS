@@ -7,7 +7,7 @@ import torch
 import pickle
 import open3d as o3d
 from typing import Tuple
-from matchers.LoFTR.utils.utils import rgb2loftrgray
+# from matchers.LoFTR.utils.utils import rgb2loftrgray
 import torch.nn.functional as F
 from utils.match_img import extract_kpt, sample_descriptors_fix_sampling, save_matchimg, find_small_circle_centers
 from matchers.mast3r.mast3r.fast_nn import fast_reciprocal_NNs
@@ -51,7 +51,7 @@ def calculate_pose_errors_ace(gt_pose_44, out_pose):
 
 
 
-def log_errors(log_dir, name, rotation_errors, translation_errors, list_text, error_text, elapsed_time=None):
+def log_errors(log_dir, name, rotation_errors, translation_errors, list_text, elapsed_time=None):
     total_frames = len(rotation_errors)
     # Remove NaN values from rotation_errors and translation_errors
     rotation_errors = [err for err in rotation_errors if not np.isnan(err)]
@@ -91,7 +91,7 @@ def log_errors(log_dir, name, rotation_errors, translation_errors, list_text, er
                            f'error_list_{name}_{list_text}.pickle'), 'wb') as f:
         pickle.dump(error_list, f)
     with open(os.path.join(log_dir, 
-                           f'median_error_{name}_{error_text}_end.txt'), 'a') as f:
+                           f'median_error_{name}_{list_text}_end.txt'), 'a') as f:
         f.write('Accuracy:\n')
         f.write(f'\t10cm/5deg: {pct10_5:.1f}%\n')
         f.write(f'\t5cm/5deg: {pct5:.1f}%\n')
@@ -150,7 +150,6 @@ def find_2d3d_correspondences(keypoints, image_features, gaussian_pcd, gaussian_
     point_vis = gaussian_pcd[max_indices].cpu().numpy().astype(np.float64)
     keypoints_matched = keypoints[..., :2].cpu().numpy().astype(np.float64)
     # print(point_vis.shape)
-
 
     # pcd = o3d.geometry.PointCloud()
     # pcd.points = o3d.utility.Vector3dVector(point_vis)
@@ -309,7 +308,7 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     else:
         kpt_th = args.kpt_th
     # kpt_db = extract_kpt(score_db, threshold=kpt_th)
-    kpt_db = find_small_circle_centers(score_db, threshold=kpt_th, kernel_size=args.kernel_size)
+    kpt_db = find_small_circle_centers(score_db, threshold=kpt_th)
     if kpt_db.shape[0] == 0:
         return None
     print("find small circle time: ", time.time()-x)
@@ -581,33 +580,33 @@ def img_match_mast3r(query_render, db_render, model, K, depth_map, w2c, gt_pose_
     return refine_rot_error, refine_translation_error
 
 
-def img_match_loftr(query_render, db_render, matcher):
-    img0 = rgb2loftrgray(query_render.squeeze(0))
-    img1 = rgb2loftrgray(db_render)
-    batch = {'image0':img0, 'image1': img1}
-    matcher(batch)
-    mkpts0 = batch['mkpts0_f']
-    mkpts1 = batch['mkpts1_f']
-    mconf = batch['mconf']
+# def img_match_loftr(query_render, db_render, matcher):
+#     img0 = rgb2loftrgray(query_render.squeeze(0))
+#     img1 = rgb2loftrgray(db_render)
+#     batch = {'image0':img0, 'image1': img1}
+#     matcher(batch)
+#     mkpts0 = batch['mkpts0_f']
+#     mkpts1 = batch['mkpts1_f']
+#     mconf = batch['mconf']
 
-    batch["mkpt0"] = batch['mkpts0_f']
-    batch["mkpt1"] = batch['mkpts1_f']
-    batch["img0"] = (img0.cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
-    batch["img1"] = (img1["render"].cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
-    breakpoint()
+#     batch["mkpt0"] = batch['mkpts0_f']
+#     batch["mkpt1"] = batch['mkpts1_f']
+#     batch["img0"] = (img0.cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
+#     batch["img1"] = (img1["render"].cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
+#     breakpoint()
 
 
-def img_match_aspan(query_render, db_render, matcher):
-    st = time.time()
-    matcher_name = "ASpanFormer"
-    with torch.no_grad():
-        img0 = rgb2loftrgray(query_render.squeeze(0))
-        img1 = rgb2loftrgray(db_render)
-        data = {
-            "img0": img0.cuda(),
-            "img1": img1.cuda(),
-        }
-        print("time1:", time.time()-st)
-        semi_img_match(data, matcher)
-        print("time2:", time.time()-st)
-    return data
+# def img_match_aspan(query_render, db_render, matcher):
+#     st = time.time()
+#     matcher_name = "ASpanFormer"
+#     with torch.no_grad():
+#         img0 = rgb2loftrgray(query_render.squeeze(0))
+#         img1 = rgb2loftrgray(db_render)
+#         data = {
+#             "img0": img0.cuda(),
+#             "img1": img1.cuda(),
+#         }
+#         print("time1:", time.time()-st)
+#         semi_img_match(data, matcher)
+#         print("time2:", time.time()-st)
+#     return data

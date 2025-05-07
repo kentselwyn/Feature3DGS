@@ -1,5 +1,10 @@
+import cv2
+import math
 import numpy as np
 
+import torch
+
+import poselib
 
 def normalize(x):
     return x / np.linalg.norm(x)
@@ -123,3 +128,74 @@ def spherify_poses(views):
     new_poses = np.stack(new_poses, 0)
     print(new_poses.shape)
     return new_poses
+
+def solve_pose(
+    p2d,
+    p3d,
+    K,
+    solver="poselib",
+    reprojection_error=8.0,
+    confidence=0.9999,
+    max_iterations=100000,
+    min_iterations=1000,
+):
+    match_num = p2d.shape[0]
+    if match_num < 4:
+        print("[SKIP] No enough matches")
+        return np.eye(4, dtype=np.float32), np.array([])
+
+    if solver == "opencv":
+        success, rvec, tvec, inliers = cv2.solvePnPRansac(
+            p3d,
+            p2d,
+            K,
+            distCoeffs=np.zeros((4, 1)),
+            reprojectionError=reprojection_error,
+            confidence=confidence,
+            iterationsCount=max_iterations
+        )
+        if success:
+            w2c = np.eye(4)
+            cv2.Rodrigues(rvec, w2c[:3, :3])
+            w2c[:3, -1] = tvec.flatten()
+            w2c = w2c.astype(np.float32)
+            inliers = np.array(inliers.flatten())
+            return w2c, inliers
+
+    elif solver == "poselib":
+        camera = {
+            "model": "PINHOLE",
+            "width": int(K[0, 2] * 2),
+            "height": int(K[1, 2] * 2),
+            "params": [K[0, 0], K[1, 1], K[0, 2], K[1, 2]],
+        }
+
+        max_reproj_error = reprojection_error
+        confidence = confidence
+
+        pose, info = poselib.estimate_absolute_pose(
+            p2d,
+            p3d,
+            camera,
+            {
+                "max_iterations": max_iterations,
+                "min_iterations": min_iterations,
+                "max_reproj_error": max_reproj_error,
+                "success_prob": confidence,
+            },
+            {
+                "verbose": False,
+            },
+        )
+
+        if info["num_inliers"] > 0:
+            w2c = pose.Rt
+            w2c = np.concatenate([w2c, np.array([[0, 0, 0, 1]])], axis=0).astype(
+                np.float32
+            )
+            inliers = info["inliers"]
+            indices = np.where(inliers)[0]
+            inliers = indices.reshape(-1, 1).astype(np.int32)
+            return w2c, inliers.flatten()
+
+    return np.eye(4, dtype=np.float32), np.array([])

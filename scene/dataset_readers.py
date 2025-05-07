@@ -404,17 +404,16 @@ def readSplit_cams_params(intrinsic_folder, extrinsic_folder):
 
 @torch.inference_mode()
 def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True, 
-                  view_num=None, test_feature_load=True):
-    
+                  view_num=None, test_feature_load=True, output_path=None):
     train_images_folder = os.path.join(path, f"train/{images}")
     train_extrinsic_folder = os.path.join(path, "train/poses")
     train_intrinsic_folder = os.path.join(path, "train/calibration")
-    train_feature_folder = os.path.join(path, f"train/{foundation_model}")
+    train_feature_folder = os.path.join(output_path, foundation_model)
     
     test_images_folder = os.path.join(path, f"test/{images}")
     test_extrinsic_folder = os.path.join(path, "test/poses")
     test_intrinsic_folder = os.path.join(path, "test/calibration")
-    test_feature_folder = os.path.join(path, f"test/{foundation_model}")
+    test_feature_folder = os.path.join(output_path, foundation_model)
 
     ply_path = os.path.join(path, "out.ply")
 

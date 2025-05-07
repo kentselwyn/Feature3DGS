@@ -9,10 +9,14 @@
 # For inquiries contact  george.drettakis@inria.fr
 #
 
+import numpy as np
+
+from math import exp
+
 import torch
 import torch.nn.functional as F
+
 from torch.autograd import Variable
-from math import exp
 
 def l1_loss(network_output, gt):
     return torch.abs((network_output - gt)).mean()
@@ -83,8 +87,6 @@ def tv_loss(feature_map):
     return tv_loss
 
 
-import numpy as np
-
 def calculate_accuracy(y_true, y_pred):
     correct_predictions = np.sum(y_true == y_pred)
     total_pixels = np.prod(y_true.shape)
@@ -101,3 +103,9 @@ def calculate_iou(y_true, y_pred, num_classes):
         iou_score = np.sum(intersection) / np.sum(union)
         iou.append(iou_score)
     return np.nanmean(iou)  
+
+def bce_loss(pred, gt):
+    gt = gt.flatten()
+    pred = pred.flatten()
+    loss = F.binary_cross_entropy(pred, gt.float())
+    return loss

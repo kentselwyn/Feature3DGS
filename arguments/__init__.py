@@ -53,6 +53,7 @@ class ModelParams(ParamGroup):
         self._images = ""
         self._resolution = -1
         self._white_background = False
+        self._longest_edge = 640
         self.data_device = "cuda"
         self.score_loss = "L2"
         self.score_scale = 1.0
@@ -69,6 +70,9 @@ class ModelParams(ParamGroup):
 
 class PipelineParams(ParamGroup):
     def __init__(self, parser):
+        # Detector params
+        self.checkpoint_dir = ""
+
         self.convert_SHs_python = False
         self.compute_cov3D_python = False
         self.debug = False
@@ -130,8 +134,8 @@ def get_combined_args(parser : ArgumentParser):
         with open(cfgfilepath) as cfg_file:
             print("Config file found: {}".format(cfgfilepath))
             cfgfile_string = cfg_file.read()
-    except TypeError:
-        print("Config file not found at")
+    except FileNotFoundError:
+        print("Config file not found.")
         pass
     args_cfgfile = eval(cfgfile_string)
 

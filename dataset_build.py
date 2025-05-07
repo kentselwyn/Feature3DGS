@@ -12,6 +12,7 @@ from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augm
 import cv2
 import numpy as np
 
+from tqdm import tqdm
 
 def plot_points(img: torch.Tensor, kpts: torch.Tensor):
     C, H, W = img.shape
@@ -122,13 +123,15 @@ def main(args):
     if args.output_images != "None":
         ImgOut_folder = f"{args.source_path}/{args.output_images}"
         os.makedirs(ImgOut_folder, exist_ok=True)
-    feature_folder = f"{args.source_path}/features/{args.feature_name}"
+    feature_folder = f"{args.output_path}/features/{args.feature_name}"
     target_images = [f for f in os.listdir(img_folder) if not os.path.isdir(os.path.join(img_folder, f))]
     target_images = [os.path.join(img_folder, f) for f in target_images]
     os.makedirs(feature_folder, exist_ok=True)
 
-    for t in target_images:
-        print(f"Processing '{t}'...")
+    print(f"Writing to: {feature_folder}...")
+
+    for t in tqdm(target_images):
+        # print(f"Processing '{t}'...")
         img_name = t.split(os.sep)[-1].split(".")[0]
         #############################################################
         # resize_num = int(args.resize_num)
@@ -152,6 +155,7 @@ def main(args):
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--source_path", type=str,)
+    parser.add_argument("--output_path", type=str,)
     parser.add_argument("--method", type=str, required=True)
     parser.add_argument("--resize_num", type=int, default=1)
     parser.add_argument("--mlp_dim", type=int, default=16,)

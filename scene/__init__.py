@@ -31,6 +31,8 @@ class Scene:
         self.loaded_iter = None
         self.gaussians = gaussians
 
+        self.longest_edge = args.longest_edge
+
         if load_iteration:
             if load_iteration == -1:
                 self.loaded_iter = searchForMaxIteration(os.path.join(self.model_path, "point_cloud"))
@@ -40,11 +42,10 @@ class Scene:
 
         self.train_cameras = {}
         self.test_cameras = {}
-
         if os.path.exists(os.path.join(args.source_path, "train", "poses")):
             scene_info = sceneLoadTypeCallbacks["Split"](args.source_path, images=args.images, foundation_model=args.foundation_model, 
                                                          load_feature=load_feature, view_num=view_num, 
-                                                         test_feature_load=test_feature_load)
+                                                         test_feature_load=test_feature_load, output_path=args.model_path,)
         elif os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = sceneLoadTypeCallbacks["Colmap"](path=args.source_path, foundation_model=args.foundation_model, 
                                                           eval=args.eval, images=args.images, view_num=view_num)
@@ -86,7 +87,7 @@ class Scene:
                                                            "iteration_" + str(self.loaded_iter),
                                                            "point_cloud.ply"))
         else:
-            self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent, scene_info.semantic_feature_dim, args.speedup) 
+            self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent, 16, args.speedup) 
 
     def save(self, iteration):
         point_cloud_path = os.path.join(self.model_path, "point_cloud/iteration_{}".format(iteration))
