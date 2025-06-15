@@ -8,8 +8,7 @@ name="SP_tank_db_imrate:1_th:0.01_mlpdim:16_kptnum:1024_score0.6_images_low_reso
 feature_name="features/$name"
 OUT_PATH="$SOURSE_PATH/outputs/$name"
 
-
-
-python train.py -s "$SOURSE_PATH" -m "$OUT_PATH" -i "$img_name" -f "$feature_name" --iterations 8000 --score_loss "$score_loss" --score_scale 0.6 --eval
+python train.py -s "$SOURSE_PATH" -m "$OUT_PATH" -i "$img_name" -f "$feature_name" --iterations 8000 \
+                --score_loss "$score_loss" --score_scale 0.6 --eval
 
 cp "$0" "$OUT_PATH"

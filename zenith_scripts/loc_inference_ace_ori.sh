@@ -4,23 +4,22 @@
     ###############################################
     # 7_scenes
     # Cambridge
-    data_name="7_scenes"
+    data_name="Cambridge"
     ###############################################
     # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt_7scenes_redkitchen, pgt_7scenes_stairs
     # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-    scene_name="pgt_7scenes_office" 
+    scene_name="Cambridge_StMarysChurch" 
     # scene_name=$1
     ###############################################
     save_match=0
     iteration=30000
     sp_th=0.0
     lg_th=0.0
-    ransac_iters=20000
+    ransac_iters=2000
     stop_kpt_num=50
     pnp_option="pycolmap" #iters, epnp, pycolmap
     depth_render=1
-
-    # 0:sp,lg, 1:mast3r
+    # 0:sp,lg, 1:mast3r, 2:aspan
     match_type=0
 }
 
@@ -57,6 +56,10 @@ export DEPTH_RENSER=$depth_render
 
     if [ "$match_type" -eq 1 ]; then
         test_name+="_mast3r"
+    fi
+
+    if [ "$match_type" -eq 2 ]; then
+        test_name+="_aspan"
     fi
 }
 ###############################################
