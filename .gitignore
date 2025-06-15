@@ -44,3 +44,8 @@ image_pairs/
 z_result/
 matchers/LoFTR
 z_images/
+mlp/imgs/
+zenith_scripts/not_used
+zenith_scripts/test
+tmp
+zenith_scripts/

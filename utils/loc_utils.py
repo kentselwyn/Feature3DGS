@@ -329,6 +329,7 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     data["descriptors0"] = feat_q
     data["descriptors1"] = feat_db
     data["image_size"] = score_db.shape[1:]
+    # breakpoint()
     pred = matcher(data)
     print("match time: ", time.time()-x)
     m0 = pred['m0']

@@ -6,8 +6,8 @@ import random
 import dsacstar
 import numpy as np
 from pathlib import Path
-from dataset import CamLocDataset
-from ace_network import Regressor
+from ace.dataset import CamLocDataset
+from ace.ace_network import Regressor
 from argparse import ArgumentParser
 import utils.loc_utils as loc_utils
 from torch.cuda.amp import autocast

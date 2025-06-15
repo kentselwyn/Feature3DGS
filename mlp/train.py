@@ -23,19 +23,21 @@ class MLPDataset(Dataset):
         self.data = []
         for h5_name in h5_file_names:
             h5_path = f"{all_path}/{h5_name}"
+            
             with h5py.File(h5_path, 'r') as hfile:
                 root_group = hfile['home']
                 print(f'start loading.....{h5_path}')
                 def gather_data(group):
                     for key in group.keys():
+                        print("Visiting:", key)
                         item = group[key]
                         if isinstance(item, h5py.Group):
                             gather_data(item)
                         elif isinstance(item, h5py.Dataset) and 'descriptors' in key:
-                            desc = group['descriptors'][:]
+                            desc = item[:]
                             self.data.append(desc)
                         elif isinstance(item, h5py.Dataset) and 'dense_descriptors' in key:
-                            desc = group['dense_descriptors'][:]
+                            desc = item[:]
                             self.data.append(desc)
                 gather_data(root_group)
         print('loaded!')
@@ -159,7 +161,8 @@ if __name__=="__main__":
         "all_path": all_path,
         "folder_path": f"{all_path}/mlpckpt",
         "desc_names": args.desc_names,
-        "out_name": f"{args.data_name}_type:SP_time:{timestamp}_dim{args.dim}_batch{args.batch_size}_lr{args.lr}_epoch{args.epochs}_{args.log_name}",
+        "out_name": f"{args.data_name}_type:SP_time:{timestamp}_dim{args.dim}_\
+                        batch{args.batch_size}_lr{args.lr}_epoch{args.epochs}_{args.log_name}",
         "load_ckpt": None,
         "train":{
             "epochs": args.epochs,

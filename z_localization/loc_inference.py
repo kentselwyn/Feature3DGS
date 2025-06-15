@@ -39,7 +39,7 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background, arg
     scene_name = model_path.split('/')[-3]
     if args.mlp_method.startswith("SP"):
         mlp = get_mlp_model(dim = args.mlp_dim, type=args.mlp_method)
-    elif args.mlp_method.startswith("pgt"):
+    elif args.mlp_method.startswith("pgt") or args.mlp_method.startswith("pairs") or args.mlp_method.startswith("match"):
         mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.mlp_method)
     elif args.mlp_method == "Cambridge":
         mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.mlp_method)
@@ -153,8 +153,8 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background, arg
     print('rot len: ',len(prior_rErr))
     print('final rot len: ', len(rErrs))
     print()
-    log_errors(error_foler, name, prior_rErr, prior_tErr, f"prior")
-    log_errors(error_foler, name, rErrs, tErrs, "warp")
+    log_errors(error_foler, name, prior_rErr, prior_tErr, list_text="", error_text=f"prior")
+    log_errors(error_foler, name, rErrs, tErrs, list_text="", error_text="warp")
 
 
 def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
@@ -188,5 +188,7 @@ if __name__ == "__main__":
     parser.add_argument("--lg_th", default=0.01, type=float)
     parser.add_argument("--kpt_th", default=0.01, type=float)
     parser.add_argument("--kpt_hist", default=0.9, type=float)
+    # kernel_size
+    parser.add_argument("--kernel_size", default=13, type=int)
     args = get_combined_args(parser)
     localize(Model_param.extract(args), Pipe_param.extract(args), args)

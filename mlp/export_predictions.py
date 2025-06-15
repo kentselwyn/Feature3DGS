@@ -52,7 +52,7 @@ def export_predictions(
         #                                         else data[f"view{idx}"]["scales"])
         #         pred[key] = pred[key] * scales[None]
         # breakpoint()
-        pred = {key: value[0].cpu().numpy() for key, value in pred.items()}
+        pred = {key: value.detach().cpu().numpy()[0] for key, value in pred.items()}
 
         if as_half:
             for key in pred:
@@ -63,15 +63,14 @@ def export_predictions(
         try:
             name = data["name"][0]
             file_group = hfile.create_group(name)
+            file_group.attrs["stride"] = 8
+            file_group.attrs["shape"] = pred["descriptors"].shape
             for key, value in pred.items():
                 file_group.create_dataset(key, data=value)
-        except RuntimeError:
+        except RuntimeError as e:
+            print(f"Skip {data['name'][0]} due to error: {e}")
             continue
 
         del pred
     hfile.close()
     return output_file
-
-
-
-

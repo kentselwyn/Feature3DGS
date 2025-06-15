@@ -99,8 +99,6 @@ def read_points3D_text(path):
             line = line.strip()
             if len(line) > 0 and line[0] != "#":
                 num_points += 1
-
-
     xyzs = np.empty((num_points, 3))
     rgbs = np.empty((num_points, 3))
     errors = np.empty((num_points, 1))
@@ -120,8 +118,46 @@ def read_points3D_text(path):
                 rgbs[count] = rgb
                 errors[count] = error
                 count += 1
-
     return xyzs, rgbs, errors
+
+
+
+def read_points3D_text2(path):
+    xyzs = []
+    rgbs = []
+    errors = []
+    tracks = []
+    pid_to_xyz = {}
+
+    with open(path, "r") as fid:
+        for line in fid:
+            line = line.strip()
+            if len(line) == 0 or line.startswith("#"):
+                continue
+            elems = line.split()
+            xyz = np.array(tuple(map(float, elems[1:4])))
+            rgb = np.array(tuple(map(int, elems[4:7])))
+            pid = int(elems[0])
+            error = float(elems[7])
+
+            # 從第 8 個開始都是 track: image_id point2D_idx ...
+            track_elems = list(map(int, elems[8:]))
+            track = [(track_elems[i], track_elems[i+1]) for i in range(0, len(track_elems), 2)]
+
+            xyzs.append(xyz)
+            rgbs.append(rgb)
+            errors.append(error)
+            tracks.append(track)
+            pid_to_xyz[pid] = xyz
+
+    xyzs = np.array(xyzs)
+    rgbs = np.array(rgbs)
+    errors = np.array(errors).reshape(-1, 1)
+
+    return xyzs, rgbs, errors, tracks, pid_to_xyz
+
+
+
 
 def read_points3D_binary(path_to_model_file):
     """
@@ -129,8 +165,6 @@ def read_points3D_binary(path_to_model_file):
         void Reconstruction::ReadPoints3DBinary(const std::string& path)
         void Reconstruction::WritePoints3DBinary(const std::string& path)
     """
-
-
     with open(path_to_model_file, "rb") as fid:
         num_points = read_next_bytes(fid, 8, "Q")[0]
 
@@ -153,6 +187,43 @@ def read_points3D_binary(path_to_model_file):
             rgbs[p_id] = rgb
             errors[p_id] = error
     return xyzs, rgbs, errors
+
+
+
+def read_points3D_binary2(path_to_model_file):
+    """
+    see: src/base/reconstruction.cc
+        void Reconstruction::ReadPoints3DBinary(const std::string& path)
+        void Reconstruction::WritePoints3DBinary(const std::string& path)
+    """
+    with open(path_to_model_file, "rb") as fid:
+        num_points = read_next_bytes(fid, 8, "Q")[0]
+
+        xyzs = np.empty((num_points, 3))
+        rgbs = np.empty((num_points, 3))
+        errors = np.empty((num_points, 1))
+        tracks = []
+
+        for p_id in range(num_points):
+            binary_point_line_properties = read_next_bytes(
+                fid, num_bytes=43, format_char_sequence="QdddBBBd")
+            xyz = np.array(binary_point_line_properties[1:4])
+            rgb = np.array(binary_point_line_properties[4:7])
+            error = np.array(binary_point_line_properties[7])
+            track_length = read_next_bytes(
+                fid, num_bytes=8, format_char_sequence="Q")[0]
+            track_elems = read_next_bytes(
+                fid, num_bytes=8*track_length,
+                format_char_sequence="ii"*track_length)
+            
+            track = [(track_elems[i], track_elems[i+1]) for i in range(0, len(track_elems), 2)]
+            
+            xyzs[p_id] = xyz
+            rgbs[p_id] = rgb
+            errors[p_id] = error
+            tracks.append(track)
+    return xyzs, rgbs, errors, tracks
+
 
 
 

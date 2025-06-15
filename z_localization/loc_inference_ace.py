@@ -6,8 +6,8 @@ import random
 import dsacstar
 import numpy as np
 from pathlib import Path
-from dataset import CamLocDataset
-from ace_network import Regressor
+from ace.dataset import CamLocDataset
+from ace.ace_network import Regressor
 from argparse import ArgumentParser
 import utils.loc_utils as loc_utils
 from torch.cuda.amp import autocast
@@ -34,20 +34,24 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
     total_elapsed_time = 0
     device = torch.device("cuda")
     scene_name = model_path.split('/')[-3]
-    if args.mlp_method.startswith("SP"):
-        mlp = get_mlp_model(dim = args.mlp_dim, type=args.mlp_method)
-    elif args.mlp_method.startswith("dataset"):
-        mlp = get_mlp_data_7scenes_Cambridege(dim=args.mlp_dim, dataset=args.mlp_method)
-    elif args.mlp_method.startswith("all"):
-        mlp = get_mlp_dataset(dim = args.mlp_dim, dataset=args.mlp_method)
-    elif args.mlp_method.startswith("pgt"):
-        mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.mlp_method)
-    elif args.mlp_method == "Cambridge":
-        mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.mlp_method)
-    elif args.mlp_method.startswith("Cambridge"):
-        mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.mlp_method)
-    elif args.mlp_method.startswith("augment"):
-        mlp = get_mlp_augment(dim=args.mlp_dim, dataset=args.mlp_method)
+
+
+    if args.method.startswith("SP"):
+        mlp = get_mlp_model(dim = args.mlp_dim, type=args.method)
+    elif args.method.startswith("dataset"):
+        mlp = get_mlp_data_7scenes_Cambridege(dim=args.mlp_dim, dataset=args.method)
+    elif args.method.startswith("all"):
+        mlp = get_mlp_dataset(dim = args.mlp_dim, dataset=args.method)
+    elif args.method.startswith("pgt") or args.method.startswith("pairs") or args.method.startswith("match"):
+        # print("get mlp dataset is triggered!!!!")
+        mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.method)
+        # breakpoint()
+    elif args.method == "Cambridge":
+        mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.method)
+    elif args.method.startswith("Cambridge"):
+        mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.method)
+    elif args.method.startswith("augment"):
+        mlp = get_mlp_augment(dim=args.mlp_dim, dataset=args.method)
     mlp = mlp.to("cuda").eval()
     test_name = args.test_name
     print(scene_name)
@@ -132,11 +136,13 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                     result = loc_utils.img_match_mast3r(query_render, db_render, matcher)
                 elif args.match_type==4:
                     result = loc_utils.img_match_loftr(query_render, db_render, matcher)
+                # breakpoint()
                 if result is None:
                     prior_rErr.append(rotError)
                     prior_tErr.append(transError)
                     rErrs.append(rotError)
                     tErrs.append(transError)
+                    print("Result is None!!!")
                     print(f"Rotation Error: {rotError} deg")
                     print(f"Translation Error: {transError} cm")
                     continue
@@ -247,7 +253,7 @@ if __name__ == "__main__":
     parser.add_argument("--iteration", default=-1, type=int)
     parser.add_argument("--ransac_iters", default=20000, type=int)
     parser.add_argument("--mlp_dim", required=True, type=int)
-    parser.add_argument("--mlp_method", required=True, type=str)
+    parser.add_argument("--method", required=True, type=str)
     parser.add_argument("--save_match", action='store_true', help='Save match if this flag is provided.')
     parser.add_argument("--sp_th", default=0.01, type=float)
     parser.add_argument("--lg_th", default=0.01, type=float)
@@ -260,6 +266,6 @@ if __name__ == "__main__":
     parser.add_argument("--pnp", default="iters", type=str)
     parser.add_argument("--test_name", required=True, type=str)
     parser.add_argument("--ace_encoder_path", 
-                        default="/home/koki/code/cc/feature_3dgs_2/ace_encoder_pretrained.pt", type=str)
+                        default="/home/koki/code/cc/feature_3dgs_2/ace/ace_encoder_pretrained.pt", type=str)
     args = get_combined_args(parser)
     localize(Model_param.extract(args), Pipe_param.extract(args), args)

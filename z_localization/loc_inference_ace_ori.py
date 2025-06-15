@@ -5,8 +5,8 @@ import torch
 import dsacstar
 import numpy as np
 from pathlib import Path
-from dataset import CamLocDataset
-from ace_network import Regressor
+from ace.dataset import CamLocDataset
+from ace.ace_network import Regressor
 from argparse import ArgumentParser
 import utils.loc_utils as loc_utils
 from torch.cuda.amp import autocast
@@ -232,6 +232,6 @@ if __name__ == "__main__":
     parser.add_argument("--test_name", required=True, type=str)
     parser.add_argument("--match_type", default=0, type=int)
     parser.add_argument("--ace_encoder_path", 
-                        default="/home/koki/code/cc/feature_3dgs_2/ace_encoder_pretrained.pt", type=str)
+                        default="/home/koki/code/cc/feature_3dgs_2/ace/ace_encoder_pretrained.pt", type=str)
     args = get_combined_args(parser)
     localize(Model_param.extract(args), Pipe_param.extract(args), args)

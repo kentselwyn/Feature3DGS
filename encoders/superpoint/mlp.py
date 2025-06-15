@@ -396,6 +396,30 @@ def get_mlp_dataset(dim=16, dataset="pgt_7scenes_chess"):
             model = MLP_module_16_short()
             ckpt = torch.load(model_path)
             model.load_state_dict(ckpt)
+    
+    if dataset=="pairs_7scenes_stairs":
+        if dim==16:
+            print("pairs_7scenes_stairs loaded!!")
+            model_path = "/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/GS-CPR/7_scenes/scene_stairs/train/sparse/mlp/ckpts/20250507_112032/epoch_115.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+            # breakpoint()
+    if dataset=="pairs_7scenes_heads":
+        if dim==16:
+            print("pairs_7scenes_heads loaded!!")
+            model_path = "/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/GS-CPR/7_scenes/scene_heads/train/sparse/mlp/ckpts/20250507_160202/epoch_171.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    if dataset=="match_pos_neg_7scenes_stairs":
+        if dim==16:
+            print("match_pos_neg_7scenes_stairs loaded!!")
+            model_path = "/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/GS-CPR/7_scenes/scene_stairs/train/sparse/mlp2/ckpts/20250521_113506/epoch_212.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    
     return model
 
 

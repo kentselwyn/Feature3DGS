@@ -98,12 +98,13 @@ def print_eval_to_file(data, name, threshold=5e-4, file_path='output.txt'):
         f.write("\n\n")
 
 
-def save_matchimg(data, path, threshold=1e-4):
+def save_matchimg(data, path, threshold=5e-4):
     all_images, all_keypoints, all_matches = [], [], []
     if isinstance(data["img0"], np.ndarray):
         all_images.append([data["img0"], data["img1"]])
     if isinstance(data["img0"], torch.Tensor):
         all_images.append([data["img_save0"], data["img_save1"]])
+        # all_images.append([data["img0"], data["img1"]])
     all_matches.append((data['mkpt0'].cpu(), data['mkpt1'].cpu()))
     epi_good = data['epi_errs'][0] < threshold
     precision = (epi_good.sum()/len(epi_good))*100
@@ -114,10 +115,11 @@ def save_matchimg(data, path, threshold=1e-4):
     if data.get('kpt0') is not None:
         all_keypoints.append([data['kpt0'].cpu(), data['kpt1'].cpu()])
         plot_keypoints(all_keypoints[0], axes=axes[0], colors="royalblue")
+    # breakpoint()
     plot_matches3(*all_matches[0], color=None, axes=axes[0], alpha=0.5, line_width=0.8, 
                   point_size=0.0, labels=epi_good,
-                  captions=[data['matcher'], 
-                            f"Matches: {match_num}",
+                #   data['matcher'], 
+                  captions=[f"Matches: {match_num}",
                             f"Precision({threshold:.1e})({precision:.1f}%): {epi_good.sum()}/{len(epi_good)}",
                             f"R_err={R_err:.2f}, t_err={t_err:.2f}"])
     plt.savefig(path, bbox_inches='tight', pad_inches=0)
