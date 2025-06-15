@@ -1,5 +1,0 @@
-bash zenith_scripts/DatasetBuild_Train_Loc.sh pgt_7scenes_heads
-bash zenith_scripts/DatasetBuild_Train_Loc.sh pgt_7scenes_office
-bash zenith_scripts/DatasetBuild_Train_Loc.sh pgt_7scenes_pumpkin
-bash zenith_scripts/DatasetBuild_Train_Loc.sh pgt7scenes_redkitchen
-# bash zenith_scripts/script1.sh

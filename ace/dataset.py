@@ -15,7 +15,7 @@ from torch.utils.data import Dataset
 from torch.utils.data.dataloader import default_collate
 from torchvision import transforms
 
-from ace_network import Regressor
+from ace.ace_network import Regressor
 
 _logger = logging.getLogger(__name__)
 

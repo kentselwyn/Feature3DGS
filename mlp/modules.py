@@ -83,6 +83,21 @@ class MLP_module_16_short(nn.Module):
         return desc_back
 
 
+class MLP_module_16_short2(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.MLP    = MLP(in_features=256, out_features=16   , num_cells=[128, 64, 32, 16])
+        self.MLP_de = MLP(in_features=16, out_features=256,    num_cells=[16, 32, 64, 128])
+        # for p in self.parameters():
+        #     p.requires_grad = False
+
+    def forward(self, desc: torch.Tensor):
+        desc_mlp = self.MLP(desc)
+        desc_back = self.MLP_de(desc_mlp)
+        return desc_mlp, desc_back
+
+
+
 class MLP_module_32_short(nn.Module):
     def __init__(self) -> None:
         super().__init__()

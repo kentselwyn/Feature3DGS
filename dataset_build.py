@@ -109,7 +109,7 @@ def main(args):
         mlp = get_mlp_data_7scenes_Cambridege(dim=args.mlp_dim, dataset=args.method)
     elif args.method.startswith("all"):
         mlp = get_mlp_dataset(dim = args.mlp_dim, dataset=args.method)
-    elif args.method.startswith("pgt"):
+    elif args.method.startswith("pgt") or args.method.startswith("pairs") or args.method.startswith("match"):
         mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.method)
     elif args.method == "Cambridge":
         mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.method)
