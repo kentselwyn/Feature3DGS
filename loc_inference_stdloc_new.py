@@ -56,7 +56,7 @@ def localize_set(
     args, 
     encoder, 
     matcher,
-    use_detector=True,
+    use_detector=False,
 ):
     rErrs = []
     tErrs = []
@@ -82,18 +82,18 @@ def localize_set(
     # Get landmarks
     if use_detector:
         sampled_index = torch.load(
-            os.path.join(model_path, "detector", "sampled_index.pt")
+            os.path.join(pipe_param.checkpoint_dir, "detector", "sampled_index.pt")
         )
         sampled_index = sampled_index.cuda()
         landmarks = sample_gaussians(gaussians, sampled_index)
-    
+
         gaussian_pcd = landmarks.get_xyz
         gaussian_feat = landmarks.get_semantic_feature.squeeze(1)
-        gaussian_feat_h = mlp.decode(gaussian_feat)
+        gaussian_feat_h = mlp.decode(gaussian_feat) * landmarks.get_opacity
     else:
         gaussian_pcd = gaussians.get_xyz
         gaussian_feat = gaussians.get_semantic_feature.squeeze(1)
-        gaussian_feat_h = mlp.decode(gaussian_feat)
+        gaussian_feat_h = mlp.decode(gaussian_feat) * gaussians.get_opacity # ON GOING
 
     # Get Scene-Specific Detector 
     if use_detector:
@@ -102,13 +102,13 @@ def localize_set(
         )
         detector.load_state_dict(
             torch.load(
-                os.path.join(model_path, "detector", f"{30_000}_detector.pth")
+                os.path.join(pipe_param.checkpoint_dir, "detector", f"{30_000}_detector.pth")
             )
         )
         detector.eval().cuda()
 
     if args.save_match:
-        match_folder = f'{model_path}/match_imgs/{test_name}'
+        match_folder = f'{pipe_param.checkpoint_dir}/match_imgs/{test_name}'
         os.makedirs(match_folder, exist_ok=True)
 
     for index, _ in enumerate(views):
@@ -122,6 +122,7 @@ def localize_set(
         desc = pred["descriptors"].squeeze(0)
         dense_desc = pred["dense_descriptors"].squeeze(0)
         gt_feature = mlp.decode(mlp(desc))
+        import pdb; pdb.set_trace()
 
         if use_detector:
             # Enlarge dense descriptors
@@ -169,9 +170,11 @@ def localize_set(
         gt_t = view.T
         _, R, t, _ = cv2.solvePnPRansac(matched_3d, matched_2d, 
                                         K, 
+                                        confidence=0.99999,
                                         distCoeffs=None, 
+                                        reprojectionError=12.0,
                                         flags=cv2.SOLVEPNP_ITERATIVE, 
-                                        iterationsCount=args.ransac_iters
+                                        iterationsCount=100000 # args.ransac_iters
                                         )
         R, _ = cv2.Rodrigues(R)
         rotError, transError = calculate_pose_errors(gt_R, gt_t, R.T, t)
@@ -196,6 +199,16 @@ def localize_set(
         db_depth = render_pkg["depth"]
         query_render = gt_im
 
+        # result_coarse = match_img_coarse(
+        #     render_query=query_render,
+        #     matched2d=torch.from_numpy(matched_2d),
+        #     matched3d=torch.from_numpy(matched_3d),
+        #     keypoints2d=torch.argwhere(kp_mask),
+        #     keypoints3d=gaussian_pcd,
+        #     extrinsic_matrix=torch.cat([torch.from_numpy(R), torch.from_numpy(t)], dim=-1),
+        #     fovx=view.FoVx,
+        #     fovy=view.FoVx,
+        # )
         result = match_img(query_render, db_score, db_feature, encoder, matcher, mlp, args)
         if result is None:
             prior_rErr.append(rotError)
@@ -210,10 +223,13 @@ def localize_set(
             tErrs.append(transError)
             continue
 
+        # result_coarse['img0'] = result['img0'] = gt_im.squeeze(0).permute(1, 2, 0)
         result['img0'] = gt_im.squeeze(0).permute(1, 2, 0)
+        # result_coarse['img0'] = result['img0'] = gt_im.squeeze(0).permute(1, 2, 0)
         result['img1'] = db_render.squeeze(0).permute(1, 2, 0)
         
         if args.save_match:
+            # save_matchimg(result_coarse, f'{match_folder}/{index}_{view.image_name}_coarse.png')
             save_matchimg(result, f'{match_folder}/{index}_{view.image_name}.png')
 
         db_world = project_2d_to_3d(result['mkpt1'].cpu(), db_depth.cpu(), torch.tensor(K, dtype=torch.float32).cpu(), 
@@ -230,14 +246,14 @@ def localize_set(
         # print(f"elapsed time: {time.time()-start}")
         # print("\r\033[3A", end="")
         print(f"RotErr: {rotError : 0.05f} deg, TransErr: {transError: 0.05f} cm")
-        print(f"Final RotErr: {rotError_final: 0.05f} deg, Final TransErr: {transError : 0.05f}")
+        print(f"Final RotErr: {rotError_final: 0.05f} deg, Final TransErr: {transError_final : 0.05f} cm")
 
         prior_rErr.append(rotError)
         prior_tErr.append(transError)
         rErrs.append(rotError_final)
         tErrs.append(transError_final)
 
-    error_foler = f'{model_path}/error_logs/{test_name}'
+    error_foler = f'{pipe_param.checkpoint_dir}/error_logs/{test_name}'
     os.makedirs(error_foler, exist_ok=True)
     print('rot len: ',len(prior_rErr))
     print('final rot len: ', len(rErrs))

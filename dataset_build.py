@@ -142,7 +142,8 @@ def main(args):
         data["image"] = img_tensor
         pred = model(data)
         desc = pred["dense_descriptors"][0]
-        desc_mlp = mlp(desc.permute(1,2,0)).permute(2,0,1).contiguous().cpu()
+        # desc_mlp = mlp(desc.permute(1,2,0)).permute(2,0,1).contiguous().cpu()
+        desc_mlp = desc.contiguous().cpu()
         kpts = pred["keypoints"].cpu()
         sp_path = f"{feature_folder}/{img_name}"
         if args.output_images != "None":

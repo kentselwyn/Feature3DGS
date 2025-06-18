@@ -1,10 +1,7 @@
 # scene_names=("pgt_7scenes_fire" "pgt_7scenes_chess" "pgt_7scenes_heads" "pgt_7scenes_office" "pgt_7scenes_pumpkin" "pgt_7scenes_redkitchen" "pgt_7scenes_stairs")
 # scene_names=("pgt_7scenes_redkitchen" "pgt_7scenes_pumpkin" "pgt_7scenes_office")
 # scene_names=("pgt_7scenes_chess" "pgt_7scenes_heads" "pgt_7scenes_stairs")
-# scene_names=("pgt_7scenes_stairs") # "pgt_7scenes_office" "pgt_7scenes_chess" 
-# scene_names=("pgt_7scenes_office") # "pgt_7scenes_redkitchen" 
-scene_names=("pgt_7scenes_chess" "pgt_7scenes_fire" "pgt_7scenes_heads" "pgt_7scenes_stairs")
-# scene_names=("pgt_7scenes_chess") # "pgt_7scenes_office" "pgt_7scenes_redkitchen" "pgt_7scenes_stairs")
+scene_names=("pgt_7scenes_pumpkin") # "pgt_7scenes_office" "pgt_7scenes_redkitchen" "pgt_7scenes_stairs")
 
 for _scene_name in ${scene_names[*]};
 do
@@ -109,8 +106,7 @@ do
 
     SOURSE_PATH="/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/$data_name/$scene_name"
     feature_name="features/$feat_name"
-    OUT_PATH="$SOURSE_PATH/outputs/$out_name"
-    CHECKPOINT_DIR="/mnt/home_6T/public/kentselwyn/Feature3DGS/$out_name"
+    OUT_PATH="/mnt/home_6T/public/kentselwyn/Feature3DGS/$out_name"
 
     ######################################################################## dataset build ########################################################################
     if (( build_data )); then
@@ -157,15 +153,14 @@ do
             -i "$train_ImgName" \
             -m "$OUT_PATH" \
             -f "$feature_name" \
-            --mlp_method $mlp_method \
             --load_iteration 30000 \
             --iterations $iterations \
-            --checkpoint_dir "$CHECKPOINT_DIR"
+            --checkpoint_dir "$OUT_PATH"
         if (( if_render )); then
             python render.py \
                 -m $OUT_PATH \
-                --checkpoint_dir "$CHECKPOINT_DIR" \
                 --iteration $iterations \
+                --skip_train \
                 --view_num $render_num
         fi
     fi
@@ -187,7 +182,6 @@ do
             python loc_inference_stdloc_new.py \
                                         --save_match \
                                         -m $OUT_PATH \
-                                        --checkpoint_dir "$CHECKPOINT_DIR" \
                                         --iteration $iterations \
                                         --mlp_dim $mlp_dim \
                                         --mlp_method $mlp_method \
@@ -197,7 +191,6 @@ do
         else
             python loc_inference_stdloc_new.py \
                                         -m $OUT_PATH \
-                                        --checkpoint_dir "$CHECKPOINT_DIR" \
                                         --iteration $iterations \
                                         --mlp_dim $mlp_dim \
                                         --mlp_method $mlp_method \

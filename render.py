@@ -422,21 +422,21 @@ def render_sets(model_param : ModelParams, iteration : int, pipe_param : Pipelin
         bg_color = [1,1,1] if model_param.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
         if not skip_train:
-            render_set(model_param.model_path, "rendering/trains", scene.loaded_iter, 
+            render_set(pipe_param.checkpoint_dir, "rendering/trains", scene.loaded_iter, 
                        scene.getTrainCameras(), 
                        gaussians, pipe_param, background, 
                        model_param.speedup)
         if not skip_test:
-            render_set(model_param.model_path, "rendering/test", scene.loaded_iter, 
+            render_set(pipe_param.checkpoint_dir, "rendering/test", scene.loaded_iter, 
                        scene.getTestCameras(), 
                        gaussians, pipe_param, background, 
                        model_param.speedup)
         if novel_view:
-            render_novel_views(model_param.model_path, "rendering/novel_views", scene.loaded_iter, scene.getTrainCameras(), 
+            render_novel_views(pipe_param.checkpoint_dir, "rendering/novel_views", scene.loaded_iter, scene.getTrainCameras(), 
                                gaussians, pipe_param, background, model_param.speedup, 
                                 multi_interpolate, num_views)
         if pairs:
-            render_pairs(model_param.model_path, model_param.foundation_model, img_name, "rendering/pairs", scene.loaded_iter, 
+            render_pairs(pipe_param.checkpoint_dir, model_param.foundation_model, img_name, "rendering/pairs", scene.loaded_iter, 
                          scene.getTrainCameras(), gaussians, pipe_param, background)
 
 

@@ -409,15 +409,19 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
     train_extrinsic_folder = os.path.join(path, "train/poses")
     train_intrinsic_folder = os.path.join(path, "train/calibration")
     train_feature_folder = os.path.join(output_path, foundation_model)
-    
+    print(f"Train Feature Folder: {train_feature_folder}")
+
     test_images_folder = os.path.join(path, f"test/{images}")
     test_extrinsic_folder = os.path.join(path, "test/poses")
     test_intrinsic_folder = os.path.join(path, "test/calibration")
     test_feature_folder = os.path.join(output_path, foundation_model)
+    print(f"Test Feature Folder: {test_feature_folder}")
 
     ply_path = os.path.join(path, "out.ply")
+    print(f"PLY Path: {ply_path}")
 
     scene_name = path.split("_")[-1]    
+    print(f"Scene Name: {scene_name}")
 
     if '7scenes' in path:
         sfm_path = os.path.join(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7scenes_reference_models", 

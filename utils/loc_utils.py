@@ -16,6 +16,7 @@ from matchers.mast3r.dust3r.dust3r.utils.image import convert_tensor_to_dust3r_f
 import torchvision.transforms as T
 from matchers.mast3r.utils.functions import *
 from utils.match_img import semi_img_match
+from utils.graphics_utils import focal2fov, fov2focal
 
 
 def calculate_pose_errors(R_gt, t_gt, R_est, t_est):
@@ -144,9 +145,9 @@ def find_2d3d_correspondences(keypoints, image_features, gaussian_pcd, gaussian_
         max_indices[update_mask] = chunk_indices[update_mask] + part
     # print(max_similarity)
     
-    # final_mask = max_similarity>0.8
-    # max_indices = max_indices[final_mask]
-    # keypoints = keypoints[final_mask]
+    final_mask = max_similarity>0.5
+    max_indices = max_indices[final_mask]
+    keypoints = keypoints[final_mask]
     point_vis = gaussian_pcd[max_indices].cpu().numpy().astype(np.float64)
     keypoints_matched = keypoints[..., :2].cpu().numpy().astype(np.float64)
     # print(point_vis.shape)
@@ -284,6 +285,75 @@ def find_2d3d_lg(img_kpts, img_feat, gs_pts, gs_feat, matcher, width, height, gt
     # result['img1'] = db_render.squeeze(0).permute(1, 2, 0)
     save_matchimg(result, f'2d3d_match_{index}.png')
 
+def generate_heatmap(
+    point_cloud,
+    extrinsic_matrix,
+    intrinsic_matrix,  
+    shape,
+):
+    # Project Gaussians from 3D to 2D
+    xyz_homo = torch.cat(
+        [
+            point_cloud, 
+            torch.ones(point_cloud.shape[0], 1, device=point_cloud.device)
+        ], 
+        dim=-1
+    ).float().cuda()
+    xyz_cam = (extrinsic_matrix.float().cuda() @ xyz_homo.T)[:3]
+    xyz_cam = xyz_cam / xyz_cam[2]
+    xy = (intrinsic_matrix @ xyz_cam.float())[:2].long()
+
+    in_mask = (
+        (xy[0] >= 0) & (xy[0] < shape[3]) &
+        (xy[1] >= 0) & (xy[1] < shape[2])
+    )
+    
+    xy_pos = (xy[:, in_mask]).permute(1,0)
+    return xy_pos, in_mask
+    
+
+def match_img_coarse(
+    render_query,
+    matched2d,
+    matched3d,
+    keypoints2d,
+    keypoints3d,
+    extrinsic_matrix,
+    fovx,
+    fovy,
+):
+    focalX = fov2focal(fovx, render_query.shape[3])
+    focalY = fov2focal(fovy, render_query.shape[2])
+    intrinsic_matrix = torch.tensor(
+        [
+            [focalX, 0.0, render_query.shape[3] / 2],
+            [0.0, focalY, render_query.shape[2] / 2],
+            [0.0, 0.0, 1.0],
+        ],
+        dtype=torch.float32,
+        device="cuda",
+    )
+    result = {}
+    # Generate heatmap
+    result["mkpt1"], in_mask = generate_heatmap(
+        point_cloud=matched3d,
+        extrinsic_matrix=extrinsic_matrix,
+        intrinsic_matrix=intrinsic_matrix,
+        shape=render_query.shape,
+    )
+    # result["kpt1"], _ = generate_heatmap(
+    #     point_cloud=keypoints3d,
+    #     extrinsic_matrix=extrinsic_matrix,
+    #     intrinsic_matrix=intrinsic_matrix,
+    #     shape=render_query.shape,
+    # )
+    result["mkpt1"] = result["mkpt1"].detach()
+    result["kpt1"] = result["mkpt1"].detach()
+
+    result["mkpt0"] = matched2d[in_mask.cpu()].detach()
+    result["kpt0"] = keypoints2d[:, [1,0]]
+
+    return result
 
 
 def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
@@ -292,7 +362,7 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     stt = time.time()
     tmp_pred = encoder(tmp)
     x = time.time()
-    print("sp time: ",x-stt)
+    # print("sp time: ",x-stt)
     desc = tmp_pred["descriptors"]
     compressed_gt_feature = mlp(desc)
     gt_feature = mlp.decode(compressed_gt_feature)
@@ -301,7 +371,7 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     kpt_q = tmp_pred["keypoints"]
     feat_q = gt_feature
     # db
-    print("mlp time: ",time.time()-x)
+    # print("mlp time: ",time.time()-x)
     x = time.time()
     if args.kpt_hist is not None:
         kpt_th = choose_th(score_db, args.kpt_hist)
@@ -311,7 +381,7 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     kpt_db = find_small_circle_centers(score_db, threshold=kpt_th)
     if kpt_db.shape[0] == 0:
         return None
-    print("find small circle time: ", time.time()-x)
+    # print("find small circle time: ", time.time()-x)
     x = time.time()
     kpt_db = kpt_db.clone().detach()[:, [1, 0]].to(score_db)
     _, h, w = score_db.shape
@@ -320,7 +390,7 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     feat_db = mlp.decode(feat_db)
     kpt_db = kpt_db.unsqueeze(0)
     # match
-    print("sample descriptor time: ", time.time()-x)
+    # print("sample descriptor time: ", time.time()-x)
     x = time.time()
     data = {}
     data["keypoints0"] = kpt_q
@@ -329,7 +399,7 @@ def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
     data["descriptors1"] = feat_db
     data["image_size"] = score_db.shape[1:]
     pred = matcher(data)
-    print("match time: ", time.time()-x)
+    # print("match time: ", time.time()-x)
     m0 = pred['m0']
     valid = (m0[0] > -1)
     m0, m1 = data["keypoints0"][0][valid].cpu(), data["keypoints1"][0][m0[0][valid]].cpu()
@@ -347,7 +417,7 @@ def match_img_feature(render_q, score_db, feature_db, encoder, matcher, mlp, arg
     stt = time.time()
     tmp_pred = encoder(tmp)
     x = time.time()
-    print("sp time: ",x-stt)
+    # print("sp time: ",x-stt)
     desc = tmp_pred["descriptors"]
     compressed_gt_feature = mlp(desc)
     gt_feature = mlp.decode(compressed_gt_feature)
@@ -360,7 +430,7 @@ def match_img_feature(render_q, score_db, feature_db, encoder, matcher, mlp, arg
     kpt_q = tmp_pred["keypoints"]
     feat_q = gt_feature
     # db
-    print("mlp time: ",time.time()-x)
+    # print("mlp time: ",time.time()-x)
     x = time.time()
     if args.kpt_hist is not None:
         kpt_th = choose_th(score_db, args.kpt_hist)
@@ -388,7 +458,7 @@ def match_img_feature(render_q, score_db, feature_db, encoder, matcher, mlp, arg
     data["descriptors1"] = feat_db
     data["image_size"] = score_db.shape[1:]
     pred = matcher(data)
-    print("match time: ", time.time()-x)
+    # print("match time: ", time.time()-x)
     m0 = pred['m0']
     valid = (m0[0] > -1)
     m0, m1 = data["keypoints0"][0][valid].cpu(), data["keypoints1"][0][m0[0][valid]].cpu()
@@ -398,8 +468,6 @@ def match_img_feature(render_q, score_db, feature_db, encoder, matcher, mlp, arg
     result['kpt0'] = kpt_q[0].cpu()
     result['kpt1'] = kpt_db[0].cpu()
     return result, compressed_dense_desc, decoded_dense_desc
-
-
 
 def img_match2(query_render, db_render, encoder, matcher) -> Tuple[torch.Tensor, torch.Tensor]:
     d0 = {}

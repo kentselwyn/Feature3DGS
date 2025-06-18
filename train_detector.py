@@ -216,7 +216,6 @@ def random_knn_score_2(points, num_points, score, k=32, batch_size=1024):
                 continue
             final_sampled_index.add(j)
             break
-    import pdb; pdb.set_trace()
     return torch.tensor(list(final_sampled_index), dtype=torch.int).cuda()
 
 def generate_heatmap(
@@ -348,7 +347,7 @@ def matching_oriented_sample_w_score_filter(
     render_visible_masks,
     landmark_num=16384,
     landmark_k=32,
-    score_threshold=0.8,
+    score_threshold=0.9,
 ):
     gaussian_mask = (gaussians.get_score_feature * gaussians.get_opacity.unsqueeze(-1) >= score_threshold).flatten()
 
@@ -450,7 +449,7 @@ def evaluate_detector(
                 from PIL import Image
                 from utils.vis_scoremap import one_channel_vis, overlay_scoremap
 
-                render_path = os.path.join(scene.model_path, pipe_param.checkpoint_dir, "detector")
+                render_path = os.path.join(pipe_param.checkpoint_dir, "detector")
                 heatmap_vis = overlay_scoremap(
                     (gt_img.permute(1,2,0).cpu().numpy() * 255).astype(np.uint8),
                     (gt_heatmap.permute(1,2,0).squeeze().cpu().numpy() * 255).astype(np.uint8),
@@ -479,7 +478,7 @@ def training_detector(
     tb_writer,
     score_threshold=0.8,
     train_iteration=30_000,
-    landmark_num=16384,
+    landmark_num=16_384,
     landmark_k=32,
 ):
     detector_dir = os.path.join(
@@ -487,7 +486,7 @@ def training_detector(
     )
 
     viewpoint_stack = scene.getTrainCameras().copy()
-    viewpoint_cam = viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack) - 1))
+    viewpoint_cam = viewpoint_stack.pop(randint(0, len(viewpoint_stack) - 1))
 
     conf = {
         "sparse_outputs": True,
@@ -524,11 +523,11 @@ def training_detector(
             landmark_num=landmark_num,
             landmark_k=landmark_k,
         )
-
-    save_path = os.path.join(scene.model_path, detector_dir)
+    save_path = os.path.join(pipe_param.checkpoint_dir, detector_dir)
     os.makedirs(save_path, exist_ok=True)
     torch.save(sampled_index, os.path.join(save_path, "sampled_index.pt"))
-
+    print(f"Saving to {save_path}...")
+    import pdb; pdb.set_trace()
     print("Start training detector")
     
     viewpoint_stack = None
@@ -648,7 +647,7 @@ def train(
     
     tb_writer = None
     if TENSORBOARD_FOUND:
-        tb_writer = SummaryWriter(log_dir=os.path.join(scene.model_path, pipe_param.checkpoint_dir, "detector"))
+        tb_writer = SummaryWriter(log_dir=os.path.join(pipe_param.checkpoint_dir, "detector"))
     
     training_detector(
         model_param=model_param,

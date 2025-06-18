@@ -31,7 +31,7 @@ class Scene:
         self.loaded_iter = None
         self.gaussians = gaussians
 
-        self.longest_edge = args.longest_edge
+        self.longest_edge = 640
 
         if load_iteration:
             if load_iteration == -1:
