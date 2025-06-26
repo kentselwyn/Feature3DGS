@@ -18,7 +18,6 @@ import scene.dataset_readers as dataset_readers
 from utils.system_utils import searchForMaxIteration
 from utils.camera_utils import cameraList_from_camInfos, camera_to_JSON
 
-
 class Scene:
 
     gaussians : GaussianModel

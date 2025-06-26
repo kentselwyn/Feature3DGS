@@ -6,7 +6,6 @@ from PIL import Image
 from torchvision import transforms
 
 
-
 def read_image(path: Path, grayscale: bool = False) -> np.ndarray:
     """Read an image from path as RGB or grayscale"""
     if not Path(path).exists():
@@ -31,7 +30,6 @@ def numpy_image_to_torch(image: np.ndarray) -> torch.Tensor:
     return torch.tensor(image / 255.0, dtype=torch.float)
 
 
-
 def load_image(path: Path, grayscale=False) -> torch.Tensor:
     image = read_image(path, grayscale=grayscale)
     return numpy_image_to_torch(image)
@@ -45,7 +43,6 @@ def load_image2(path: str, resize=None) -> torch.Tensor:
             image = image.resize([int(size[0]/resize), int(size[1]/resize)])
         elif type(resize)==list:
             image = image.resize(resize)
-
     transfrom = transforms.ToTensor()
     tensor = transfrom(image)
     return tensor

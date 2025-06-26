@@ -12,9 +12,9 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from encoders.utils import GroupParams
 from scene.gaussian_model import GaussianModel
-from utils.metrics_match import compute_metrics
-from utils.match_img import score_feature_match
-from utils.viz2d import plot_image_grid, plot_keypoints, plot_matches3
+from utils.match.metrics_match import compute_metrics
+from utils.match.match_img import score_feature_match
+from utils.match.viz2d import plot_image_grid, plot_keypoints, plot_matches3
 # given a source path, feature path, model output path, compute some pairs of images for matching
 # 2 pipelines
 # img + sp + LG      -> match

@@ -3,10 +3,10 @@ import torch
 import numpy as np
 from PIL import Image
 from scene import Scene
-from utils.match_img import matchimg2
+from utils.match.match_img import matchimg2
 from encoders.utils import GroupParams
 from scene.gaussian_model import GaussianModel
-from utils.metrics_match import compute_metrics
+from utils.match.metrics_match import compute_metrics
 from scene.dataset_readers import readColmapSceneInfo
 from scene.colmap_loader import read_extrinsics_binary, read_intrinsics_binary
 

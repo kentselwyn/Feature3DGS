@@ -6,8 +6,8 @@ import argparse
 from pathlib import Path
 from itertools import chain
 from datetime import datetime
-from utils.comm import gather
-from utils.metrics import aggregate_metrics
+from utils.match.comm import gather
+from utils.match.metrics import aggregate_metrics
 from render import feature_visualize_saving
 import torch.utils.tensorboard as tensorboard
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator

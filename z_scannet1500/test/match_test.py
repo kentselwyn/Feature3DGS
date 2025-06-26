@@ -8,11 +8,11 @@ import numpy as np
 from copy import deepcopy
 from z_scannet1500.utils.utils import print_eval_to_file, save_matchimg
 from argparse import ArgumentParser, Namespace
-from utils.metrics_match import compute_metrics
-from utils.match_img import img_match2, score_feature_match
+from utils.match.metrics_match import compute_metrics
+from utils.match.match_img import img_match2, score_feature_match
 from scene.gaussian_model import GaussianModel
-from utils.comm import gather
-from utils.metrics import aggregate_metrics
+from utils.match.comm import gather
+from utils.match.metrics import aggregate_metrics
 from itertools import chain
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint

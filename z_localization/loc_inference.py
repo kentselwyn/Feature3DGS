@@ -1,18 +1,18 @@
 import time
 import torch
 import numpy as np
-from utils.loc_utils import *
+from utils.loc.loc_utils import *
 from argparse import ArgumentParser
 from scene import Scene, GaussianModel
-from utils.match_img import save_matchimg
+from utils.match.match_img import save_matchimg
 from utils.graphics_utils import fov2focal
-from utils.find_depth import project_2d_to_3d
-from utils.vis_scoremap import one_channel_vis
+from utils.loc.depth import project_2d_to_3d
+from utils.match.scoremap import one_channel_vis
 from gaussian_renderer.__init__loc import render
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from arguments import ModelParams, PipelineParams, get_combined_args
-from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment
+from mlp.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment
 
 
 def choose_th(score, histogram_th):

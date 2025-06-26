@@ -69,7 +69,6 @@ def loadCam(args, id, cam_info, resolution_scale):
                   data_device="cpu") 
 
 
-
 def cameraList_from_camInfos(cam_infos, resolution_scale, args):
     camera_list = []
 

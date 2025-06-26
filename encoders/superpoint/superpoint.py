@@ -330,12 +330,6 @@ class SuperPoint(nn.Module):
         return pred
 
 
-
-
-
-
-
-
 # python -m encoders.superpoint.superpoint
 if __name__=="__main__":
     from PIL import Image
@@ -366,13 +360,6 @@ if __name__=="__main__":
 
     for i in range(500):
         pred = model(data)
-
     end = time.time()
-
     print("elapsed time:", end-start)
-
-    breakpoint()
-
-
-
-                                                                                                                                                                                                                                                                                             
+    breakpoint()                                                                                                                                                                                                                                                                                             

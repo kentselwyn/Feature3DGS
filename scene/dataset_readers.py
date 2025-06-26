@@ -631,7 +631,7 @@ def readSplitInfo(path, images, foundation_model, pcd = None, load_feature=True,
     if train_cam_infos[0].semantic_feature is not None:
         semantic_feature_dim = train_cam_infos[0].semantic_feature.shape[0]
     else:
-        semantic_feature_dim = None
+        semantic_feature_dim = 256
 
     scene_info = SceneInfo(point_cloud=pcd,
                            train_cameras=train_cam_infos,

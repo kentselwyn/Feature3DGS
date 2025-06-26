@@ -26,7 +26,7 @@ def gaussian(window_size, sigma):
 
 
 def weighted_l2(fmap, gtmap):
-    alpha = 2.0
+    alpha = 0.2
     weights = torch.exp(alpha* gtmap)
     loss = torch.mean(weights* (fmap-gtmap)**2)
     return loss

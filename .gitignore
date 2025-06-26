@@ -49,3 +49,6 @@ zenith_scripts/not_used
 zenith_scripts/test
 tmp
 zenith_scripts/
+submodules/
+mlp/not_used/
+utils/tmp/

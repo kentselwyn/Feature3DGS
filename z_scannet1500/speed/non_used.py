@@ -6,7 +6,7 @@ from scene import Scene
 from argparse import Namespace
 from gaussian_renderer import render
 import torch.nn.functional as F
-from utils.match_img import score_feature_match
+from utils.match.match_img import score_feature_match
 from scene.gaussian_model import GaussianModel
 from matchers.lightglue import LightGlue
 

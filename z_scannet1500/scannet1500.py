@@ -6,7 +6,7 @@ import torch
 import argparse
 import subprocess
 from tqdm import tqdm
-import dataset_build as dataset_build
+import utils.gauss.plot as plot
 import z_scannet1500.utils.metrics_gauss as metrics_gauss
 from z_scannet1500.utils.match_utils import match_eval
 
@@ -79,10 +79,10 @@ def run_scannet(start, end, args, test_list=None):
         torch.cuda.empty_cache()
         args.output_images = "None"
         if not os.path.exists(f"{args.input}/features/{args.feature_name}"):
-            dataset_build.main(args)
+            plot.main(args)
         elif len(os.listdir(f"{args.input}/features/{args.feature_name}")) != \
                 len(os.listdir(f"{args.input}/{args.images}"))*2:
-            dataset_build.main(args)
+            plot.main(args)
         torch.cuda.empty_cache()
         
         ################ train gaussians

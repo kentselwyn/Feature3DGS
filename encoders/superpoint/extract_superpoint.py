@@ -3,7 +3,7 @@ import argparse
 import os
 from .superpoint import SuperPoint
 from .utils import load_image, resize_image
-from .mlp import get_mlp_model
+from ...mlp.mlp import get_mlp_model
 from torchvision.transforms import ToPILImage
 
 

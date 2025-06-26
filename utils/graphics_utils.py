@@ -20,8 +20,6 @@ class BasicPointCloud(NamedTuple):
     normals : np.array
 
 
-
-
 def geom_transform_points(points, transf_matrix):
     P, _ = points.shape
     ones = torch.ones(P, 1, dtype=points.dtype, device=points.device)
@@ -30,9 +28,6 @@ def geom_transform_points(points, transf_matrix):
 
     denom = points_out[..., 3:] + 0.0000001
     return (points_out[..., :3] / denom).squeeze(dim=0)
-
-
-
 
 
 def getWorld2View(R, t):

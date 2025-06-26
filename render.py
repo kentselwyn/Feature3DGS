@@ -28,7 +28,7 @@ from utils.general_utils import PILtoTorch
 from utils.general_utils import safe_state
 from gaussian_renderer import GaussianModel
 from utils.graphics_utils import getWorld2View2
-from utils.vis_scoremap import one_channel_vis
+from utils.match.scoremap import one_channel_vis
 from arguments import ModelParams, PipelineParams, get_combined_args
 
 
@@ -108,18 +108,18 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         torchvision.utils.save_image(gt, os.path.join(gts_path, view.image_name + ".png"))
 
         ############## visualize feature map
-        feature_map = render_pkg["feature_map"][:16]
-        feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
+        # feature_map = render_pkg["feature_map"][:16]
+        # feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
 
-        feature_map_vis = feature_visualize_saving(feature_map)
-        Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(feature_map_path, view.image_name + "_feature_vis.png"))
+        # feature_map_vis = feature_visualize_saving(feature_map)
+        # Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(feature_map_path, view.image_name + "_feature_vis.png"))
         
-        gt_feature_map_vis = feature_visualize_saving(gt_feature_map)
-        Image.fromarray((gt_feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(gt_feature_map_path, view.image_name + "_feature_vis.png"))
+        # gt_feature_map_vis = feature_visualize_saving(gt_feature_map)
+        # Image.fromarray((gt_feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(gt_feature_map_path, view.image_name + "_feature_vis.png"))
 
-        # save feature map
-        feature_map = feature_map.cpu().numpy().astype(np.float16)
-        torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, view.image_name + "_fmap.pt"))
+        # # save feature map
+        # feature_map = feature_map.cpu().numpy().astype(np.float16)
+        # torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, view.image_name + "_fmap.pt"))
         #############
 
         ############# score map

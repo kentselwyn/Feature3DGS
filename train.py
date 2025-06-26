@@ -20,7 +20,6 @@ import torch.nn.functional as F
 from utils.image_utils import psnr
 from gaussian_renderer import render
 from scene import Scene, GaussianModel
-from models.networks import CNN_decoder
 from utils.general_utils import safe_state
 from argparse import ArgumentParser, Namespace
 from utils.loss_utils import l1_loss, ssim, l2_loss, weighted_l2
@@ -105,11 +104,6 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
     gt_feature_map = viewpoint_cam.semantic_feature.cuda()
     feature_out_dim = gt_feature_map.shape[0]
     gt_score_map = viewpoint_cam.score_feature.cuda()
-    # speed up
-    if model_param.speedup:
-        feature_in_dim = int(feature_out_dim/4)
-        cnn_decoder = CNN_decoder(feature_in_dim, feature_out_dim)
-        cnn_decoder_optimizer = torch.optim.Adam(cnn_decoder.parameters(), lr=0.0001)
 
     gaussians.training_setup(opt_param)
     if checkpoint:
@@ -157,8 +151,7 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
                                     mode='bilinear', align_corners=True).squeeze(0)
         score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], gt_score_map.shape[2]), 
                                   mode='bilinear', align_corners=True).squeeze(0)
-        if model_param.speedup:
-            feature_map = cnn_decoder(feature_map)
+
         Ll1_feature = l1_loss(feature_map, gt_feature_map)
 
         score_loss_comp = None
@@ -191,9 +184,6 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
                 scene.save(iteration)
                 
-                if model_param.speedup:
-                    print("\n[ITER {}] Saving feature decoder ckpt".format(iteration))
-                    torch.save(cnn_decoder.state_dict(), scene.model_path + "/decoder_chkpnt" + str(iteration) + ".pth")
             # Densification
             if iteration < opt_param.densify_until_iter:
                 # Keep track of max radii in image-space for pruning
@@ -210,9 +200,6 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
             if iteration < opt_param.iterations:
                 gaussians.optimizer.step()
                 gaussians.optimizer.zero_grad(set_to_none = True)
-                if model_param.speedup:
-                    cnn_decoder_optimizer.step()
-                    cnn_decoder_optimizer.zero_grad(set_to_none = True)
 
             if (iteration in checkpoint_iterations):
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))

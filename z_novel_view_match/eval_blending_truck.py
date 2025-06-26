@@ -6,13 +6,13 @@ import numpy as np
 from PIL import Image
 from copy import deepcopy
 from visual import get_aspan, Eval_params
-from utils.metrics import aggregate_metrics
-from utils.metrics_match import compute_metrics
+from utils.match.metrics import aggregate_metrics
+from utils.match.metrics_match import compute_metrics
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from eval.eval_scannet1500 import flattenList, gather
 from eval.eval import save_matchimg, read_scannet_gray
-from utils.match_img import score_feature_match, encoder_img_match, semi_img_match
+from utils.match.match_img import score_feature_match, encoder_img_match, semi_img_match
 
 
 all_path="/home/koki/code/cc/feature_3dgs_2/img_match/Else/tandt_db"

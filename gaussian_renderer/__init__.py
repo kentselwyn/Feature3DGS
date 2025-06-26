@@ -26,18 +26,12 @@ if mlp_dim==16:
     else:
         from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
     ##############################################################################################
-# elif mlp_dim==32:
-#     from diff_gaussian_rasterization_feature_test_dim32 import GaussianRasterizationSettings, GaussianRasterizer
-# elif mlp_dim==64:
-#     from diff_gaussian_rasterization_feature_test_dim64 import GaussianRasterizationSettings, GaussianRasterizer
-
-# from diff_gaussian_rasterization_feature_test_median_depth import GaussianRasterizationSettings, GaussianRasterizer
-# from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
 from scene.gaussian_model import GaussianModel
 from utils.sh_utils import eval_sh
 
 
-def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None):
+def render(viewpoint_camera, pc : GaussianModel, pipe, 
+           bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None):
     """
     Render the scene. 
     

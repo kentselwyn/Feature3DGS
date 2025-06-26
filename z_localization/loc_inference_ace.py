@@ -9,18 +9,18 @@ from pathlib import Path
 from ace.dataset import CamLocDataset
 from ace.ace_network import Regressor
 from argparse import ArgumentParser
-import utils.loc_utils as loc_utils
+import utils.loc.loc_utils as loc_utils
 from torch.cuda.amp import autocast
 from scene import Scene, GaussianModel
 from torch.utils.data import DataLoader
 from utils.graphics_utils import fov2focal
-from utils.find_depth import project_2d_to_3d
+from utils.loc.depth import project_2d_to_3d
 from gaussian_renderer.__init__loc import render
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
-from utils.pycolmap_utils import opencv_to_pycolmap_pnp
+from utils.loc.pycolmap_utils import opencv_to_pycolmap_pnp
 from arguments import ModelParams, PipelineParams, get_combined_args
-from encoders.superpoint.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment, \
+from mlp.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment, \
                                     get_mlp_data_7scenes_Cambridege
 
 random.seed(100)

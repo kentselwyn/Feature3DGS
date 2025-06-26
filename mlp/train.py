@@ -1,57 +1,27 @@
 import os
-import h5py
 import time
 import torch
 import torch.nn as nn
-from .tools import set_seed
-from .modules import get_mlp
+from .utils.tools import set_seed
+from .utils.modules import get_mlp
+from .utils.tensor import batch_to_device
+from .utils.mlp_utils import do_evaluation3
+from .utils.image import ImagePreprocessor, load_image
 from datetime import datetime
+from pathlib import Path
 from omegaconf import OmegaConf
 from argparse import ArgumentParser
-from .tensor import batch_to_device
-from .mlp_utils import do_evaluation3
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.tensorboard.writer import SummaryWriter
-from torch.utils.data import Dataset, random_split, DataLoader
+from torch.utils.data import Dataset, DataLoader
+from encoders.superpoint.superpoint import SuperPoint
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
-class MLPDataset(Dataset):
-    def __init__(self, all_path, h5_file_names):
-        # breakpoint()
-        self.data = []
-        for h5_name in h5_file_names:
-            h5_path = f"{all_path}/{h5_name}"
-            
-            with h5py.File(h5_path, 'r') as hfile:
-                root_group = hfile['home']
-                print(f'start loading.....{h5_path}')
-                def gather_data(group):
-                    for key in group.keys():
-                        print("Visiting:", key)
-                        item = group[key]
-                        if isinstance(item, h5py.Group):
-                            gather_data(item)
-                        elif isinstance(item, h5py.Dataset) and 'descriptors' in key:
-                            desc = item[:]
-                            self.data.append(desc)
-                        elif isinstance(item, h5py.Dataset) and 'dense_descriptors' in key:
-                            desc = item[:]
-                            self.data.append(desc)
-                gather_data(root_group)
-        print('loaded!')
-
-    def __getitem__(self, idx):
-        desc = torch.tensor(self.data[idx], dtype=torch.float32)
-        return desc
-    
-    def __len__(self):
-        return len(self.data)
-
-
 def lr_schedule(epoch):
-    start = conf['train']['start_epoch']
+    start = lr_schedule_epoch
     if epoch < start:
         return 1.0
     else:
@@ -68,110 +38,73 @@ def manage_checkpoints(save_dir, max_checkpoints=10):
             os.remove(old_ckpt_path)
 
 
-def main(conf):
-    conf = OmegaConf.create(conf)
-    model = get_mlp(conf.dim)
+
+class feature_set(Dataset):
+    def __init__(self, args, encoder) -> None:
+        train_path = Path(args.path)/"train/rgb"
+        test_path = Path(args.path)/"test/rgb"
+        train_images = list(train_path.glob("**/" + "*.png"))
+        test_images = list(test_path.glob("**/" + "*.png"))
+        all_images = train_images + test_images
+        preprocessor = ImagePreprocessor({})
+        self.features = []
+        with torch.no_grad():
+            for idx, img_p in enumerate(all_images):
+                print(idx, img_p)
+                img = load_image(img_p)
+                data = {}
+                data["image"] = img.unsqueeze(0).to(device)
+                pred = encoder(data)
+                feat = pred["descriptors"].squeeze(0).cpu()
+                self.features.append(feat)
+    def __getitem__(self, idx):
+        desc = self.features[idx]
+        return desc
+    def __len__(self):
+        return len(self.features)
+
+
+def main(args, conf):
+    encoder =  SuperPoint(conf).eval().to(device)
+    dataset = feature_set(args, encoder)
+    model = get_mlp(args.dim)
     model.to(device)
-
-    if conf.load_ckpt is not None:
-        ckpt = torch.load(conf.load_ckpt)
-        model.load_state_dict(ckpt)
-        print(f'{conf.load_ckpt} ckpt loaded')
-
     params = [param for param in model.parameters() if param.requires_grad]
-    optimizer = torch.optim.Adam(params , lr=conf.train.lr)
+    optimizer = torch.optim.Adam(params , lr=args.lr)
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_schedule)
-
     best_vloss = 1_000_000.
     l2_loss = nn.MSELoss()
-
-    dataset = MLPDataset(conf.all_path, conf.desc_names)
-    set_seed(conf.train.seed)
-
-    dataset_size = len(dataset)
-    train_size = int(0.9 * dataset_size)
-    val_size = dataset_size - train_size
-
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-    trainloader = DataLoader(train_dataset, batch_size=conf.train.batch_size , 
-                             shuffle=True, num_workers=conf.train.num_workers)
-    valloader = DataLoader(val_dataset, batch_size=conf.train.batch_size, 
-                           shuffle=False, num_workers=conf.train.num_workers)
-
-    out_path = f"{conf.folder_path}/{conf.out_name}"
-    os.makedirs(out_path, exist_ok=True)
-
-    writer = SummaryWriter(f"{out_path}/runs/{timestamp}")
-
-    for epoch in range(conf.train.epochs):
+    loader = DataLoader(dataset, batch_size=args.batch_size , 
+                             shuffle=True, num_workers=args.num_workers)
+    os.makedirs(args.out_path, exist_ok=True)
+    writer = SummaryWriter(f"{args.out_path}/runs/{timestamp}")
+    for epoch in range(args.epochs):
         print('EPOCH {}:'.format(epoch + 1))
         start_time = time.time()
         model.train(True)
-        for index, data in enumerate(trainloader):
+        for index, data in enumerate(loader):
             data = batch_to_device(data, device, non_blocking=True)
-            optimizer.zero_grad()
-            pred = model(data)
-            loss = l2_loss(pred, data)
-            loss.backward()
-            optimizer.step()
-            scheduler.step()
-            if index % 99 == 0:
-                total_iteration = len(trainloader) * epoch + index
-                writer.add_scalar("train/" + "mse", loss.item(), total_iteration)
-
-        print( "[E {} | iter {}] loss {}".format(epoch, index, loss.item()))
-        val_loss = do_evaluation3(model, valloader, device)
-        print(f'[Validation]', val_loss.item())
-        writer.add_scalar("val/" + 'mse', val_loss.item(), total_iteration)
-
-        end_time = time.time()
-        epoch_time = end_time - start_time
-        print('Time taken for one EPOCH {}: {:.2f} seconds'.format(epoch + 1, epoch_time))
-
-        if val_loss < best_vloss:
-            print(f'new ckpt get! val_loss:{val_loss}\n')
-            best_vloss = val_loss
-            checkpoint_path = f'{out_path}/epoch_{epoch}.pt'
-            torch.save(model.state_dict(), checkpoint_path)
-            manage_checkpoints(out_path, max_checkpoints=10)
-
+            breakpoint()
 
 
 if __name__=="__main__":
     parser = ArgumentParser()
+    parser.add_argument("--path", type=str, required=True)
+    parser.add_argument("--out_path", type=str, required=True)
     parser.add_argument("--dim", type=int, default=16)
-    parser.add_argument("--data_name", type=str)
-    parser.add_argument(
-        '--desc_names',
-        nargs='+',  # one or more arguments will be collected into a list
-        type=str,
-        required=True,
-        help='List of descriptor file paths'
-    )
     parser.add_argument("--epochs", type=int, default=4000)
-    parser.add_argument("--start_epoch", type=int, default=2500)
     parser.add_argument("--lr", type=float, default=8e-4)
+    parser.add_argument("--lr_schedule_epoch", type=int, default=2500)
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--num_workers", type=int, default=0)
-    parser.add_argument("--log_name", type=str)
+    parser.add_argument("--num_kpts", type=int, default=1024)
+    parser.add_argument("--sp_th", type=float, default=0.0)
     args = parser.parse_args()
-    all_path = f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/{args.data_name}"
-    conf = {
-        "dim": args.dim,
-        "all_path": all_path,
-        "folder_path": f"{all_path}/mlpckpt",
-        "desc_names": args.desc_names,
-        "out_name": f"{args.data_name}_type:SP_time:{timestamp}_dim{args.dim}_\
-                        batch{args.batch_size}_lr{args.lr}_epoch{args.epochs}_{args.log_name}",
-        "load_ckpt": None,
-        "train":{
-            "epochs": args.epochs,
-            "start_epoch": args.start_epoch,
-            "lr": args.lr,
-            "seed": 0,
-            "batch_size": args.batch_size,
-            "num_workers": args.num_workers,
-        }
+    lr_schedule_epoch = args.lr_schedule_epoch
+    model_conf = {
+        "max_num_keypoints": args.num_kpts,
+        "detection_threshold": args.sp_th,
+        "force_num_keypoints": True,
     }
-    conf = OmegaConf.create(conf)
-    main(conf=conf)
+    model_conf = OmegaConf.create(model_conf)
+    main(args, model_conf)

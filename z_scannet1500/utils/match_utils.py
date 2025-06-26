@@ -6,15 +6,15 @@ import numpy as np
 from PIL import Image
 from copy import deepcopy
 from itertools import chain
-from utils.comm import gather
+from utils.match.comm import gather
 from dataclasses import dataclass
-from utils.metrics import aggregate_metrics
-from utils.metrics_match import compute_metrics
+from utils.match.metrics import aggregate_metrics
+from utils.match.metrics_match import compute_metrics
 from matchers.lightglue import LightGlue
 from z_scannet1500.utils.utils import print_eval_to_file, save_matchimg
-from utils.match_img import score_feature_match
+from utils.match.match_img import score_feature_match
 from scene.colmap_loader import read_intrinsics_binary
-from encoders.superpoint.mlp import get_mlp_model
+from mlp.mlp import get_mlp_model
 
 ROOT_PATH = "/home/koki/code/cc/feature_3dgs_2/data/img_match"
 SP_THRESHOLD = 0.01
