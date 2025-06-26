@@ -238,7 +238,7 @@ def get_mlp_model(dim = 16, type = "SP"):
     return model
         
 
-def get_mlp_dataset(dim=16, dataset="pgt_7scenes_chess"):
+def get_mlp_dataset(dim=16, dataset="pgt_7scenes_chess") -> MLP_module_16_short:
     CKPT_FOLDER = Path(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc")
     if dataset=="pgt_7scenes_chess":
         if dim==4:

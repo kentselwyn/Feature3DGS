@@ -5,8 +5,6 @@ from torchrl.modules import MLP
 import mlp.utils as utils
 
 
-
-
 class MLP_module_4_long(nn.Module):
     def __init__(self):
         super().__init__()
@@ -36,9 +34,6 @@ class MLP_module_16_long(nn.Module):
         desc_mlp = self.MLP(desc)
         desc_back = self.MLP_de(desc_mlp)
         return desc_mlp, desc_back
-
-
-
 
 
 class MLP_module_4_short(nn.Module):
@@ -112,9 +107,6 @@ class MLP_module_16_vit(nn.Module):
 
 
 
-
-
-
 class MLP_module_32_short(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -150,11 +142,6 @@ class MLP_module_128_short(nn.Module):
         desc_mlp = self.MLP(desc)
         desc_back = self.MLP_de(desc_mlp)
         return desc_mlp, desc_back
-
-
-
-
-
 
 
 class MLP_module_4_128(nn.Module):
@@ -250,7 +237,6 @@ def get_module_ckptpath(dim: int, type = "short"):
             return MLP_module_64_short, model_path
 
 
-
 def test_model_ckpt(dim, type):
     model, ckpt_path = get_module_ckptpath(dim, type)
     model = model()
@@ -321,10 +307,3 @@ def get_mlp_vit(dim=16):
 if __name__=="__main__":
     model = test_model_ckpt(64, "short")
     # test()
-
-
-
-
-
-
-

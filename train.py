@@ -18,8 +18,11 @@ from random import randint
 from datetime import datetime
 import torch.nn.functional as F
 from utils.image_utils import psnr
+###################################################
 from gaussian_renderer import render
-from scene import Scene, GaussianModel
+from scene import Scene
+from scene.gaussian.gaussian_model import GaussianModel
+###################################################
 from utils.general_utils import safe_state
 from argparse import ArgumentParser, Namespace
 from utils.loss_utils import l1_loss, ssim, l2_loss, weighted_l2
@@ -54,7 +57,8 @@ def prepare_output_and_logger(args):
     return tb_writer
 
 
-def training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_loss, elapsed, testing_iterations, scene : Scene, renderFunc, renderArgs):
+def training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_loss, elapsed, 
+                    testing_iterations, scene : Scene, renderFunc, renderArgs):
     if tb_writer:
         tb_writer.add_scalar('train_loss_patches/l1_loss_RGB', Ll1.item(), iteration)
         tb_writer.add_scalar('train_loss_patches/l1_loss_feature', Ll1_feature.item(), iteration)
@@ -65,7 +69,8 @@ def training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_
     if iteration in testing_iterations:
         torch.cuda.empty_cache()
         validation_configs = ({'name': 'test', 'cameras' : scene.getTestCameras()}, 
-                              {'name': 'train', 'cameras' : [scene.getTrainCameras()[idx % len(scene.getTrainCameras())] for idx in range(5, 30, 5)]})
+                              {'name': 'train', 'cameras' : 
+                               [scene.getTrainCameras()[idx % len(scene.getTrainCameras())] for idx in range(5, 30, 5)]})
         for config in validation_configs:
             if config['cameras'] and len(config['cameras']) > 0:
                 l1_test = 0.0
@@ -74,9 +79,11 @@ def training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_
                     image = torch.clamp(renderFunc(viewpoint, scene.gaussians, *renderArgs)["render"], 0.0, 1.0)
                     gt_image = torch.clamp(viewpoint.original_image.to("cuda"), 0.0, 1.0)
                     if tb_writer and (idx < 5):
-                        tb_writer.add_images(config['name'] + "_view_{}/render".format(viewpoint.image_name), image[None], global_step=iteration)
+                        tb_writer.add_images(config['name'] + "_view_{}/render".format(viewpoint.image_name), 
+                                             image[None], global_step=iteration)
                         if iteration == testing_iterations[0]:
-                            tb_writer.add_images(config['name'] + "_view_{}/ground_truth".format(viewpoint.image_name), gt_image[None], global_step=iteration)
+                            tb_writer.add_images(config['name'] + \
+                                    "_view_{}/ground_truth".format(viewpoint.image_name), gt_image[None], global_step=iteration)
                     l1_test += l1_loss(image, gt_image).mean().double()
                     psnr_test += psnr(image, gt_image).mean().double()
                 psnr_test /= len(config['cameras'])
@@ -96,7 +103,8 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
     first_iter = 0
     tb_writer = prepare_output_and_logger(model_param)
     gaussians = GaussianModel(model_param.sh_degree)
-    scene = Scene(model_param, gaussians, test_feature_load=False, load_testcam=args.load_testcam)
+    scene = Scene(model_param, gaussians, load_testcam=args.load_testcam)
+    breakpoint()
 
     # 2D semantic feature map CNN decoder
     viewpoint_stack = scene.getTrainCameras().copy()
@@ -137,8 +145,8 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
             pipe_param.debug = True
         render_pkg = render(viewpoint_cam, gaussians, pipe_param, background)
         feature_map, score_map, image, viewspace_point_tensor, visibility_filter, radii = render_pkg["feature_map"], \
-        render_pkg["score_map"], render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
-
+                    render_pkg["score_map"], render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], \
+                    render_pkg["radii"]
         # Loss
         gt_image = viewpoint_cam.original_image.cuda().detach()
         gt_feature_map = viewpoint_cam.semantic_feature.cuda().detach()
@@ -165,7 +173,6 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
         Ll1 = l1_loss(image, gt_image)
         loss = (1.0 - opt_param.lambda_dssim) * Ll1 + opt_param.lambda_dssim * (1.0 - ssim(image, gt_image)) +  1.0 * Ll1_feature + \
                 model_param.score_scale* Ll1_score
-
         loss.backward()
         iter_end.record()
         with torch.no_grad():

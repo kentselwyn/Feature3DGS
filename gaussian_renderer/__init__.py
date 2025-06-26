@@ -26,7 +26,7 @@ if mlp_dim==16:
     else:
         from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
     ##############################################################################################
-from scene.gaussian_model import GaussianModel
+from scene.gaussian.gaussian_model import GaussianModel
 from utils.sh_utils import eval_sh
 
 
@@ -44,7 +44,6 @@ def render(viewpoint_camera, pc : GaussianModel, pipe,
         screenspace_points.retain_grad()
     except:
         pass
-
     # Set up rasterization configuration
     tanfovx = math.tan(viewpoint_camera.FoVx * 0.5)
     tanfovy = math.tan(viewpoint_camera.FoVy * 0.5)
@@ -68,8 +67,6 @@ def render(viewpoint_camera, pc : GaussianModel, pipe,
     means3D = pc.get_xyz
     means2D = screenspace_points
     opacity = pc.get_opacity
-
-
 
     # If precomputed 3d covariance is provided, use it. If not, then it will be computed from
     # scaling / rotation by the rasterizer.
@@ -99,22 +96,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe,
         colors_precomp = override_color
     semantic_feature = pc.get_semantic_feature
     score_feature = pc.get_score_feature
-
-
     var_loss = torch.zeros(1,viewpoint_camera.image_height,viewpoint_camera.image_width) ###d
 
-
-    # print(means3D.device)
-    # print(means2D.device)
-    # print(shs.device)
-    # # print(colors_precomp.device)
-    # print(semantic_feature.device)
-    # print(score_feature.device)
-    # print(opacity.device)
-    # print(scales.device)
-    # print(rotations.device)
-    # breakpoint()
-    # Rasterize visible Gaussians to image, obtain their radii (on screen). 
     rendered_image, feature_map, score_map, radii, depth = rasterizer(
         means3D = means3D,
         means2D = means2D,

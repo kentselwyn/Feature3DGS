@@ -22,7 +22,6 @@ from pathlib import Path
 import sklearn.decomposition
 import torch.nn.functional as F
 from argparse import ArgumentParser
-from models.networks import CNN_decoder
 from gaussian_renderer import render
 from utils.general_utils import PILtoTorch
 from utils.general_utils import safe_state
@@ -153,12 +152,6 @@ def render_novel_views(model_path, name, iteration, views, gaussians, pipe_param
     score_map_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_renders")
     saved_score_path = os.path.join(model_path, name, "ours_{}".format(iteration), "score_tensors")
 
-    if speedup:
-        gt_feature_map = views[0].semantic_feature.cuda()
-        feature_out_dim = gt_feature_map.shape[0]
-        feature_in_dim = int(feature_out_dim/4)
-        cnn_decoder = CNN_decoder(feature_in_dim, feature_out_dim)
-        cnn_decoder.load_state_dict(torch.load(decoder_ckpt_path))
     
     makedirs(render_path, exist_ok=True)
     makedirs(feature_map_path, exist_ok=True)
@@ -189,8 +182,7 @@ def render_novel_views(model_path, name, iteration, views, gaussians, pipe_param
         feature_map = render_pkg["feature_map"]
         feature_map = F.interpolate(feature_map.unsqueeze(0), 
                                     size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
-        if speedup:
-            feature_map = cnn_decoder(feature_map)
+
         feature_map_vis = feature_visualize_saving(feature_map)
         Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8))\
             .save(os.path.join(feature_map_path,view.image_name + "_feature_vis.png"))

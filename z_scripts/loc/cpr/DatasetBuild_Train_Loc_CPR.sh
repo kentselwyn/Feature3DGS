@@ -7,13 +7,18 @@
     ###############################################
     # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt_7scenes_redkitchen, pgt_7scenes_stairs
     # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-    scene_name="scene_${1}" 
+    # ss=${1}
+    ss="stairs"
+    scene_name="scene_${ss}" 
     ###############################################
     # all, dataset_7scenes
     # pgt_7scenes_chess, pgt_7scenes_fire, pgt_7scenes_heads, pgt_7scenes_office, pgt_7scenes_pumpkin, pgt_7scenes_redkitchen, pgt_7scenes_stairs
+    # pairs_7scenes_stairs
     # Cambridge
     # Cambridge_KingsCollege, Cambridge_OldHospital, Cambridge_ShopFacade, Cambridge_StMarysChurch
-    mlp_method="pgt_7scenes_${1}"
+    # match_pos_neg_7scenes_stairs
+    mlp_method="match_pos_neg_7scenes_${ss}"
+    # mlp_method="pgt_7scenes_${ss}"
     ###### dataset build #########################################
     resize_num=1
     th=0.01
@@ -27,11 +32,10 @@
     feat_name+="mlpdim:${mlp_dim}_kptnum:${max_num_keypoints}_rgb"
 }
 ##### training parameters######################################################################## 
-# ( bash zenith_scripts/DatasetBuild_Train_Loc_CPR.sh )
 {
     ###### gaussian training #########################################
-    score_loss="${2}" # L2, weighted, L1
-    # score_loss="L2"
+    score_loss="L2" # L2, weighted, L1
+    train_load_testcam=1
     score_scale=0.6
     feature_opa=0
     iterations=30000
@@ -39,25 +43,24 @@
     train_ImgName="rgb"
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Warninggggggggggggggggggggggggggggggggggggggggg
     # traing_name_option="UseTrueRender_denseless6000_DenseInterval100"
-    traing_name_option="UseTrueRender"
+    traing_name_option=""
+    # traing_name_option="_pairs"
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Warninggggggggggggggggggggggggggggggggggggggggg
     # output name
     out_name="${mlp_method}_imrate:${resize_num}_th:${th}_"
     out_name+="mlpdim:${mlp_dim}_kptnum:${max_num_keypoints}_"
-    out_name+="Score${score_loss}_ScoreScale${score_scale}_${train_ImgName}_${traing_name_option}"
+    out_name+="Score${score_loss}_ScoreScale${score_scale}_${train_ImgName}_UseTrueRender${traing_name_option}"
     if (( feature_opa )); then
         out_name+="_FeatureOpa"
     fi
     # render
     render_num=20
 }
-
-
-# ( bash zenith_scripts/DatasetBuild_Train_Loc_CPR.sh )
+# ( bash zenith_scripts/CPR/DatasetBuild_Train_Loc_CPR_single.sh )
 ########################################################################
-build_data="${3}"
-start_train=0
-if_render=0
+build_data=1
+start_train=1
+if_render=1
 start_loc=1
 ########################################################################
 
@@ -65,7 +68,7 @@ start_loc=1
 ##### localization parameters ######################################################################## 
 {
     # 0:ours, 1:feat_from_img(# use score from gaussian, feature from image), 2:rival, 3:mast3r
-    match_type="${4}"
+    match_type=0
     ###########################
     save_match=0
     depth_render=1
@@ -112,14 +115,14 @@ if (( build_data )); then
                             --output_images "$data_ImgName" \
                             --resize_num $resize_num --th $th --max_num_keypoints $max_num_keypoints --name $feat_name
 fi
-
 ######################################################################## train ########################################################################
 if (( start_train )); then
     export MLP_DIM=$mlp_dim
     export FEATURE_OPA=$feature_opa
     python train.py -s "$SOURSE_PATH" -i "$train_ImgName" -m "$OUT_PATH" -f "$feature_name" --iterations $iterations \
-                    --score_loss "$score_loss" --score_scale "$score_scale"
+                    --score_loss "$score_loss" --score_scale "$score_scale"  --load_testcam $train_load_testcam
 fi
+
 if (( if_render )); then
     python render.py -m $OUT_PATH --iteration $iterations --skip_train --view_num $render_num
 fi
@@ -130,7 +133,7 @@ if (( start_loc )); then
     export DEPTH_RENSER=$depth_render
     export FEATURE_OPA=$feature_opa
     if [[ "$data_name" == "7_scenes" ]]; then
-        ace_ckpt="/home/koki/code/cc/feature_3dgs_2/data/ace_models/7Scenes_pgt/pgt_7scenes_${1}.pt"
+        ace_ckpt="/home/koki/code/cc/feature_3dgs_2/data/ace_models/7Scenes_pgt/pgt_7scenes_${ss}.pt"
     elif [[ "$data_name" == "Cambridge" ]]; then
         ace_ckpt="/home/koki/code/cc/feature_3dgs_2/data/ace_models/Cambridge/$scene_name.pt"
     else
@@ -140,15 +143,15 @@ if (( start_loc )); then
     if (( save_match )); then
         python -m z_localization.loc_inference_ace --save_match \
                                     -m $OUT_PATH --ace_ckpt $ace_ckpt --iteration $test_iteration \
-                                    --mlp_dim $mlp_dim --mlp_method $mlp_method --lg_th $lg_th \
+                                    --mlp_dim $mlp_dim --method $mlp_method --lg_th $lg_th \
                                     --kernel_size $kernel_size --sp_th $sp_th --ransac_iters $ransac_iters \
                                     --stop_kpt_num $stop_kpt_num --pnp $pnp_option --kpt_hist $kpt_hist \
-                                    --test_name "$test_name" --match_type "$match_type"
+                                    --test_name "$test_name" --match_type "$match_type" 
     else
         python -m z_localization.loc_inference_ace -m $OUT_PATH --ace_ckpt $ace_ckpt --iteration $test_iteration \
-                                    --mlp_dim $mlp_dim --mlp_method $mlp_method --lg_th $lg_th \
+                                    --mlp_dim $mlp_dim --method $mlp_method --lg_th $lg_th \
                                     --kernel_size $kernel_size --sp_th $sp_th --ransac_iters $ransac_iters \
                                     --stop_kpt_num $stop_kpt_num --pnp $pnp_option --kpt_hist $kpt_hist \
-                                    --test_name "$test_name" --match_type "$match_type"
+                                    --test_name "$test_name" --match_type "$match_type" 
     fi
 fi

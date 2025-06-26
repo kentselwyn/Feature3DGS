@@ -6,7 +6,6 @@ start_loc=0
 {
     data_name="7_scenes"
     scene_name="pgt_7scenes_stairs"
-    
     iterations=10000
     score_loss="weighted" # L2, weighted, L1
     render_num=100

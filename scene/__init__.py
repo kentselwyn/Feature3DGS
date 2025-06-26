@@ -12,19 +12,16 @@ import os
 import json
 import random
 from arguments import ModelParams
-from .gaussian_model import GaussianModel
-from .dataset_readers import sceneLoadTypeCallbacks
 import scene.dataset_readers as dataset_readers
 from utils.system_utils import searchForMaxIteration
-from utils.camera_utils import cameraList_from_camInfos, camera_to_JSON
+from scene.camera_utils import cameraList_from_camInfos, camera_to_JSON
+from encoders.superpoint.superpoint import SuperPoint
+from mlp.mlp import get_mlp_dataset
 
 class Scene:
-
-    gaussians : GaussianModel
-
-    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, shuffle=True, 
-                 resolution_scales=[1.0], load_feature=True, view_num=None, test_feature_load=True, load_testcam=1,
-                 load_semantic_feature=True, load_test_cams=True): 
+    def __init__(self, args : ModelParams, gaussians, load_iteration=None, shuffle=True, 
+                 resolution_scales=[1.0], load_feature=True, view_num=None, load_testcam=1,
+                 load_test_cams=True): 
         """b
         :param path: Path to colmap scene main folder.
         """
@@ -43,22 +40,17 @@ class Scene:
         self.test_cameras = {}
 
         if os.path.exists(os.path.join(args.source_path, "train", "poses")):
-            scene_info = dataset_readers.readSplitInfo(args.source_path, images=args.images, foundation_model=args.foundation_model, 
-                                                         load_feature=load_feature, view_num=view_num, 
-                                                         test_feature_load=test_feature_load, 
-                                                         load_semantic_feature=load_semantic_feature)
+            scene_info = dataset_readers.readSplitInfo(args.source_path, images=args.images, view_num=view_num)
         elif os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = dataset_readers.readColmapSceneInfo(path=args.source_path, foundation_model=args.foundation_model, 
                                                           eval=args.eval, images=args.images, view_num=view_num, 
                                                           load_feature = load_feature, load_testcam=load_testcam)
-        elif os.path.exists(os.path.join(args.source_path, "transforms_train.json")):
-            print("Found transforms_train.json file, assuming Blender data set!")
-            scene_info = dataset_readers.readNerfSyntheticInfo(args.source_path,  args.foundation_model, args.white_background, args.eval) 
         else:
             assert False, "Could not recognize scene type!"
 
         if not self.loaded_iter:
-            with open(scene_info.ply_path, 'rb') as src_file, open(os.path.join(self.model_path, "input.ply") , 'wb') as dest_file:
+            with open(scene_info.ply_path, 'rb') as src_file, \
+                open(os.path.join(self.model_path, "input.ply") , 'wb') as dest_file:
                 dest_file.write(src_file.read())
             json_cams = []
             camlist = []
@@ -75,14 +67,24 @@ class Scene:
             random.shuffle(scene_info.train_cameras)  # Multi-res consistent random shuffling
             random.shuffle(scene_info.test_cameras)  # Multi-res consistent random shuffling
         self.cameras_extent = scene_info.nerf_normalization["radius"]
+        conf = {
+            "sparse_outputs": True,
+            "dense_outputs": True,
+            "max_num_keypoints": 512,
+            "detection_threshold": 0.01,
+        }
+        encoder = SuperPoint(conf).to("cuda").eval()
+        mlp = get_mlp_dataset(16, dataset="pgt_7scenes_stairs").cuda().eval()
 
         for resolution_scale in resolution_scales:
             # if load_feature:
             print("Loading Training Cameras")
-            self.train_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.train_cameras, resolution_scale, args)
+            self.train_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.train_cameras, resolution_scale, args,
+                                                                            encoder=encoder, mlp=mlp)
             if load_test_cams:
                 print("Loading Test Cameras")
-                self.test_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.test_cameras, resolution_scale, args)
+                self.test_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.test_cameras, resolution_scale, args,
+                                                                               encoder=encoder, mlp=mlp)
 
         if self.loaded_iter:
             self.gaussians.load_ply(os.path.join(self.model_path,
@@ -90,7 +92,8 @@ class Scene:
                                                            "iteration_" + str(self.loaded_iter),
                                                            "point_cloud.ply"))
         else:
-            self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent, scene_info.semantic_feature_dim, args.speedup) 
+            self.gaussians.create_from_pcd(scene_info.point_cloud, 
+                                           self.cameras_extent, scene_info.semantic_feature_dim, args.speedup)
 
     def save(self, iteration):
         point_cloud_path = os.path.join(self.model_path, "point_cloud/iteration_{}".format(iteration))

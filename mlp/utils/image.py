@@ -50,8 +50,6 @@ class ImagePreprocessor:
             "transform": T,
             "original_image_size": np.array([w, h]),
         }
-
-
         if self.conf.square_pad:
             sl = max(img.shape[-2:])
             data["image"] = torch.zeros(*img.shape[:-2], sl, sl, device=img.device, dtype=img.dtype)
@@ -135,5 +133,4 @@ if __name__=="__main__":
     preprocessor = ImagePreprocessor(conf)
     image_tensor = torch.rand(3, 500, 400)  # Simulate a 3-channel image with height 500 and width 400
     processed_data = preprocessor(image_tensor)
-
     print(processed_data["image"].shape)  # Check the shape of the processed image

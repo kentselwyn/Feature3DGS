@@ -98,7 +98,6 @@ class GaussianModel:
         self.optimizer.load_state_dict(opt_dict)
 
 
-
     @property
     def get_scaling(self):
         return self.scaling_activation(self._scaling)
@@ -128,8 +127,6 @@ class GaussianModel:
     @property
     def get_score_feature(self):
         return self._score_feature 
-
-
 
 
     def rewrite_semantic_feature(self, x):
@@ -226,11 +223,7 @@ class GaussianModel:
         # Add score features
         for i in range(self._score_feature.shape[1]*self._score_feature.shape[2]):  
             l.append('score_{}'.format(i))
-
         return l
-
-
-
 
 
     def save_ply(self, path):
@@ -317,9 +310,6 @@ class GaussianModel:
         self.active_sh_degree = self.max_sh_degree
 
 
-
-
-
     def replace_tensor_to_optimizer(self, tensor, name):
         optimizable_tensors = {}
         for group in self.optimizer.param_groups:
@@ -392,9 +382,6 @@ class GaussianModel:
                 optimizable_tensors[group["name"]] = group["params"][0]
 
         return optimizable_tensors
-
-
-
 
 
     def densification_postfix(self, new_xyz, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation, new_semantic_feature, new_score_feature):
@@ -482,16 +469,6 @@ class GaussianModel:
         torch.cuda.empty_cache()
 
 
-
-
-
-
-
-
     def add_densification_stats(self, viewspace_point_tensor, update_filter):
         self.xyz_gradient_accum[update_filter] += torch.norm(viewspace_point_tensor.grad[update_filter,:2], dim=-1, keepdim=True)
         self.denom[update_filter] += 1
-
-
-
-

@@ -6,7 +6,7 @@ import torch
 import argparse
 import subprocess
 from tqdm import tqdm
-import utils.gauss.plot as plot
+import utils.plot as plot
 import z_scannet1500.utils.metrics_gauss as metrics_gauss
 from z_scannet1500.utils.match_utils import match_eval
 
