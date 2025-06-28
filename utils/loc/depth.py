@@ -7,7 +7,7 @@ from scene import GaussianModel
 from argparse import ArgumentParser
 from gaussian_renderer import render
 from utils.match.match_img import extract_kpt
-from utils.match.scoremap import one_channel_vis
+from utils.scoremap_vis import one_channel_vis
 from utils.graphics_utils import getWorld2View2, fov2focal
 from arguments import ModelParams, PipelineParams, get_combined_args
 

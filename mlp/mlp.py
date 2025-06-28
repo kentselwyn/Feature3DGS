@@ -50,7 +50,6 @@ class MLP_module_16_short(nn.Module):
             p.requires_grad = False
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
-        # desc_back = self.MLP_de(desc_mlp)
         return desc_mlp
     def decode(self, desc_mlp: torch.Tensor):
         desc_back = self.MLP_de(desc_mlp)
@@ -129,10 +128,11 @@ class MLP_module_16_128(nn.Module):
         return desc_back
 
 
-CKPT_FOLDER = Path("/mnt/home_6T/public/koki/mlpckpt/ckpt/")
+
 
 
 def get_mlp_model(dim = 16, type = "SP"):
+    CKPT_FOLDER = Path("/mnt/home_6T/public/koki/mlpckpt/ckpt/")
     if type=="SP_scannet":
         name = "SP_scannet"
         if dim==8:
@@ -462,7 +462,25 @@ def get_mlp_data_7scenes_Cambridege(dim=16, dataset="dataset_7scenes"):
     return model
 
 
-# python -m encoders.superpoint.mlp
+def get_mlp_new(dim=16, name=None) -> MLP_module_16_short:
+    FOLDER_PATH = Path("/home/koki/code/cc/feature_3dgs_2/data/mlpckpt")
+    CKPT_FOLDER = Path(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc")
+    if name=="7scenes_stairs":
+        if dim==16:
+            model_path = FOLDER_PATH/"7scenes/pgt_7scenes_stairs/epoch_988.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    if name=="7scenes_stairs_pgt":
+        if dim==16:
+            model_path = CKPT_FOLDER/f"7_scenes/pgt_7scenes_stairs/mlpckpt/type:SP_time:20250107_160254_dim16_batch64_lr0.0008_epoch5000/epoch_1722.pt"
+            model = MLP_module_16_short()
+            ckpt = torch.load(model_path)
+            model.load_state_dict(ckpt)
+    return model
+# python -m mlp.mlp
 if __name__=="__main__":
-    model = get_mlp_augment(dim=16, dataset="augment_pgt_7scenes_stairs")
+    # model = get_mlp_augment(dim=16, dataset="augment_pgt_7scenes_stairs")
+    mlp = get_mlp_new(dim=16, name="7scenes_stairs").cuda().eval()
+
     breakpoint()

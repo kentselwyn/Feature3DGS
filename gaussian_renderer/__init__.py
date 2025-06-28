@@ -14,18 +14,7 @@ import math
 
 mlp_dim = int(os.getenv("MLP_DIM", "16"))
 feature_opa = int(os.getenv("FEATURE_OPA", "0"))
-
-if mlp_dim==4:
-    from diff_gaussian_rasterization_feature_test_dim4 import GaussianRasterizationSettings, GaussianRasterizer
-if mlp_dim==8:
-    from diff_gaussian_rasterization_feature_test_dim8 import GaussianRasterizationSettings, GaussianRasterizer
-if mlp_dim==16:
-    if feature_opa:
-        from diff_gaussian_rasterization_feature_test_feature_opa import GaussianRasterizationSettings, GaussianRasterizer
-    ##############################################################################################
-    else:
-        from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
-    ##############################################################################################
+from diff_gaussian_rasterization_feature_test import GaussianRasterizationSettings, GaussianRasterizer
 from scene.gaussian.gaussian_model import GaussianModel
 from utils.sh_utils import eval_sh
 

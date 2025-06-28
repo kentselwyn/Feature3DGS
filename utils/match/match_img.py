@@ -11,7 +11,8 @@ from matchers.aliked import SDDH
 from torchvision import transforms
 from skimage.measure import label, regionprops
 from mlp.mlp import get_mlp_model
-from utils.match.viz2d import plot_image_grid, plot_keypoints, plot_matches
+from utils.viz2d import plot_image_grid, plot_keypoints, plot_matches,\
+                                plot_matches3
 from scipy.ndimage import gaussian_filter
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -128,7 +129,6 @@ def sample_descriptors_fix_sampling(kpt, desc, scale):
     desc = desc.unsqueeze(0).float() # add batch dim
     desc = torch.nn.functional.grid_sample(desc, kpt.view(1, 1, -1, 2), mode="bilinear", align_corners=False)
     desc = desc.reshape(1, c, -1).transpose(-1,-2)
-
     return desc
 
 
@@ -471,7 +471,47 @@ def save_matchimg(data, path):
     if data.get('kpt0') is not None:
         all_keypoints.append([data['kpt0'].cpu(), data['kpt1'].cpu()])
         plot_keypoints(all_keypoints[0], axes=axes[0], colors="royalblue")
-    # plot_keypoints(all_keypoints[0], axes=axes[0], colors="royalblue")
     plot_matches(*all_matches[0], color=None, axes=axes[0], alpha=0.5, line_width=1.0, point_size=0.0)
+    plt.savefig(path, bbox_inches='tight', pad_inches=0)
+    plt.close(fig)
+
+
+def match_data(data, matcher, img0, img1):
+    pred = matcher(data)
+    m0 = pred['m0']
+    valid = (m0[0] > -1)
+    m0, m1 = data["keypoints0"][0][valid].cpu(), data["keypoints1"][0][m0[0][valid]].cpu()
+    result = {}
+    result['img0'] = img0
+    result['img1'] = img1
+    result['mkpt0'] = m0
+    result['mkpt1'] = m1
+    result['kpt0'] = data["keypoints0"].squeeze(0).cpu()
+    result['kpt1'] = data["keypoints1"].squeeze(0).cpu()
+    return result
+
+
+def save_matchimg_th(data, path, threshold=5e-6):
+    all_images, all_keypoints, all_matches = [], [], []
+    all_images.append([data["img0"].detach().cpu().numpy(), data["img1"].detach().cpu().numpy()])
+    # if isinstance(data["img0"], np.ndarray):
+    #     all_images.append([data["img0"], data["img1"]])
+    # if isinstance(data["img0"], torch.Tensor):
+    #     all_images.append([data["img_save0"], data["img_save1"]])
+    all_matches.append((data['mkpt0'].cpu(), data['mkpt1'].cpu()))
+    epi_good = data['epi_errs'][0] < threshold
+    precision = (epi_good.sum()/len(epi_good))*100
+    R_err = data['R_errs'][0]
+    t_err = data['t_errs'][0]
+    match_num = len(data['mkpt0'])
+    fig, axes = plot_image_grid(all_images, return_fig=True, set_lim=True)
+    if data.get('kpt0') is not None:
+        all_keypoints.append([data['kpt0'].cpu(), data['kpt1'].cpu()])
+        plot_keypoints(all_keypoints[0], axes=axes[0], colors="royalblue")
+    plot_matches3(*all_matches[0], color=None, axes=axes[0], alpha=0.5, line_width=0.8, 
+                  point_size=0.0, labels=epi_good,
+                  captions=[f"Matches: {match_num}",
+                            f"Precision({threshold:.1e})({precision:.1f}%): {epi_good.sum()}/{len(epi_good)}",
+                            f"R_err={R_err:.2f}, t_err={t_err:.2f}"])
     plt.savefig(path, bbox_inches='tight', pad_inches=0)
     plt.close(fig)

@@ -31,6 +31,7 @@ class CameraInfo(NamedTuple):
     T: np.array
     FovY: np.array
     FovX: np.array
+    focal_length: float
     image: np.array
     image_path: str
     image_name: str
@@ -369,8 +370,6 @@ def readCamerasFromTransforms(path, transformsfile, white_background, semantic_f
     return cam_infos
 
 
-
-
 def readSplit_cams_params(intrinsic_folder, extrinsic_folder):
     intrinsic_files = sorted(os.listdir(intrinsic_folder))
     extrinsic_files = sorted(os.listdir(extrinsic_folder))
@@ -396,7 +395,7 @@ def readSplit_cams_params(intrinsic_folder, extrinsic_folder):
 
 
 @torch.inference_mode()
-def readSplitInfo(path, images, pcd = None, view_num=None):
+def readSplitInfo(path, images, pcd = None, view_num=None, mlp_dim=16):
     
     train_images_folder = os.path.join(path, f"train/{images}")
     train_extrinsic_folder = os.path.join(path, "train/poses")
@@ -461,7 +460,9 @@ def readSplitInfo(path, images, pcd = None, view_num=None):
         image_name = os.path.basename(image_path).split(".png")[0].split(".color")[0]
         image = Image.open(image_path)
         
-        cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+        cam_info = CameraInfo(uid=i, R=R, T=T, 
+                            FovY=FovY, FovX=FovX, focal_length=focal_length_x,
+                            image=image,
                             image_path=image_path, image_name=image_name,
                             intrinsic_params=None,
                             intrinsic_model=None,
@@ -486,7 +487,9 @@ def readSplitInfo(path, images, pcd = None, view_num=None):
         image_name = os.path.basename(image_path).split(".png")[0].split(".color")[0]
         image = Image.open(image_path)
 
-        cam_info = CameraInfo(uid=i, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
+        cam_info = CameraInfo(uid=i, R=R, T=T, 
+                              FovY=FovY, FovX=FovX, focal_length=focal_length_x,
+                              image=image,
                             image_path=image_path, image_name=image_name,
                             intrinsic_params=None,
                             intrinsic_model=None,
@@ -531,5 +534,5 @@ def readSplitInfo(path, images, pcd = None, view_num=None):
                            test_cameras=test_cam_infos,
                            nerf_normalization=nerf_normalization,
                            ply_path=ply_path,
-                           semantic_feature_dim=1)
+                           semantic_feature_dim=mlp_dim)
     return scene_info

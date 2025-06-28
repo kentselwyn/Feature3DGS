@@ -59,6 +59,12 @@ class ModelParams(ParamGroup):
         self.eval = False
         self.speedup = False ###
         self.load_testcam = 1
+##################################################
+        self.num_kpts = 1024
+        self.detect_th = 0.0
+        self.mlp_dim = 16
+        self.mlp_name = "7scenes_stairs"
+##################################################
         self.render_items = ['RGB', 'Depth', 'Edge', 'Normal', 'Curvature', 'Feature Map', 'Score Map']
         super().__init__(parser, "Loading Parameters", sentinel)
 

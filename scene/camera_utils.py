@@ -46,9 +46,12 @@ def loadCam(args, id, cam_info, resolution_scale, encoder, mlp):
     ###
     intrinsic_params = cam_info.intrinsic_params
     intrinsic_model = cam_info.intrinsic_model
-    return Camera(colmap_id=cam_info.uid, R=cam_info.R, T=cam_info.T, 
+    return Camera(colmap_id=cam_info.uid, 
+                  R=cam_info.R, 
+                  T=cam_info.T, 
                   FoVx=cam_info.FovX, 
                   FoVy=cam_info.FovY, 
+                  focal_length=cam_info.focal_length,
                   image=gt_image, 
                   gt_alpha_mask=loaded_mask,
                   image_name=cam_info.image_name, 
@@ -62,8 +65,8 @@ def loadCam(args, id, cam_info, resolution_scale, encoder, mlp):
 
 def cameraList_from_camInfos(cam_infos, resolution_scale, args, encoder, mlp):
     camera_list = []
-    for id, c in enumerate(cam_infos):
-        cam = loadCam(args, id, c, resolution_scale, encoder, mlp)
+    for id, cam_info in enumerate(cam_infos):
+        cam = loadCam(args, id, cam_info, resolution_scale, encoder, mlp)
         camera_list.append(cam)
     return camera_list
 

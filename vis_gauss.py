@@ -2,21 +2,21 @@ import os
 import torch
 import open3d as o3d
 ###################################################
-from scene_score import Scene
-from scene_score.gaussian_model_score import GaussianModel as Gauss_score
-from scene_score.gaussian_model_feature import GaussianModel as GaussianModelFeature
-# from gaussian_renderer.__init__feature import render
-from gaussian_renderer.__init__dim16 import render
+from scene import Scene
+from scene.gaussian.gaussian_model_score import GaussianModel as Gauss_score
+from scene.gaussian.gaussian_model_feature import GaussianModel as GaussianModelFeature
+from gaussian_renderer import render
 ###################################################
 from argparse import ArgumentParser
 from arguments import ModelParams, PipelineParams, get_combined_args
-from utils.match.scoremap import one_channel_vis
+from utils.scoremap_vis import one_channel_vis
 from tqdm import tqdm
 import torch.nn.functional as F
 from render import feature_visualize_saving
 from PIL import Image
 import numpy as np
-from utils.match.match_img import find_small_circle_centers, sample_descriptors_fix_sampling, save_matchimg
+from utils.match.match_img import find_small_circle_centers, sample_descriptors_fix_sampling, \
+                                    save_matchimg, match_data
 from z_localization.loc_inference_ace import get_mlp_dataset
 from copy import deepcopy
 from matchers.lightglue import LightGlue
@@ -35,15 +35,11 @@ def get_new_gaussians(filter_th):
     flat_scores = scores.view(-1) 
     threshold = torch.quantile(flat_scores, filter_th)
     mask = flat_scores.detach() > threshold
-
     filtered_xyz = xyz[mask]
     filtered_scores = scores[mask.view(-1, 1, 1)]
-
     points_np = filtered_xyz.detach().cpu().numpy()
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(points_np)
-    # o3d.io.write_point_cloud(f"filtered_points_{threshold:.3f}.ply", pcd)
-    # breakpoint()
     gaussians._xyz = gaussians._xyz[mask]
     gaussians._features_dc = gaussians._features_dc[mask]
     gaussians._features_rest = gaussians._features_rest[mask]
@@ -58,21 +54,6 @@ def choose_th(feature, histogram_th):
     score_flat = feature.flatten()
     percentile_value = torch.quantile(score_flat, float(histogram_th))
     return percentile_value.item()
-
-
-def match_data(data, matcher, img0, img1):
-    pred = matcher(data)
-    m0 = pred['m0']
-    valid = (m0[0] > -1)
-    m0, m1 = data["keypoints0"][0][valid].cpu(), data["keypoints1"][0][m0[0][valid]].cpu()
-    result = {}
-    result['img0'] = img0
-    result['img1'] = img1
-    result['mkpt0'] = m0
-    result['mkpt1'] = m1
-    result['kpt0'] = data["keypoints0"].squeeze(0).cpu()
-    result['kpt1'] = data["keypoints1"].squeeze(0).cpu()
-    return result
 
 
 # ( bash zenith_scripts/twoPhase.sh )
@@ -105,9 +86,6 @@ if __name__=="__main__":
     encoder = SuperPoint(conf).to("cuda").eval()
     lg_th = 0.01
     my_hist = 0.9
-
-
-
     matcher = LightGlue({"filter_threshold": lg_th ,}).cuda().eval()
     mlp = get_mlp_dataset(16, dataset="pgt_7scenes_stairs").cuda().eval()
 
@@ -164,13 +142,11 @@ if __name__=="__main__":
                 if idx==0:
                     continue
                 pkg1 = render(view, gaussians, Pipe_param.extract(args), background)
-                
-                
                 s0, s1, f0, f1 = pkg0['score_map'], pkg1['score_map'], \
                                     pkg0['feature_map'], pkg1['feature_map']
                 
                 th0 = choose_th(s0, my_hist)
-                th1 = choose_th(s0, my_hist)
+                th1 = choose_th(s1, my_hist)
                 kpt0 = find_small_circle_centers(s0, threshold=th0, kernel_size=15).clone().detach()[:, [1, 0]]
                 kpt1 = find_small_circle_centers(s1, threshold=th1, kernel_size=15).clone().detach()[:, [1, 0]]
                 

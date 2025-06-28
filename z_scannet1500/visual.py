@@ -8,7 +8,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from utils.match.metrics_match import compute_metrics
 from scene.colmap_loader import read_intrinsics_binary
-from z_scannet1500.utils.match_utils import save_matchimg
+from z_scannet1500.utils.match_utils import save_matchimg_th
 from z_scannet1500.utils.utils import read_scannet_gray
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
@@ -180,7 +180,7 @@ def score_match_image(scene_name, pair_index,
     fm_path = f"{OUT_PATH}/{scene_name}_{pair_index}_score_feature_{pair[0]}_{pair[1]}.png"
     compute_metrics(data_fm)
     data_fm["matcher"] = "ours+LG"
-    save_matchimg(data_fm, fm_path)
+    save_matchimg_th(data_fm, fm_path)
     
 
 
@@ -213,7 +213,7 @@ def sp_image_match_image(encoder, matcher, scene_name, pair_index, out_name="raw
     data_fm["matcher"] = matcher_name
     fm_path = f"{OUT_PATH}/{scene_name}_{pair_index}_{matcher_name}_{pair[0]}_{pair[1]}.png"
     
-    save_matchimg(data_fm, fm_path)
+    save_matchimg_th(data_fm, fm_path)
 
 
 

@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from encoders.superpoint.superpoint import SuperPoint
 from matchers.MNN import NearestNeighborMatcher
-from utils.match.viz2d import plot_matches, plot_image_grid, plot_keypoints
+from utils.viz2d import plot_matches, plot_image_grid, plot_keypoints
 from mlp.mlp import get_mlp_vit
 
 def sample_descriptors_fix_sampling(kpt, desc, scale):

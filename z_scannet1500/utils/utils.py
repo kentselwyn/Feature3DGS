@@ -11,10 +11,9 @@ from scene import Scene
 from copy import deepcopy
 import matplotlib.pyplot as plt
 from encoders.utils import GroupParams
-from scene.gaussian_model import GaussianModel
+from scene.gaussian.gaussian_model import GaussianModel
 from utils.match.metrics_match import compute_metrics
-from utils.match.match_img import score_feature_match
-from utils.match.viz2d import plot_image_grid, plot_keypoints, plot_matches3
+from utils.match.match_img import score_feature_match, save_matchimg_th
 # given a source path, feature path, model output path, compute some pairs of images for matching
 # 2 pipelines
 # img + sp + LG      -> match
@@ -96,34 +95,6 @@ def print_eval_to_file(data, name, threshold=5e-4, file_path='output.txt'):
         else:
             f.write("epi_err max: No data (empty array)\n")
         f.write("\n\n")
-
-
-def save_matchimg(data, path, threshold=5e-4):
-    all_images, all_keypoints, all_matches = [], [], []
-    if isinstance(data["img0"], np.ndarray):
-        all_images.append([data["img0"], data["img1"]])
-    if isinstance(data["img0"], torch.Tensor):
-        all_images.append([data["img_save0"], data["img_save1"]])
-        # all_images.append([data["img0"], data["img1"]])
-    all_matches.append((data['mkpt0'].cpu(), data['mkpt1'].cpu()))
-    epi_good = data['epi_errs'][0] < threshold
-    precision = (epi_good.sum()/len(epi_good))*100
-    R_err = data['R_errs'][0]
-    t_err = data['t_errs'][0]
-    match_num = len(data['mkpt0'])
-    fig, axes = plot_image_grid(all_images, return_fig=True, set_lim=True)
-    if data.get('kpt0') is not None:
-        all_keypoints.append([data['kpt0'].cpu(), data['kpt1'].cpu()])
-        plot_keypoints(all_keypoints[0], axes=axes[0], colors="royalblue")
-    # breakpoint()
-    plot_matches3(*all_matches[0], color=None, axes=axes[0], alpha=0.5, line_width=0.8, 
-                  point_size=0.0, labels=epi_good,
-                #   data['matcher'], 
-                  captions=[f"Matches: {match_num}",
-                            f"Precision({threshold:.1e})({precision:.1f}%): {epi_good.sum()}/{len(epi_good)}",
-                            f"R_err={R_err:.2f}, t_err={t_err:.2f}"])
-    plt.savefig(path, bbox_inches='tight', pad_inches=0)
-    plt.close(fig)
 
 
 def load_array_from_s3(path, client, cv_type, use_h5py=False,):
@@ -217,7 +188,7 @@ if __name__=="__main__":
         fm_path = f"{match_img_path}/images/{idx}_score_feature_{n0}_{n1}.png"
         fm_name = f"{scene_name}_score_feature_{idx}_{n0}_{n1}"
         print_eval_to_file(data_fm, fm_name, threshold=5e-4, file_path=txt_file)
-        save_matchimg(data_fm, fm_path)
+        save_matchimg_th(data_fm, fm_path)
         R_err_fm_total+=data_fm['R_errs'][0]
         t_err_fm_total+=data_fm['t_errs'][0]
 

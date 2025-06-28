@@ -6,11 +6,11 @@ from scene import Scene
 from PIL import Image
 import numpy as np
 from copy import deepcopy
-from z_scannet1500.utils.utils import print_eval_to_file, save_matchimg
+from z_scannet1500.utils.utils import print_eval_to_file, save_matchimg_th
 from argparse import ArgumentParser, Namespace
 from utils.match.metrics_match import compute_metrics
 from utils.match.match_img import img_match2, score_feature_match
-from scene.gaussian_model import GaussianModel
+from scene.gaussian.gaussian_model import GaussianModel
 from utils.match.comm import gather
 from utils.match.metrics import aggregate_metrics
 from itertools import chain
@@ -119,7 +119,7 @@ def raw_eval(args, group, out_path, m_path, test_cams, scene_num, aggregate_list
         compute_metrics(data_im)
         im_path = f"{m_path}/images/{idx}_image_{n0}_{n1}.png"
         print_eval_to_file(data_im, im_name, threshold=5e-4, file_path=txt_file)
-        save_matchimg(data_im, im_path)
+        save_matchimg_th(data_im, im_path)
         keys = ['epi_errs', 'R_errs', 't_errs', 'inliers', 'identifiers']
         eval_data = {}
         for k in keys:
@@ -153,7 +153,7 @@ def feature_eval(args, group, out_path, m_path, test_cams, scene_num, aggregate_
             compute_metrics(data_fm)
             fm_path = f"{m_path}/images/{idx}_score_feature_{n0}_{n1}.png"
             print_eval_to_file(data_fm, fm_name, threshold=EPI_ERR_THR, file_path=txt_file)
-            save_matchimg(data_fm, fm_path)
+            save_matchimg_th(data_fm, fm_path)
             keys = ['epi_errs', 'R_errs', 't_errs', 'inliers', 'identifiers']
             eval_data = {}
             for k in keys:

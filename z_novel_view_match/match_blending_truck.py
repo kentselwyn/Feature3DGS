@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from argparse import ArgumentParser
 from render import  feature_visualize_saving
 from gaussian_renderer import GaussianModel, render
-from utils.match.scoremap import one_channel_vis
+from utils.scoremap_vis import one_channel_vis
 from arguments import ModelParams, PipelineParams, get_combined_args
 
 random.seed(20)

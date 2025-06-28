@@ -11,7 +11,7 @@ from utils.match.metrics_match import compute_metrics
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from eval.eval_scannet1500 import flattenList, gather
-from eval.eval import save_matchimg, read_scannet_gray
+from eval.eval import save_matchimg_th, read_scannet_gray
 from utils.match.match_img import score_feature_match, encoder_img_match, semi_img_match
 
 
@@ -132,7 +132,7 @@ def eval_blending_ours():
                 compute_metrics(data_fm)
                 data_fm["matcher"] = "ours+LG"
                 data_fm["identifiers"] = [fm_name]
-                save_matchimg(data_fm, fm_path, threshold=1e-4)
+                save_matchimg_th(data_fm, fm_path, threshold=1e-4)
 
                 keys = ['epi_errs', 'R_errs', 't_errs', 'inliers', 'identifiers']
                 eval_data = {}
@@ -175,7 +175,7 @@ def eval_blending_sp_lg():
                 compute_metrics(data_fm)
                 data_fm["matcher"] = "sp+LG"
                 data_fm["identifiers"] = [fm_name]
-                save_matchimg(data_fm, fm_path, threshold=1e-4)
+                save_matchimg_th(data_fm, fm_path, threshold=1e-4)
 
                 keys = ['epi_errs', 'R_errs', 't_errs', 'inliers', 'identifiers']
                 eval_data = {}
@@ -222,7 +222,7 @@ def eval_blending_aspan():
                 compute_metrics(data_fm)
                 data_fm["matcher"] = "ASpanFormer"
                 data_fm["identifiers"] = [fm_name]
-                save_matchimg(data_fm, fm_path, threshold=1e-4)
+                save_matchimg_th(data_fm, fm_path, threshold=1e-4)
 
                 keys = ['epi_errs', 'R_errs', 't_errs', 'inliers', 'identifiers']
                 eval_data = {}

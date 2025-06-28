@@ -16,15 +16,16 @@ from utils.graphics_utils import getWorld2View2, getProjectionMatrix, getIntrins
 
 
 class Camera(nn.Module):
-    def __init__(self, colmap_id, R, T, FoVx, FoVy, image, gt_alpha_mask,
-                 image_name, uid, 
-                 intrinsic_params,
-                 intrinsic_model,
-                 trans=np.array([0.0, 0.0, 0.0]), 
-                 scale=1.0, 
-                 data_device = "cpu",
-                 encoder = None,
-                 mlp = None
+    def __init__(self, colmap_id, R, T, FoVx, FoVy, focal_length,
+                 image, gt_alpha_mask,
+            image_name, uid, 
+            intrinsic_params,
+            intrinsic_model,
+            trans=np.array([0.0, 0.0, 0.0]), 
+            scale=1.0, 
+            data_device = "cpu",
+            encoder = None,
+            mlp = None
         ): 
         super(Camera, self).__init__()
         print(uid)
@@ -65,12 +66,12 @@ class Camera(nn.Module):
             x=mlp(desc.permute(1,2,0)).permute(2,0,1)
             score = torch.zeros((1, H, W), dtype=torch.float32).cuda()
             new_img = self.original_image.cuda()
-            plot_points(score, kpts)
             plot_points(new_img, kpts)
+            plot_points(score, kpts)
 
-        self.semantic_feature = x.detach().cpu().clone()
-        self.original_image = new_img.cpu()
+        # self.original_image = new_img.cpu()
         self.score_feature = score.cpu()
+        self.semantic_feature = x.detach().cpu().clone()
 
         self.zfar = 100.0
         self.znear = 0.01
@@ -90,6 +91,16 @@ class Camera(nn.Module):
             K = getIntrinsicMatrix(intrinsic_params, intrinsic_model)
             self.intrinsic_matrix = K
             self.intrinsic_params = intrinsic_params
+        else:
+            f = focal_length
+            W, H = self.image_width, self.image_height
+            cx, cy = W / 2, H / 2
+            K = np.array([
+                [f, 0, cx],
+                [0, f, cy],
+                [0, 0, 1]
+            ], dtype=np.float32)
+            self.intrinsic_matrix = K
     
     def update_RT(self, R, t):
         self.R = R

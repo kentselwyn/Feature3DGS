@@ -9,7 +9,8 @@ import open3d as o3d
 from typing import Tuple
 from matchers.LoFTR.utils.utils import rgb2loftrgray
 import torch.nn.functional as F
-from utils.match.match_img import extract_kpt, sample_descriptors_fix_sampling, save_matchimg, find_small_circle_centers
+from utils.match.match_img import extract_kpt, sample_descriptors_fix_sampling, save_matchimg, \
+                                    find_small_circle_centers
 from matchers.mast3r.mast3r.fast_nn import fast_reciprocal_NNs
 from matchers.mast3r.dust3r.dust3r.inference import inference
 from matchers.mast3r.dust3r.dust3r.utils.image import convert_tensor_to_dust3r_format

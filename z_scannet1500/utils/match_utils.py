@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from utils.match.metrics import aggregate_metrics
 from utils.match.metrics_match import compute_metrics
 from matchers.lightglue import LightGlue
-from z_scannet1500.utils.utils import print_eval_to_file, save_matchimg
+from z_scannet1500.utils.utils import print_eval_to_file, save_matchimg_th
 from utils.match.match_img import score_feature_match
 from scene.colmap_loader import read_intrinsics_binary
 from mlp.mlp import get_mlp_model
@@ -161,7 +161,7 @@ def match_eval(args):
             print_eval_to_file(data_fm, fm_name, threshold=5e-4, file_path=txt_file)
             data_fm["matcher"] = "ours+LG"
             if args.save_img:
-                save_matchimg(data_fm, fm_path)
+                save_matchimg_th(data_fm, fm_path)
             keys = ['epi_errs', 'R_errs', 't_errs', 'inliers', 'identifiers']
             eval_data = {}
             for k in keys:

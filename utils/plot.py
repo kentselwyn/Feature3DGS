@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from matchers.aliked import ALIKED
 from utils.utils import load_image2
 from encoders.DISK.disk_kornia import DISK
-from utils.match.scoremap import one_channel_vis
+from utils.scoremap_vis import one_channel_vis
 from encoders.superpoint.superpoint import SuperPoint
 from mlp.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment,\
                                     get_mlp_data_7scenes_Cambridege

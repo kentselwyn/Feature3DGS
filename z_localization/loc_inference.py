@@ -7,7 +7,7 @@ from scene import Scene, GaussianModel
 from utils.match.match_img import save_matchimg
 from utils.graphics_utils import fov2focal
 from utils.loc.depth import project_2d_to_3d
-from utils.match.scoremap import one_channel_vis
+from utils.scoremap_vis import one_channel_vis
 from gaussian_renderer.__init__loc import render
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint

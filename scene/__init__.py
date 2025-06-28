@@ -16,7 +16,7 @@ import scene.dataset_readers as dataset_readers
 from utils.system_utils import searchForMaxIteration
 from scene.camera_utils import cameraList_from_camInfos, camera_to_JSON
 from encoders.superpoint.superpoint import SuperPoint
-from mlp.mlp import get_mlp_dataset
+from mlp.mlp import get_mlp_new
 
 class Scene:
     def __init__(self, args : ModelParams, gaussians, load_iteration=None, shuffle=True, 
@@ -40,7 +40,8 @@ class Scene:
         self.test_cameras = {}
 
         if os.path.exists(os.path.join(args.source_path, "train", "poses")):
-            scene_info = dataset_readers.readSplitInfo(args.source_path, images=args.images, view_num=view_num)
+            scene_info = dataset_readers.readSplitInfo(args.source_path, images=args.images, view_num=view_num,
+                                                       mlp_dim=args.mlp_dim)
         elif os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = dataset_readers.readColmapSceneInfo(path=args.source_path, foundation_model=args.foundation_model, 
                                                           eval=args.eval, images=args.images, view_num=view_num, 
@@ -70,11 +71,13 @@ class Scene:
         conf = {
             "sparse_outputs": True,
             "dense_outputs": True,
-            "max_num_keypoints": 512,
-            "detection_threshold": 0.01,
+            "max_num_keypoints": args.num_kpts,
+            "detection_threshold": float(args.detect_th),
         }
-        encoder = SuperPoint(conf).to("cuda").eval()
-        mlp = get_mlp_dataset(16, dataset="pgt_7scenes_stairs").cuda().eval()
+        encoder = SuperPoint(conf).cuda().eval()
+        mlp = get_mlp_new(dim=args.mlp_dim, name=args.mlp_name).cuda().eval()
+        self.encoder = encoder
+        self.mlp = mlp
 
         for resolution_scale in resolution_scales:
             # if load_feature:

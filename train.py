@@ -104,7 +104,6 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
     tb_writer = prepare_output_and_logger(model_param)
     gaussians = GaussianModel(model_param.sh_degree)
     scene = Scene(model_param, gaussians, load_testcam=args.load_testcam)
-    breakpoint()
 
     # 2D semantic feature map CNN decoder
     viewpoint_stack = scene.getTrainCameras().copy()
@@ -159,9 +158,7 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
                                     mode='bilinear', align_corners=True).squeeze(0)
         score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], gt_score_map.shape[2]), 
                                   mode='bilinear', align_corners=True).squeeze(0)
-
         Ll1_feature = l1_loss(feature_map, gt_feature_map)
-
         score_loss_comp = None
         if model_param.score_loss=="L2":
             score_loss_comp = l2_loss
@@ -196,7 +193,6 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
                 # Keep track of max radii in image-space for pruning
                 gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
                 gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
-
                 if iteration > opt_param.densify_from_iter and iteration % opt_param.densification_interval == 0:
                     size_threshold = 20 if iteration > opt_param.opacity_reset_interval else None
                     gaussians.densify_and_prune(opt_param.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold)

@@ -13,7 +13,6 @@ def one_channel_vis(score):
     depth_colored = colormap(depth_tensor_squeezed.cpu().detach().numpy())
     depth_colored_rgb = depth_colored[:, :, :3]
     depth_image = Image.fromarray((depth_colored_rgb * 255).astype(np.uint8))
-
     return depth_image
 
 # python -m codes.vis_scoremap
