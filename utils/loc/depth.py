@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import open3d as o3d
 from plyfile import PlyData
-from scene import GaussianModel
+from scene.gaussian.gaussian_model import GaussianModel
 from argparse import ArgumentParser
 from gaussian_renderer import render
 from utils.match.match_img import extract_kpt
@@ -27,34 +27,19 @@ def project_2d_to_3d(keypoints, depth_map, K, w2c) -> torch.Tensor:
     """
     N = keypoints.shape[0]
     H, W = depth_map.shape[1], depth_map.shape[2]
-    
-    # Extract u and v from keypoints
     u = keypoints[:, 0]  # x-coordinates
     v = keypoints[:, 1]  # y-coordinates
-
-    # Ensure keypoints are within the depth map bounds
     u = u.clamp(0, W - 1)
     v = v.clamp(0, H - 1)
-
-    # Gather depth values for the keypoints
     depth = depth_map[0, v.long(), u.long()]  # Shape: [N]
-
-    # Backproject to camera coordinates
     uv1 = torch.stack([u, v, torch.ones_like(u)], dim=1).T  # Shape: [3, N]
     K_inv = torch.inverse(K)  # Shape: [3, 3]
     points_camera = (K_inv @ (uv1 * depth))  # Shape: [3, N]
-
-    # Convert to homogeneous coordinates (add a row of 1s)
     points_camera_h = torch.cat([points_camera, torch.ones((1, N), 
                                                 device=points_camera.device)], dim=0)  # Shape: [4, N]
-
-    # Transform to world coordinates
     w2c_inv = torch.inverse(w2c)  # Shape: [4, 4]
     points_world_h = (w2c_inv @ points_camera_h)  # Shape: [4, N]
-
-    # Drop the homogeneous component
     points_world = points_world_h[:3].T  # Shape: [N, 3]
-
     return points_world
 
 
@@ -68,68 +53,41 @@ def find_depth(model_param:ModelParams, pipe_param:PipelineParams,):
     # scene = Scene(model_param, gaussians, load_iteration=-1, shuffle=False)
     bg_color = [1,1,1] if model_param.white_background else [0, 0, 0]
     background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
-    
     # views = scene.getTestCameras()
-
     # view = views[0]
     view = torch.load(f'{model_path}/camera_seq-03-frame-000000.pt').cuda()
-    # breakpoint()
     R = view.R
     T = view.T
     w2c = torch.tensor(getWorld2View2(R, T))
-
     K = np.eye(3)
     focal_length = fov2focal(view.FoVx, view.image_width)
     K[0, 0] = K[1, 1] = focal_length
     K[0, 2] = view.image_width / 2
     K[1, 2] = view.image_height / 2
     K = torch.tensor(K, dtype=torch.float32)
-
     render_pkg = render(view, gaussians, pipe_param, background)
-    # torch.save(view, f'{model_path}/camera_{view.image_name}.pt')
-    # torch.save(render_pkg, f'{model_path}/render_pkg_{view.image_name}.pt')
-    # breakpoint()
     ply_path = "/home/koki/code/cc/feature_3dgs_2/data/cluster_centers.ply"
     plydata = PlyData.read(ply_path)
     vertex_data = plydata['vertex']
-
-    # Extract positions as a NumPy array
     positions = np.array([(vertex['x'], vertex['y'], vertex['z']) for vertex in vertex_data])
-    # Extract colors as a NumPy array
     colors = np.array([(vertex['red'], vertex['green'], vertex['blue']) for vertex in vertex_data])
-
-
-
     depth = render_pkg["depth"].cpu()
     score_map = render_pkg["score_map"].cpu()
-
-    # depth = depth + 0.1
-
-
-    # depth = 
     depth_img = one_channel_vis(depth)
     depth_img.save('depth_median.png')
-
-    # w2c = torch.eye(4, 4, device='cuda')
     centroids = extract_kpt(score_map, 0.5)
     centroids = centroids[:, [1, 0]]
-    # breakpoint()
-
     points_world = project_2d_to_3d(centroids, depth, K, w2c).cpu().detach().numpy()
-
     center_pcd = o3d.geometry.PointCloud()
     center_pcd.points = o3d.utility.Vector3dVector(points_world)
     center_pcd.paint_uniform_color([0, 0, 1])
     o3d.io.write_point_cloud("points_world_depth_median_adjust.ply", center_pcd)
-    # breakpoint()
+
 
 
 if __name__ == "__main__":
-    # Set up command line argument parser
     parser = ArgumentParser(description="Testing script parameters")
     Model_param = ModelParams(parser, sentinel=True)
     Pipe_param = PipelineParams(parser)
     args = get_combined_args(parser)
-
     find_depth(Model_param.extract(args), Pipe_param.extract(args))
-    # loca(Model_param.extract(args), Pipe_param.extract(args))

@@ -39,13 +39,11 @@ def readImages(renders_dir, gt_dir):
 
 
 def evaluate(model_paths):
-
     full_dict = {}
     per_view_dict = {}
     full_dict_polytopeonly = {}
     per_view_dict_polytopeonly = {}
     print("")
-
     for scene_dir in model_paths:
         try:
             print("Scene:", scene_dir)
@@ -53,26 +51,20 @@ def evaluate(model_paths):
             per_view_dict[scene_dir] = {}
             full_dict_polytopeonly[scene_dir] = {}
             per_view_dict_polytopeonly[scene_dir] = {}
-
             test_dir = Path(scene_dir) / "test_pairs"
-
             for method in os.listdir(test_dir):
                 print("Method:", method)
-
                 full_dict[scene_dir][method] = {}
                 per_view_dict[scene_dir][method] = {}
                 full_dict_polytopeonly[scene_dir][method] = {}
                 per_view_dict_polytopeonly[scene_dir][method] = {}
-
                 method_dir = test_dir / method
                 gt_dir = method_dir/ "image_gt"
                 renders_dir = method_dir / "image_renders"
                 renders, gts, image_names = readImages(renders_dir, gt_dir)
-
                 ssims = []
                 psnrs = []
                 lpipss = []
-
                 for idx in tqdm(range(len(renders)), desc="Metric evaluation progress"):
                     ssims.append(ssim(renders[idx], gts[idx]))
                     psnrs.append(psnr(renders[idx], gts[idx]))

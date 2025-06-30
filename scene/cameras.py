@@ -25,7 +25,8 @@ class Camera(nn.Module):
             scale=1.0, 
             data_device = "cpu",
             encoder = None,
-            mlp = None
+            mlp = None,
+            load_feature=True
         ): 
         super(Camera, self).__init__()
         print(uid)
@@ -57,21 +58,22 @@ class Camera(nn.Module):
             self.original_image *= torch.ones((1, self.image_height, self.image_width), device=self.data_device)
 
         _ , H, W = self.original_image.shape
-        with torch.no_grad():
-            data = {}
-            data["image"] = self.original_image.unsqueeze(0).cuda()
-            pred = encoder(data)
-            kpts = pred["keypoints"][0]
-            desc = pred["dense_descriptors"][0]
-            x=mlp(desc.permute(1,2,0)).permute(2,0,1)
-            score = torch.zeros((1, H, W), dtype=torch.float32).cuda()
-            new_img = self.original_image.cuda()
-            plot_points(new_img, kpts)
-            plot_points(score, kpts)
+        if load_feature:
+            with torch.no_grad():
+                data = {}
+                data["image"] = self.original_image.unsqueeze(0).cuda()
+                pred = encoder(data)
+                kpts = pred["keypoints"][0]
+                desc = pred["dense_descriptors"][0]
+                x=mlp(desc.permute(1,2,0)).permute(2,0,1)
+                score = torch.zeros((1, H, W), dtype=torch.float32).cuda()
+                new_img = self.original_image.cuda()
+                plot_points(new_img, kpts)
+                plot_points(score, kpts)
 
-        # self.original_image = new_img.cpu()
-        self.score_feature = score.cpu()
-        self.semantic_feature = x.detach().cpu().clone()
+                # self.original_image = new_img.cpu()
+                self.score_feature = score.cpu()
+                self.semantic_feature = x.detach().cpu().clone()
 
         self.zfar = 100.0
         self.znear = 0.01

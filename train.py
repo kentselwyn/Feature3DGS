@@ -180,14 +180,12 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
                 progress_bar.update(10)
             if iteration == opt_param.iterations:
                 progress_bar.close()
-
             # Log and save
             training_report(tb_writer, iteration, Ll1, Ll1_feature, Ll1_score, loss, l1_loss, 
                             iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe_param, background)) 
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
                 scene.save(iteration)
-                
             # Densification
             if iteration < opt_param.densify_until_iter:
                 # Keep track of max radii in image-space for pruning
@@ -197,7 +195,8 @@ def training(model_param, opt_param, pipe_param, testing_iterations, saving_iter
                     size_threshold = 20 if iteration > opt_param.opacity_reset_interval else None
                     gaussians.densify_and_prune(opt_param.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold)
                 
-                if iteration % opt_param.opacity_reset_interval == 0 or (model_param.white_background and iteration == opt_param.densify_from_iter):
+                if iteration % opt_param.opacity_reset_interval == 0 or (model_param.white_background 
+                                                                         and iteration == opt_param.densify_from_iter):
                     gaussians.reset_opacity()
             # Optimizer step
             if iteration < opt_param.iterations:

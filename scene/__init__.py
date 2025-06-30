@@ -21,7 +21,7 @@ from mlp.mlp import get_mlp_new
 class Scene:
     def __init__(self, args : ModelParams, gaussians, load_iteration=None, shuffle=True, 
                  resolution_scales=[1.0], load_feature=True, view_num=None, load_testcam=1,
-                 load_test_cams=True): 
+                 load_test_cams=True, test_only_view_num=False):
         """b
         :param path: Path to colmap scene main folder.
         """
@@ -41,11 +41,12 @@ class Scene:
 
         if os.path.exists(os.path.join(args.source_path, "train", "poses")):
             scene_info = dataset_readers.readSplitInfo(args.source_path, images=args.images, view_num=view_num,
-                                                       mlp_dim=args.mlp_dim)
+                                                       mlp_dim=args.mlp_dim, test_only_view_num=test_only_view_num)
         elif os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = dataset_readers.readColmapSceneInfo(path=args.source_path, foundation_model=args.foundation_model, 
                                                           eval=args.eval, images=args.images, view_num=view_num, 
-                                                          load_feature = load_feature, load_testcam=load_testcam)
+                                                          load_feature = load_feature, load_testcam=load_testcam,
+                                                          )
         else:
             assert False, "Could not recognize scene type!"
 
@@ -80,14 +81,13 @@ class Scene:
         self.mlp = mlp
 
         for resolution_scale in resolution_scales:
-            # if load_feature:
             print("Loading Training Cameras")
             self.train_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.train_cameras, resolution_scale, args,
-                                                                            encoder=encoder, mlp=mlp)
+                                                                            encoder=encoder, mlp=mlp, load_feature=load_feature)
             if load_test_cams:
                 print("Loading Test Cameras")
                 self.test_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.test_cameras, resolution_scale, args,
-                                                                               encoder=encoder, mlp=mlp)
+                                                                               encoder=encoder, mlp=mlp, load_feature=load_feature)
 
         if self.loaded_iter:
             self.gaussians.load_ply(os.path.join(self.model_path,

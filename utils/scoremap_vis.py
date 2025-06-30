@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from pathlib import Path
 
-
 def one_channel_vis(score):
     scale_nor = score.max().item()
     score_nor = score / scale_nor
@@ -20,8 +19,6 @@ if __name__=="__main__":
     path = Path("/home/koki/code/cc/feature_3dgs_2/all_data/scene0000_01/B/features/sp_feature_2/5366_smap_CxHxW.pt")
     smap = torch.load(path)
     print(smap.shape)
-
     name = path.stem
-
     d_smap = one_channel_vis(smap)
     d_smap.save(f"{name}.png")

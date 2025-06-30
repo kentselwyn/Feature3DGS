@@ -28,14 +28,16 @@ from copy import deepcopy
 from encoders.superpoint.superpoint import SuperPoint
 from utils.general_utils import PILtoTorch
 from utils.general_utils import safe_state
-from gaussian_renderer import GaussianModel
+from scene.gaussian.gaussian_model import GaussianModel
 from utils.graphics_utils import getWorld2View2
 from utils.scoremap_vis import one_channel_vis
 from arguments import ModelParams, PipelineParams, get_combined_args
 from utils.loc.loc_utils import choose_th
 from utils.match.match_img import find_small_circle_centers, sample_descriptors_fix_sampling, \
-                                    save_matchimg, match_data, save_matchimg_th
+                                    match_data, save_matchimg_th
 from utils.match.metrics_match import compute_metrics
+from detector.models import RefinedScoreNet
+import copy
 
 # utils
 def feature_visualize_saving(feature):
@@ -69,15 +71,43 @@ def match_and_save(kpts0, kpts1, desc0, desc1, img0, img1,
                         img1=img1)
     result.update(poses)
     compute_metrics(result)
-    save_matchimg_th(result, match_path)
+    log_path = f"{str(Path(match_path).parent.parent)}/log.txt"
+    threshold = args.match_precision_th
+    epi_good = result['epi_errs'][0] < threshold
+    precision = (epi_good.sum()/len(epi_good))*100
+    R_err = result['R_errs'][0]
+    t_err = result['t_errs'][0]
+    match_num = len(result['mkpt0'])
+    name = result['identifiers'][0]
+    with open(log_path, 'a') as f:  # 'a' for append mode
+        f.write(f"Name: {name}\n")
+        f.write(f"MatchNum: {match_num},   Precision: {precision:.2f}%\n")
+        # f.write(f"Precision     : {precision:.2f}%\n")
+        f.write(f"Rotation Error: {R_err:.4f}\n")
+        f.write(f"Transl. Error : {t_err:.4f}\n")
+        f.write(f"{'-'*40}\n\n")
+    save_matchimg_th(result, match_path, threshold=threshold)
+
 
 
 # render train, test
 def render_set(model_path, name, iteration, views, gaussians, pipe_param, background, 
                args, mlp, render_encoder):
+    ###################################################
+    myHist = args.hist
+    detector_kernel_size = 7
+    detector_hist = 0.9
+    ###################################################
     fin_name = f"ours_{iteration}_{len(views)}"
     desc_path = os.path.join(model_path, name, fin_name, "desc")
-    mat_path = os.path.join(model_path, name, fin_name, "match")
+    mat_path =  os.path.join(model_path, name, fin_name, 
+                             f"match_{detector_kernel_size}_{detector_hist}_{args.match_precision_th}")
+    ###################################################
+    RenderRe_path = os.path.join(mat_path, "RenderRender")
+    RenderGT_path = os.path.join(mat_path, "RenderGT")
+    GT_USE_FT_for_kpt = os.path.join(RenderGT_path, "kpt_from_FT")
+    GT_USE_SP_for_kpt = os.path.join(RenderGT_path, "kpt_from_SP")
+    GT_USE_DE_for_kpt = os.path.join(RenderGT_path, "kpt_from_DE")
     
     render_path = os.path.join(desc_path, "image", "renders")
     gts_path = os.path.join(desc_path, "image", "gt")
@@ -93,14 +123,24 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
     makedirs(gt_feature_map_path, exist_ok=True)
     makedirs(score_map_path, exist_ok=True)
     makedirs(gt_score_map_path, exist_ok=True)
+    if args.detector_path is not None:
+        model_path = args.detector_path
+        encoder = copy.deepcopy(render_encoder)
+        detector = RefinedScoreNet(encoder, False)
+        ckpt = torch.load(model_path)
+        detector.load_state_dict(ckpt)
+        detector = detector.cuda().eval()
+        for param in detector.parameters():
+            param.requires_grad = False
+        grad_params = [p for p in detector.parameters() if p.requires_grad]
     if args.render_kpt_desc:
         for _, view in enumerate(tqdm(views, desc="Rendering progress")):
             print(view.image_name)
             render_pkg = render(view, gaussians, pipe_param, background)
-            gt = view.original_image[0:3, :, :]
+            gt_img = view.original_image[0:3, :, :]
             gt_feature_map = view.semantic_feature.cuda() 
             torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, f"{view.image_name}.png")) 
-            torchvision.utils.save_image(gt, os.path.join(gts_path, f"{view.image_name}.png"))
+            torchvision.utils.save_image(gt_img, os.path.join(gts_path, f"{view.image_name}.png"))
             ############## visualize feature map
             feature_map = render_pkg["feature_map"][:16]
             feature_map = F.interpolate(feature_map.unsqueeze(0), 
@@ -125,25 +165,44 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
             gt_score_map_vis = one_channel_vis(gt_score_map)
             gt_score_map_vis.save(os.path.join(gt_score_map_path, f"{view.image_name}.png"))
             #############
+            ############# detector score map
+            #############
     if args.render_match:
-        myHist = args.hist
         matcher = LightGlue({"filter_threshold": args.lg_th ,}).cuda().eval()
-        rr_match_path = os.path.join(mat_path, f"0-RenderRender-Feat-Feat", f"{args.lg_th}_{myHist}")
-        rr_spsp_match_path = os.path.join(mat_path, f"1-RenderRender-SP-SP", f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}")
-        rg_match_path = os.path.join(mat_path, f"2-RenderGT-Feat-SP", f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}")
-        rgmlp_match_path = os.path.join(mat_path, f"3-RenderGT-Feat-SPMLP", f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}")
-        rg_spsp_match_path = os.path.join(mat_path, f"4-RenderGT-SP-SP", f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}")
-        rg_score_SP_path = os.path.join(mat_path, f"5-RenderGT-kpt(F)feat(SP)-SP", f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}")
-        rg_feat_score_path = os.path.join(mat_path, f"6-RenderGT-Feat-kpt(F)feat(SP)", f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}")
-        rg_score_score_path = os.path.join(mat_path, f"7-RenderGT-kpt(F)feat(SP)-kpt(F)feat(SP)", f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}")
-        makedirs(rr_match_path, exist_ok=True)
-        makedirs(rr_spsp_match_path, exist_ok=True)
-        makedirs(rg_match_path, exist_ok=True)
-        makedirs(rgmlp_match_path, exist_ok=True)
-        makedirs(rg_spsp_match_path, exist_ok=True)
-        makedirs(rg_score_SP_path, exist_ok=True)
-        makedirs(rg_feat_score_path, exist_ok=True)
-        makedirs(rg_score_score_path, exist_ok=True)
+        ########################################## RenderRe ##########################################
+        match_path_0 = os.path.join(RenderRe_path, f"(Ft)(Ft)-(Ft)(Ft)",    f"{args.lg_th}_{myHist}", "imgs")
+        match_path_1 = os.path.join(RenderRe_path, f"(Ft)(Ft)-(DE)(Ft)",    f"{args.lg_th}_{myHist}", "imgs")
+        match_path_11= os.path.join(RenderRe_path, f"(Ft)(Ft)-(SP)(Ft)",    f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}", "imgs")
+        match_path_2 = os.path.join(RenderRe_path, f"(SP)(SP)-(SP)(SP)",    f"{args.lg_th}_{args.sp_kpt}_{args.sp_th}", "imgs")
+        ########################################## RenderGT ##########################################
+        ################ SP
+        match_path_3 = os.path.join(GT_USE_SP_for_kpt, f"(Ft)(Ft)-(SP)(SP)",    f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}", "imgs")
+        match_path_4 = os.path.join(GT_USE_SP_for_kpt, f"(Ft)(Ft)-(SP)(SPMLP)", f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}", "imgs")
+        match_path_5 = os.path.join(GT_USE_SP_for_kpt, f"(SP)(SP)-(SP)(SP)",    f"{args.lg_th}_{args.sp_kpt}_{args.sp_th}", "imgs")
+        match_path_6 = os.path.join(GT_USE_SP_for_kpt, f"(Ft)(SP)-(SP)(SP)",    f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}", "imgs")
+        ################ Ft
+        match_path_7 = os.path.join(GT_USE_FT_for_kpt, f"(Ft)(Ft)-(Ft)(SP)",    f"{args.lg_th}_{myHist}", "imgs")
+        match_path_8 = os.path.join(GT_USE_FT_for_kpt, f"(Ft)(SP)-(Ft)(SP)",    f"{args.lg_th}_{myHist}", "imgs")
+        ################ DE
+        match_path_9 = os.path.join(GT_USE_DE_for_kpt, f"(Ft)(SP)-(DE)(SP)",    f"{args.lg_th}_{myHist}", "imgs")
+        match_path_10= os.path.join(GT_USE_DE_for_kpt, f"(Ft)(Ft)-(DE)(SP)",    f"{args.lg_th}_{myHist}", "imgs")
+        ##############################################################################################
+        makedirs(match_path_0, exist_ok=True)
+        makedirs(match_path_1, exist_ok=True)
+        makedirs(match_path_11, exist_ok=True)
+        makedirs(match_path_2, exist_ok=True)
+        ################ SP
+        makedirs(match_path_3, exist_ok=True)
+        makedirs(match_path_4, exist_ok=True)
+        makedirs(match_path_5, exist_ok=True)
+        makedirs(match_path_6, exist_ok=True)
+        ################ Ft
+        makedirs(match_path_7, exist_ok=True)
+        makedirs(match_path_8, exist_ok=True)
+        ################ DE
+        makedirs(match_path_9, exist_ok=True)
+        makedirs(match_path_10, exist_ok=True)
+        
         pkg0 = render(views[0], gaussians, Pipe_param.extract(args), background)
 
         K = torch.tensor((views[0].intrinsic_matrix).astype(np.float32))
@@ -178,61 +237,118 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
             img_render0 = pkg0['render']
             img_render1 = pkg1['render']
             img_gt1 = view.original_image
+            
+            # 用render kpt抽取superpoint desc, imgRender0
             tmp = {}
             tmp["image"] = img_render0.unsqueeze(0).cuda()
             SP_pred0 = render_encoder(tmp)
-            tmp = {}
-            tmp["image"] = img_render1.unsqueeze(0).cuda()
-            SP_pred1 = render_encoder(tmp)
+            feat_sp_dense0 = SP_pred0["dense_descriptors"].squeeze(0)
+            feat_sp0 = sample_descriptors_fix_sampling(kpt0, feat_sp_dense0, scale)
+            
+            # 單純測試
+            # 用render kpt抽取superpoint desc, imgGT1, 不會出現
             tmp = {}
             tmp["image"] = img_gt1.unsqueeze(0).cuda()
             SP_pred_gt1 = render_encoder(tmp)
-            
-            #### 0 RenderRender, 兩邊都用feature做match ##########################################
-            match_and_save(kpt0.unsqueeze(0), kpt1.unsqueeze(0), feat0, feat1,
-                           img_render0.permute(1, 2, 0), img_render1.permute(1, 2, 0),
-                           s0.shape[1:], pose_data, f"{rr_match_path}/{view.image_name}.png",
-                           matcher)
-            #### 1 RenderRender, ##########################################
-            match_and_save(SP_pred0["keypoints"], SP_pred1["keypoints"], SP_pred0["descriptors"], SP_pred1["descriptors"],
-                           img_render0.permute(1, 2, 0), img_render1.permute(1, 2, 0),
-                           s0.shape[1:], pose_data, f"{rr_spsp_match_path}/{view.image_name}.png",
-                           matcher)
-            #### 2 RenderGT,     ##########################################
-            match_and_save(kpt0.unsqueeze(0), SP_pred_gt1["keypoints"], feat0, SP_pred_gt1["descriptors"],
-                           img_render0.permute(1, 2, 0), img_gt1.permute(1, 2, 0),
-                           s0.shape[1:], pose_data, f"{rg_match_path}/{view.image_name}.png",
-                           matcher)
-            #### 3 ##########################################
-            match_and_save(kpt0.unsqueeze(0), SP_pred_gt1["keypoints"], feat0, mlp.decode(mlp(SP_pred_gt1["descriptors"])),
-                           img_render0.permute(1, 2, 0), img_gt1.permute(1, 2, 0),
-                           s0.shape[1:], pose_data, f"{rgmlp_match_path}/{view.image_name}.png",
-                           matcher)
-            #### 4 ##########################################
-            match_and_save(SP_pred0["keypoints"], SP_pred_gt1["keypoints"], SP_pred0["descriptors"], SP_pred_gt1["descriptors"],
-                           img_render0.permute(1, 2, 0), img_gt1.permute(1, 2, 0),
-                           s0.shape[1:], pose_data, f"{rg_spsp_match_path}/{view.image_name}.png",
-                           matcher)
-            #### 5 ##########################################
-            feat_sp_dense0 = SP_pred0["dense_descriptors"].squeeze(0)
-            feat_sp0 = sample_descriptors_fix_sampling(kpt0, feat_sp_dense0, scale)
-            match_and_save(kpt0.unsqueeze(0), SP_pred_gt1["keypoints"], feat_sp0, SP_pred_gt1["descriptors"],
-                           img_render0.permute(1, 2, 0), img_gt1.permute(1, 2, 0),
-                           s0.shape[1:], pose_data, f"{rg_score_SP_path}/{view.image_name}.png",
-                           matcher)
-            #### 6 ##########################################
             feat_sp_gt_dense1 = SP_pred_gt1["dense_descriptors"].squeeze(0)
-            feat_sp_gt_1 = sample_descriptors_fix_sampling(kpt1, feat_sp_gt_dense1, scale)
-            match_and_save(kpt0.unsqueeze(0), kpt1.unsqueeze(0), feat0, feat_sp_gt_1,
-                           img_render0.permute(1, 2, 0), img_gt1.permute(1, 2, 0),
-                           s0.shape[1:], pose_data, f"{rg_feat_score_path}/{view.image_name}.png",
+            feat_sp1_gt = sample_descriptors_fix_sampling(kpt1, feat_sp_gt_dense1, scale)
+
+            # detection part
+            tmp = {}
+            tmp["image"] = img_gt1.unsqueeze(0).cuda()
+            detect_gt_map1 = detector(tmp["image"])[0]
+            th_detect = choose_th(detect_gt_map1, detector_hist)
+            detect_kpt_gt1 = find_small_circle_centers(detect_gt_map1, threshold=th_detect, kernel_size=detector_kernel_size).clone().detach()[:, [1, 0]]
+            # 用detect kpt抽取 superpoint desc1
+            feat_sp1_gt_detect = sample_descriptors_fix_sampling(detect_kpt_gt1, feat_sp_gt_dense1, scale)
+            # 用detect kpt抽取 render desc1
+            feat1_detect =       sample_descriptors_fix_sampling(detect_kpt_gt1, f1,                scale)
+            feat1_detect = mlp.decode(feat1_detect)
+            # 用SP kpt抽取 render desc1
+            featttttt0 = sample_descriptors_fix_sampling(SP_pred_gt1["keypoints"][0], f1,           scale)
+            featttttt0 = mlp.decode(featttttt0)
+            ########################################################################################### RenderRe ##########################################
+            ########################################## 兩邊都render, 不會出現 ####################
+            #### (Ft)(Ft)-(Ft)(Ft) 看render情況下ours
+            match_and_save(kpt0.unsqueeze(0),              kpt1.unsqueeze(0), 
+                           feat0,                          feat1,
+                           img_render0.permute(1, 2, 0),   img_render1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,        f"{match_path_0}/{view.image_name}.png",
                            matcher)
-            #### 7 ##########################################
-            match_and_save(kpt0.unsqueeze(0), kpt1.unsqueeze(0), feat_sp0, feat_sp_gt_1,
-                           img_render0.permute(1, 2, 0), img_gt1.permute(1, 2, 0),
-                           s0.shape[1:], pose_data, f"{rg_score_score_path}/{view.image_name}.png",
+            #### (Ft)(Ft)-(DE)(Ft) 看使用 detector+render feature 的match情況
+            match_and_save(kpt0.unsqueeze(0),             detect_kpt_gt1.unsqueeze(0), 
+                           feat0,                         feat1_detect,
+                           img_render0.permute(1, 2, 0),  img_render1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,       f"{match_path_1}/{view.image_name}.png",
                            matcher)
-            ##############################################
+            #### (Ft)(Ft)-(SP)(Ft) 看使用 SP kpt+render feature 的match情況
+            match_and_save(kpt0.unsqueeze(0),             SP_pred_gt1["keypoints"], 
+                           feat0,                         featttttt0,
+                           img_render0.permute(1, 2, 0),  img_render1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,       f"{match_path_11}/{view.image_name}.png",
+                           matcher)
+            #### (SP)(SP)-(SP)(SP) 看render情況下rival的情況
+            tmp = {}
+            tmp["image"] = img_render1.unsqueeze(0).cuda()
+            SP_pred1 = render_encoder(tmp)
+            match_and_save(SP_pred0["keypoints"],          SP_pred1["keypoints"], 
+                           SP_pred0["descriptors"],        SP_pred1["descriptors"],
+                           img_render0.permute(1, 2, 0),   img_render1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,        f"{match_path_2}/{view.image_name}.png",
+                           matcher)
+            ########################################################################################### RenderGT ##########################################
+            ########################################## 用SP抽GT keypoints 真實情況 #####################
+            #### (Ft)(Ft)-(SP)(SP) ours目前localizae方法
+            match_and_save(kpt0.unsqueeze(0),             SP_pred_gt1["keypoints"], 
+                           feat0,                         SP_pred_gt1["descriptors"],
+                           img_render0.permute(1, 2, 0),  img_gt1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,       f"{match_path_3}/{view.image_name}.png",
+                           matcher)
+            #### (Ft)(Ft)-(SP)(SPMLP) ours目前localizae方法+MLP
+            match_and_save(kpt0.unsqueeze(0),             SP_pred_gt1["keypoints"], 
+                           feat0,                         mlp.decode(mlp(SP_pred_gt1["descriptors"])),
+                           img_render0.permute(1, 2, 0),  img_gt1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,       f"{match_path_4}/{view.image_name}.png",
+                           matcher)
+            #### (SP)(SP)-(SP)(SP)  rival目前localize方法
+            match_and_save(SP_pred0["keypoints"],         SP_pred_gt1["keypoints"], 
+                           SP_pred0["descriptors"],       SP_pred_gt1["descriptors"],
+                           img_render0.permute(1, 2, 0),  img_gt1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,       f"{match_path_5}/{view.image_name}.png",
+                           matcher)
+            #### (Ft)(SP)-(SP)(SP)  ours目前localizae方法, feature從SP抽取
+            match_and_save(kpt0.unsqueeze(0),             SP_pred_gt1["keypoints"], 
+                           feat_sp0,                      SP_pred_gt1["descriptors"],
+                           img_render0.permute(1, 2, 0),  img_gt1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,       f"{match_path_6}/{view.image_name}.png",
+                           matcher)
+            ########################################## 用Ft抽GT keypoints 不會出現 單純測試 ###############
+            #### (Ft)(Ft)-(Ft)(SP) 使用render的keypoints抽取ground truth SP的desc, 效果不錯, 一邊用Ft, 一邊用SP
+            match_and_save(kpt0.unsqueeze(0),             kpt1.unsqueeze(0), 
+                           feat0,                         feat_sp1_gt,
+                           img_render0.permute(1, 2, 0),  img_gt1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,       f"{match_path_7}/{view.image_name}.png",
+                           matcher)
+            #### (Ft)(SP)-(Ft)(SP)  
+            match_and_save(kpt0.unsqueeze(0),             kpt1.unsqueeze(0), 
+                           feat_sp0,                      feat_sp1_gt,
+                           img_render0.permute(1, 2, 0),  img_gt1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,       f"{match_path_8}/{view.image_name}.png",
+                           matcher)
+            ########################################## 用DE抽GT keypoints, 真實情況, 看detector效果 #######
+            #### (Ft)(SP)-(DE)(SP) 兩邊都用SP feature
+            match_and_save(kpt0.unsqueeze(0),             detect_kpt_gt1.unsqueeze(0), 
+                           feat_sp0,                      feat_sp1_gt_detect,
+                           img_render0.permute(1, 2, 0),  img_gt1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,       f"{match_path_9}/{view.image_name}.png",
+                           matcher)
+            #### (Ft)(Ft)-(DE)(SP) render的用Ft
+            match_and_save(kpt0.unsqueeze(0),             detect_kpt_gt1.unsqueeze(0), 
+                           feat0,                         feat_sp1_gt_detect,
+                           img_render0.permute(1, 2, 0),  img_gt1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,       f"{match_path_10}/{view.image_name}.png",
+                           matcher)
+            ##########################################
             pkg0 = deepcopy(pkg1)
             T0 = deepcopy(T1)
 
@@ -299,23 +415,21 @@ def render_novel_views(model_path, name, iteration, views, gaussians, pipe_param
         gt_feature_map = view.semantic_feature.cuda()
         feature_map = render_pkg["feature_map"]
         feature_map = F.interpolate(feature_map.unsqueeze(0), 
-                                    size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
-
+                                    size=(gt_feature_map.shape[1], gt_feature_map.shape[2]), 
+                                            mode='bilinear', align_corners=True).squeeze(0) ###
         feature_map_vis = feature_visualize_saving(feature_map)
         Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8))\
             .save(os.path.join(feature_map_path,view.image_name + "_feature_vis.png"))
-
         feature_map = feature_map.cpu().numpy().astype(np.float16)
         torch.save(torch.tensor(feature_map).half(), os.path.join(saved_feature_path, view.image_name + "_fmap_CxHxW.pt"))
-
         ########## visualize score map
         gt_score_map = view.score_feature.cuda()
         score_map = render_pkg['score_map']
         score_map = F.interpolate(score_map.unsqueeze(0), size=(gt_score_map.shape[1], 
-                                                                gt_score_map.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
+                                                                gt_score_map.shape[2]), mode='bilinear', 
+                                                                align_corners=True).squeeze(0) ###
         score_map_vis = one_channel_vis(score_map)
         score_map_vis.save(os.path.join(score_map_path, view.image_name + "_score_vis.png"))
-        
         score_map = score_map.cpu().numpy().astype(np.float16)
         torch.save(torch.tensor(score_map).half(), os.path.join(saved_score_path, view.image_name + "_smap_CxHxW.pt"))
 
@@ -459,16 +573,19 @@ def render_sets(model_param : ModelParams, iteration : int, pipe_param : Pipelin
 
 
 
+# ( bash z_scripts/train.sh )
 if __name__ == "__main__":
     parser = ArgumentParser(description="Testing script parameters")
     Model_param = ModelParams(parser, sentinel=True)
     Pipe_param = PipelineParams(parser)
+    parser.add_argument("--detector_path", default=None, type=str)
     parser.add_argument("--iteration", default=-1, type=int)
     parser.add_argument("--view_num", default=-1, type=int)
     parser.add_argument("--lg_th", default=0.01, type=float)
     parser.add_argument("--hist", default=0.95, type=float)
     parser.add_argument("--sp_kpt", default=512, type=int)
     parser.add_argument("--sp_th", default=0.005, type=float)
+    parser.add_argument("--match_precision_th", default=5e-6, type=float)
     # render cams
     parser.add_argument("--render_train", action="store_true")
     parser.add_argument("--render_test", action="store_true")

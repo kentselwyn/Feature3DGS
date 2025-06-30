@@ -5,14 +5,14 @@ import torch
 import dsacstar
 import numpy as np
 from pathlib import Path
-from ace.dataset import CamLocDataset
-from ace.ace_network import Regressor
+from data.ace.dataset import CamLocDataset
+from data.ace.ace_network import Regressor
 from argparse import ArgumentParser
 import utils.loc.loc_utils as loc_utils
 from torch.cuda.amp import autocast
 from scene_ori import Scene, GaussianModel
 from torch.utils.data import DataLoader
-from utils_ori.graphics_utils import fov2focal
+from utils.graphics_utils import fov2focal
 from utils.loc.depth import project_2d_to_3d
 from gaussian_renderer.__init__ori import render
 from matchers.lightglue import LightGlue
@@ -101,7 +101,7 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 query_render = gt_im
                 result = None
                 if args.match_type==0:
-                    result = loc_utils.img_match2(query_render, db_render, encoder, matcher)
+                    result = loc_utils.img_match_rival(query_render, db_render, encoder, matcher)
                 if args.match_type==1:
                     rotError_final, transError_final = loc_utils.img_match_mast3r(query_render, db_render, matcher, 
                                                              K, depth_map=db_depth, w2c=w2c, gt_pose_44=gt_pose_44)

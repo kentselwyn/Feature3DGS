@@ -6,12 +6,13 @@ import random
 import dsacstar
 import numpy as np
 from pathlib import Path
-from ace.dataset import CamLocDataset
-from ace.ace_network import Regressor
+from data.ace.dataset import CamLocDataset
+from data.ace.ace_network import Regressor
 from argparse import ArgumentParser
 import utils.loc.loc_utils as loc_utils
 from torch.cuda.amp import autocast
-from scene import Scene, GaussianModel
+from scene import Scene
+from scene.gaussian.gaussian_model import GaussianModel
 from torch.utils.data import DataLoader
 from utils.graphics_utils import fov2focal
 from utils.loc.depth import project_2d_to_3d
@@ -131,7 +132,7 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 elif args.match_type==1:
                     result = loc_utils.feat_fromImg_match(query_render, db_score, db_render, encoder, matcher, args)
                 elif args.match_type==2:
-                    result = loc_utils.img_match2(query_render, db_render, encoder, matcher)
+                    result = loc_utils.img_match_rival(query_render, db_render, encoder, matcher)
                 elif args.match_type==3:
                     result = loc_utils.img_match_mast3r(query_render, db_render, matcher)
                 elif args.match_type==4:

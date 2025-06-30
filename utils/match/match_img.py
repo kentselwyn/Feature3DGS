@@ -58,9 +58,6 @@ def render_gaussian_kpt_map(kpts: torch.Tensor, shape: tuple, sigma=2.0):
     return heatmap
 
 
-
-
-
 def generate_gaussian_kernel(size=7, sigma=1.0):
     """產生 2D Gaussian kernel"""
     x = torch.arange(size).float() - size // 2
@@ -78,25 +75,17 @@ def fast_render_gaussian_kpt_map(kpts: torch.Tensor, shape: tuple, sigma=1.5, ke
     """
     H, W = shape
     heatmap = torch.zeros((1, H, W), device=device)
-
     # 產生 Gaussian kernel（例如 7x7）
     kernel = generate_gaussian_kernel(kernel_size, sigma).to(device)
-
     offset = kernel_size // 2
     kpts = kpts.long()
-
     for y, x in kpts:
         if offset <= y < H - offset and offset <= x < W - offset:
             heatmap[0, y - offset: y + offset + 1, x - offset: x + offset + 1] += kernel
-
     # 可選：正規化到 [0, 1]
     if heatmap.max() > 0:
         heatmap /= heatmap.max()
-
     return heatmap
-
-
-
 
 
 
@@ -113,11 +102,8 @@ def find_small_circle_centers(score_map, threshold, kernel_size=3):
     """
     score_map = score_map.cuda()
     pooled = F.max_pool2d(score_map, kernel_size=kernel_size, stride=1, padding=kernel_size // 2)
-
     maxima = (score_map == pooled) & (score_map > threshold)
-
     positions = torch.nonzero(maxima[0], as_tuple=False)
-
     return positions
 
 
@@ -133,37 +119,27 @@ def sample_descriptors_fix_sampling(kpt, desc, scale):
 
 
 def match_image(img0, img1, kpt0, kpt1, desc0, desc1, mlp_dim, matcher):
-    
     mlp = get_mlp_model(mlp_dim).to("cuda")
     data = {}
     kpt0 = kpt0.to(device).unsqueeze(0).float()
     kpt1 = kpt1.to(device).unsqueeze(0).float()
-
     data["keypoints0"] = kpt0
     data["keypoints1"] = kpt1
     data["descriptors0"] = mlp.decode(desc0.to(device)).unsqueeze(0).float()
     data["descriptors1"] = mlp.decode(desc1.to(device)).unsqueeze(0).float()
     data["image_size"] = img0.shape[:2]
-
     pred = matcher(data)
-    
     m0 = pred['m0']
     m1 = pred['m1']
     valid = (m0[0] > -1)
-
     m_kpts0, m_kpts1 = kpt0[0][valid].cpu().numpy(), kpt1[0][m0[0][valid]].cpu().numpy()
-    
-
     all_images, all_keypoints, all_matches = [], [], []
     all_images.append([img0, img1])
     all_keypoints.append([kpt0[0].to("cpu"), kpt1[0].to("cpu")])
     all_matches.append((m_kpts0, m_kpts1))
-
-
     fig, axes = plot_image_grid(all_images, return_fig=True, set_lim=True)
     plot_keypoints(all_keypoints[0], axes=axes[0], colors="royalblue")
     plot_matches(*all_matches[0], color=None, axes=axes[0], alpha=0.5, line_width=1.0, point_size=0.0)
-
     return fig
 
 
@@ -171,22 +147,16 @@ def load_kpt_desc(name, folder_path):
     i_path = f"{folder_path}/image_renders/{name}.png"
     s_path = f"{folder_path}/score_tensors/{name}_smap_CxHxW.pt"
     f_path = f"{folder_path}/feature_tensors/{name}_fmap_CxHxW.pt"
-
     score = torch.load(s_path)
     feat = torch.load(f_path)
-
     kpts = extract_kpt(score)
-
     # [h, w] to [w, h]
     kpts = torch.tensor(kpts)[:, [1, 0]]
-
     _, h, w = score.shape
     scale = torch.tensor([w, h])
     desc = sample_descriptors_fix_sampling(kpts, feat, scale)
-
     image = Image.open(i_path)
     image = np.array(image)
-
     return image, kpts, desc
 
 
@@ -305,9 +275,6 @@ state_dict = torch.hub.load_state_dict_from_url(
                 "https://github.com/Shiaoming/ALIKED/raw/main/models/{}.pth".format("aliked-n16"), map_location="cpu"
             )
 desc_head_state_dict = {k.replace('desc_head.', ''): v for k, v in state_dict.items() if k.startswith('desc_head')}
-
-
-
 desc_head.load_state_dict(desc_head_state_dict)
 desc_head = desc_head.to(device)
 
@@ -494,10 +461,6 @@ def match_data(data, matcher, img0, img1):
 def save_matchimg_th(data, path, threshold=5e-6):
     all_images, all_keypoints, all_matches = [], [], []
     all_images.append([data["img0"].detach().cpu().numpy(), data["img1"].detach().cpu().numpy()])
-    # if isinstance(data["img0"], np.ndarray):
-    #     all_images.append([data["img0"], data["img1"]])
-    # if isinstance(data["img0"], torch.Tensor):
-    #     all_images.append([data["img_save0"], data["img_save1"]])
     all_matches.append((data['mkpt0'].cpu(), data['mkpt1'].cpu()))
     epi_good = data['epi_errs'][0] < threshold
     precision = (epi_good.sum()/len(epi_good))*100

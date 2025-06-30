@@ -605,32 +605,19 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def test_model():
     model = __main_model__({}).train().to(device)
     # data = get_homography_data(batch=4)
-
     init_cp = torch.load("/home/koki/gluetrain/outputs/train/records/superglue_lightglue/240410_sp_lg/checkpoint_best.tar", map_location="cpu")
-
     model_dict = init_cp['model']
     state_dict = {k.replace('matcher.','',1): v for k, v in model_dict.items() if k.split('.')[0] == "matcher"}
-
-
     model.load_state_dict(state_dict)
     # pred = model(data)
-
     # loss, metric = model.loss(pred, data)
     # gt_neg0 = (data["gt_matches0"] == -1).float()
     # gt_neg1 = (data["gt_matches1"] == -1).float()
-
-
     # print(pred.keys())
     # from pprint import pprint
     # pprint(loss)
     # pprint(metric)
 
-
-
 # python -m core.models.matcher.lightglue
 if __name__=="__main__":
     test_model()
-
-
-
-

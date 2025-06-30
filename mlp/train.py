@@ -78,10 +78,8 @@ def main(args, conf):
     params = [param for param in model.parameters() if param.requires_grad]
     optimizer = torch.optim.Adam(params , lr=args.lr)
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_schedule)
-    
     best_vloss = float("inf")
     l2_loss = nn.MSELoss()
-    
     # Logging
     writer = SummaryWriter(f"{args.out_path}/runs/{timestamp}")
     logger.info("Training started.")
@@ -93,16 +91,13 @@ def main(args, conf):
         
         for index, data in enumerate(loader):
             data = batch_to_device(data, device, non_blocking=True)
-            
             optimizer.zero_grad()
             pred = model(data)
             loss = l2_loss(pred, data)
             loss.backward()
             optimizer.step()
             scheduler.step()
-            
             total_loss += loss.item()
-            
             if index % 99 == 0:
                 total_iteration = len(loader) * epoch + index
                 writer.add_scalar("train/mse", loss.item(), total_iteration)

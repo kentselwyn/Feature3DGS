@@ -177,14 +177,12 @@ def aggregate_metrics(metrics, epi_err_thr=5e-4):
     unq_ids = OrderedDict((iden, id) for id, iden in enumerate(metrics['identifiers']))
     unq_ids = list(unq_ids.values())
     logger.info(f'Aggregating metrics over {len(unq_ids)} unique items...')
-
     # pose auc
     angular_thresholds = [1, 5, 10, 20]
     pose_errors = np.max(np.stack([metrics['R_errs'], metrics['t_errs']]), axis=0)[unq_ids]
     aucs = error_auc(pose_errors, angular_thresholds)  # (auc@5, auc@10, auc@20)
-
     # matching precision
     dist_thresholds = [epi_err_thr]
-    precs = epidist_prec(np.array(metrics['epi_errs'], dtype=object)[unq_ids], dist_thresholds, True)  # (prec@err_thr)
-
+    precs = epidist_prec(np.array(metrics['epi_errs'], 
+                                  dtype=object)[unq_ids], dist_thresholds, True)  # (prec@err_thr)
     return {**aucs, **precs}

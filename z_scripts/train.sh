@@ -17,11 +17,15 @@ start_loc=0
     render_num=25
     sp_kpt=1024
     sp_th=0.0
+    hist=0.95
+    match_precision_th="5e-5"
 #################################################
 }
 out_name="1_${iterations}_${score_loss}_${score_scale}_${num_kpts}_${detect_th}_${mlp_dim}_${mlp_name}"
 SOURSE_PATH="/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/$data_name/$scene_name"
 OUT_PATH="$SOURSE_PATH/outputs/$out_name"
+
+detector_path="data/detector/7_scenes/pgt_7scenes_stairs/L2_0.0001_sptrain_normalizeRemoveNeg/epoch_138.pt"
 
 # ( bash z_scripts/train.sh )
 if (( start_train )); then
@@ -30,7 +34,11 @@ if (( start_train )); then
                     --num_kpts $num_kpts --detect_th $detect_th --mlp_dim $mlp_dim --mlp_name $mlp_name
 fi
 
+# render_train, render_test
+# render_kpt_desc, render_match
 if (( start_render )); then
-    python render.py -m $OUT_PATH --iteration $iterations --render_test --render_match --view_num $render_num \
-                        --sp_kpt $sp_kpt --sp_th $sp_th
+    python render.py -m $OUT_PATH --iteration $iterations --render_test --view_num $render_num \
+                        --sp_kpt $sp_kpt --sp_th $sp_th --detector_path $detector_path --hist $hist\
+                        --match_precision_th $match_precision_th\
+                        --render_match
 fi

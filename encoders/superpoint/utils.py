@@ -7,7 +7,6 @@ import numpy as np
 import kornia
 
 
-
 def pad_to_length(
     x,
     length: int,
@@ -21,15 +20,12 @@ def pad_to_length(
     if d == length:
         return x
     shape[pad_dim] = length - d
-
     low, high = bounds
-
     if mode == "zeros":
         xn = torch.zeros(*shape, device=x.device, dtype=x.dtype)
     elif mode == "ones":
         xn = torch.ones(*shape, device=x.device, dtype=x.dtype)
     elif mode == "random":
-
         low = low if low is not None else x.min()
         high = high if high is not None else x.max()
         xn = torch.empty(*shape, device=x.device).uniform_(low, high)
@@ -63,9 +59,6 @@ def pad_and_stack(
     return y
 
 
-
-
-
 def read_image(path: Path, grayscale: bool = False) -> np.ndarray:
     """Read an image from path as RGB or grayscale"""
     if not Path(path).exists():
@@ -95,8 +88,6 @@ def load_image(path: Path, grayscale=False) -> torch.Tensor:
     return numpy_image_to_torch(image)
 
 
-
-
 def resize_image(image: torch.Tensor, size: list):
     image = kornia.geometry.transform.resize(
                 image,
@@ -109,14 +100,8 @@ def resize_image(image: torch.Tensor, size: list):
     return image
 
 
-
 # python -m encoders.superpoint.utils
 if __name__=="__main__":
     x=torch.load('/home/koki/code/feature_3dgs/scene000000_B/sam_embeddings/3364_fmap_CxHxW.pt')
     print(x.shape) # torch.Size([256, 48, 64])
-
     breakpoint()
-
-
-
-
