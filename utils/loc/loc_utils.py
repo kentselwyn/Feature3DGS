@@ -268,7 +268,7 @@ def img_match_mast3r(img0, img1, model, K, depth_map, w2c, gt_pose_44):
         predict_c2w_refine[:3,:3] = R.T
         predict_c2w_refine[:3,3] = trans.reshape(3)
         ini_rot_error,ini_translation_error=cal_campose_error(predict_c2w_ini, gt_c2w_pose)
-        refine_rot_error,refine_translation_error=cal_campose_error(predict_c2w_refine, gt_c2w_pose)
+        refine_rot_error, refine_translation_error=cal_campose_error(predict_c2w_refine, gt_c2w_pose)
         combined_list = rotmat2qvec(np.linalg.inv(predict_c2w_refine)[:3,:3]).tolist() + \
             np.linalg.inv(predict_c2w_refine)[:3,3].tolist()
         output_line = ' '.join(map(str, combined_list))
@@ -447,4 +447,31 @@ def img_match_kptSPfeat(args,
 def img_match_RenderRender(args, mlp, matcher,
                             scoremap0, featmap0,
                             scoremap1, featmap1,):
-    pass
+    th0 = choose_th(scoremap0, args.kpt_hist)
+    th1 = choose_th(scoremap1, args.kpt_hist)
+    kpt0 = find_small_circle_centers(scoremap0, threshold=th0, kernel_size=args.kernel_size).clone().detach()[:, [1, 0]]
+    kpt1 = find_small_circle_centers(scoremap1, threshold=th1, kernel_size=args.kernel_size).clone().detach()[:, [1, 0]]
+    _, h, w = scoremap0.shape
+    scale = torch.tensor([w, h]).to(scoremap0)
+    feat0 = sample_descriptors_fix_sampling(kpt0, featmap0, scale)
+    feat1 = sample_descriptors_fix_sampling(kpt1, featmap1, scale)
+    feat0 = mlp.decode(feat0)
+    feat1 = mlp.decode(feat1)
+    #######################################
+    data = {}
+    data["keypoints0"] = kpt0.unsqueeze(0)
+    data["keypoints1"] = kpt1.unsqueeze(0)
+    data["descriptors0"] = feat0
+    data["descriptors1"] = feat1
+    data["image_size"] = scoremap1.shape[1:]
+    pred = matcher(data)
+    #######################################
+    m0 = pred['m0']
+    valid = (m0[0] > -1)
+    m0, m1 = data["keypoints0"][0][valid].cpu(), data["keypoints1"][0][m0[0][valid]].cpu()
+    result = {}
+    result['mkpt0'] = m0
+    result['mkpt1'] = m1
+    result['kpt0'] = kpt0.cpu()
+    result['kpt1'] = kpt1.cpu()
+    return result

@@ -22,12 +22,20 @@ from encoders.superpoint.superpoint import SuperPoint
 from utils.loc.pycolmap_utils import opencv_to_pycolmap_pnp
 from arguments import ModelParams, PipelineParams, get_combined_args
 from mlp.mlp import get_mlp_new
+from datetime import datetime
 from utils.match.match_img import save_matchimg_th
 from utils.match.metrics_match import compute_metrics
 
 
-def log_all_err(log_path):
-    pass
+def log_all_err(log_path, index, name,
+                rotError, traError, rotError_final, traError_final,
+                elapsed_time):
+    with open(log_path, 'a') as f:
+        f.write(f"{'-'*40}\n")
+        f.write(f"{index}, {name}, {elapsed_time*1000:.1f}ms\n")
+        f.write(f"{rotError:.2f},  {rotError_final:.2f}\n")
+        f.write(f"{traError:.2f},  {traError_final:.2f}\n")
+        f.write(f"{'-'*40}\n\n")
 
 
 random.seed(100)
@@ -46,6 +54,7 @@ def localize_set(args,
     with torch.no_grad():
         for index, (image_B1HW, _, gt_pose_B44, _, intrinsics_B33, _, _, filenames) in enumerate(ace_test_loader):
             start = time.time()
+            image_B1HW = image_B1HW.to(torch.device("cuda"), non_blocking=True)
             with autocast(enabled=True):
                 scene_coordinates_B3HW = ace_network(image_B1HW)
             scene_coordinates_B3HW = scene_coordinates_B3HW.float().cpu()
@@ -66,7 +75,7 @@ def localize_set(args,
                 ########################################################
                 view = views[index]
                 print(f"{index}, {view.image_name}")
-                image_B1HW = image_B1HW.to(torch.device("cuda"), non_blocking=True)
+                
                 K = np.eye(3)
                 focal_length = fov2focal(view.FoVx, view.image_width)
                 K[0, 0] = K[1, 1] = focal_length
@@ -76,7 +85,7 @@ def localize_set(args,
                 gt_t = view.T
                 gt_extrinsic_matrix = view.extrinsic_matrix
                 ########################################################
-                if args.match_type==3:
+                if args.match_type==3 or args.match_type==4:
                     render_pkg0 = render(view, gaussians, pipe_param, background)
                 ########################################################
                 out_R = out_pose[0:3, 0:3].numpy()
@@ -105,6 +114,10 @@ def localize_set(args,
                     result = loc_utils.img_match_RenderRender(args, mlp, matcher, 
                                                               render_pkg0["score_map"], render_pkg0["feature_map"],
                                                               render_pkg1["score_map"], render_pkg1["feature_map"])
+                elif args.match_type==4:
+                    result = loc_utils.img_match_rival(render_pkg0["render"].unsqueeze(0), 
+                                                       render_pkg1["render"], 
+                                                       encoder, matcher)
                 ########################################################
                 if result is None:
                     prior_rErr.append(rotError)
@@ -144,8 +157,11 @@ def localize_set(args,
                 rotError_final, transError_final = loc_utils.calculate_pose_errors(gt_R, gt_t, R_final.T, t_final)
                 ########################################################
                 if match_folder_path is not None:
-                    result['img0'] = gt_img.squeeze(0).permute(1, 2, 0)
-                    result['img1'] = render_pkg1["render"].squeeze(0).permute(1, 2, 0)
+                    if args.match_type==3 or args.match_type==4:
+                        result['img0'] = render_pkg0["render"].permute(1, 2, 0)
+                    else:
+                        result['img0'] = gt_img.squeeze(0).permute(1, 2, 0)
+                    result['img1'] = render_pkg1["render"].permute(1, 2, 0)
                     ########################################################
                     T0 = gt_extrinsic_matrix
                     T1 = view.extrinsic_matrix
@@ -172,7 +188,9 @@ def localize_set(args,
                 total_elapsed_time += elapsed_time
                 print(f"elapsed time: {elapsed_time}")
                 print()
-                log_all_err(all_err_log_path, )
+                log_all_err(all_err_log_path, index, view.image_name, 
+                            rotError, transError, rotError_final, transError_final,
+                            elapsed_time)
                 prior_rErr.append(rotError)
                 prior_tErr.append(transError)
                 rErrs.append(rotError_final)
@@ -215,15 +233,25 @@ def localize(args, model_param:ModelParams, pipe_param:PipelineParams):
     )
     ace_test_loader = DataLoader(testset, shuffle=False, num_workers=0)
     ########################################################
-    loc_path = Path(model_param.model_path)/"localization"
+    match_type_dict = {
+        0: "ours",
+        1: "rival",
+        2: "Renderkpt_featSP",
+        3: "nothappen_ours",
+        4: "nothappen_rival"
+    }
+    loc_path = Path(model_param.model_path)/"localization"/f"{args.match_type}_{match_type_dict[args.match_type]}"
     if args.save_match:
         match_folder_path = f'{loc_path}/{args.test_name}/match_imgs'
         os.makedirs(match_folder_path, exist_ok=True)
     else:
         match_folder_path = None
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     error_foler_path = f'{loc_path}/{args.test_name}/error_logs'
-    all_err_log_path = f"{str(Path(error_foler_path).parent)}/log.txt"
+    all_err_log_path = f"{str(Path(error_foler_path).parent)}/log_{timestamp}.txt"
     os.makedirs(error_foler_path, exist_ok=True)
+    if os.path.exists(all_err_log_path):
+        os.remove(all_err_log_path)
     ########################################################
     bg_color = [1,1,1] if model_param.white_background else [0, 0, 0]
     background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")

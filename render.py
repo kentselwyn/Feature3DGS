@@ -175,6 +175,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         match_path_11= os.path.join(RenderRe_path, f"(Ft)(Ft)-(SP)(Ft)",    f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}", "imgs")
         match_path_12= os.path.join(RenderRe_path, f"(SP)(Ft)-(SP)(Ft)",    f"{args.lg_th}_{args.sp_kpt}_{args.sp_th}", "imgs")
         match_path_2 = os.path.join(RenderRe_path, f"(SP)(SP)-(SP)(SP)",    f"{args.lg_th}_{args.sp_kpt}_{args.sp_th}", "imgs")
+        match_path_13= os.path.join(RenderRe_path, f"(Ft)(SP)-(Ft)(SP)",    f"{args.lg_th}_{myHist}", "imgs")
         ########################################## RenderGT ##########################################
         ################ SP
         match_path_3 = os.path.join(GT_USE_SP_for_kpt, f"(Ft)(Ft)-(SP)(SP)",    f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}", "imgs")
@@ -193,6 +194,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         makedirs(match_path_11, exist_ok=True)
         makedirs(match_path_2, exist_ok=True)
         makedirs(match_path_12, exist_ok=True)
+        makedirs(match_path_13, exist_ok=True)
         ################ SP
         makedirs(match_path_3, exist_ok=True)
         makedirs(match_path_4, exist_ok=True)
@@ -307,7 +309,14 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
                            img_render0.permute(1, 2, 0),   img_render1.permute(1, 2, 0),
                            s0.shape[1:], pose_data,        f"{match_path_2}/{view.image_name}.png",
                            matcher)
-            
+            #### (Ft)(SP)-(Ft)(SP) 用ft keyppoint抽SP desc
+            feat_sp_dense1 = SP_pred1["dense_descriptors"].squeeze(0)
+            feat_sp1 = sample_descriptors_fix_sampling(kpt1, feat_sp_dense1, scale)
+            match_and_save(kpt0.unsqueeze(0),              kpt1.unsqueeze(0), 
+                           feat_sp0,                       feat_sp1,
+                           img_render0.permute(1, 2, 0),   img_render1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,        f"{match_path_13}/{view.image_name}.png",
+                           matcher)
             ########################################################################################### RenderGT ##########################################
             ####################### 用SP抽GT keypoints 真實情況 #####################
             #### (Ft)(Ft)-(SP)(SP) ours目前localizae方法
@@ -527,10 +536,12 @@ def render_pairs(model_path, feature_name, img_name, name, iteration, views, gau
         torchvision.utils.save_image(gt, os.path.join(gts_path, '{}'.format(view.image_name) + ".png"))
         ############## visualize feature map
         feature_map = render_pkg["feature_map"]
-        feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature.shape[1], gt_feature.shape[2]), mode='bilinear', align_corners=True).squeeze(0) ###
+        feature_map = F.interpolate(feature_map.unsqueeze(0), size=(gt_feature.shape[1], gt_feature.shape[2]), 
+                                    mode='bilinear', align_corners=True).squeeze(0) ###
 
         feature_map_vis = feature_visualize_saving(feature_map)
-        Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(feature_map_path, '{}'.format(view.image_name) + "_feature_vis.png"))
+        Image.fromarray((feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(
+                                            os.path.join(feature_map_path, '{}'.format(view.image_name) + "_feature_vis.png"))
         
 
         feature_map = feature_map.cpu().numpy().astype(np.float16)
