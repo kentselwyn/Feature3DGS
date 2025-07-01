@@ -12,12 +12,9 @@ class MLP_module_4_short(nn.Module):
         self.MLP_de = MLP(in_features=4,   out_features=256,  num_cells=[8, 16, 32, 64, 128])
         for p in self.parameters():
             p.requires_grad = False
-
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
-        # desc_back = self.MLP_de(desc_mlp)
         return desc_mlp
-    
     def decode(self, desc_mlp: torch.Tensor):
         desc_back = self.MLP_de(desc_mlp)
         return desc_back
@@ -30,12 +27,9 @@ class MLP_module_8_short(nn.Module):
         self.MLP_de = MLP(in_features=8,   out_features=256,  num_cells=[8, 16, 32, 64, 128])
         for p in self.parameters():
             p.requires_grad = False
-
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
-        # desc_back = self.MLP_de(desc_mlp)
         return desc_mlp
-    
     def decode(self, desc_mlp: torch.Tensor):
         desc_back = self.MLP_de(desc_mlp)
         return desc_back
@@ -55,6 +49,7 @@ class MLP_module_16_short(nn.Module):
         desc_back = self.MLP_de(desc_mlp)
         return desc_back
 
+
 class MLP_module_32_short(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -64,7 +59,6 @@ class MLP_module_32_short(nn.Module):
             p.requires_grad = False
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
-        # desc_back = self.MLP_de(desc_mlp)
         return desc_mlp
     def decode(self, desc_mlp: torch.Tensor):
         desc_back = self.MLP_de(desc_mlp)
@@ -80,7 +74,6 @@ class MLP_module_64_short(nn.Module):
             p.requires_grad = False
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
-        # desc_back = self.MLP_de(desc_mlp)
         return desc_mlp
     def decode(self, desc_mlp: torch.Tensor):
         desc_back = self.MLP_de(desc_mlp)
@@ -96,7 +89,6 @@ class MLP_module_8_128(nn.Module):
             p.requires_grad = False
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
-        # desc_back = self.MLP_de(desc_mlp)
         return desc_mlp
     def decode(self, desc_mlp: torch.Tensor):
         desc_back = self.MLP_de(desc_mlp)
@@ -114,10 +106,8 @@ class MLP_module_16_128(nn.Module):
         self.MLP_de = MLP(in_features=16, out_features=128,    num_cells=[16, 16, 32, 64])
         for p in self.parameters():
             p.requires_grad = False
-
     def forward(self, desc: torch.Tensor):
         desc_mlp = self.MLP(desc)
-        # desc_back = self.MLP_de(desc_mlp)
         return desc_mlp
     def decode(self, desc_mlp: torch.Tensor):
         desc_back = self.MLP_de(desc_mlp)
@@ -126,7 +116,6 @@ class MLP_module_16_128(nn.Module):
         desc_mlp = self.MLP(desc)
         desc_back = self.MLP_de(desc_mlp)
         return desc_back
-
 
 
 
@@ -234,7 +223,6 @@ def get_mlp_model(dim = 16, type = "SP"):
             model = MLP_module_16_128()
             ckpt = torch.load(model_path)
             model.load_state_dict(ckpt)
-    
     return model
         
 
@@ -478,9 +466,12 @@ def get_mlp_new(dim=16, name=None) -> MLP_module_16_short:
             ckpt = torch.load(model_path)
             model.load_state_dict(ckpt)
     return model
+
+
+
+
 # python -m mlp.mlp
 if __name__=="__main__":
     # model = get_mlp_augment(dim=16, dataset="augment_pgt_7scenes_stairs")
     mlp = get_mlp_new(dim=16, name="7scenes_stairs").cuda().eval()
-
     breakpoint()

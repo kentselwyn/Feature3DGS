@@ -188,7 +188,6 @@ class MLP_module_16_128(nn.Module):
 
 
 
-
 CKPT_FOLDER = Path("/home/koki/gluetrain/data/ckpt/mlp/")
 
 def get_module_ckptpath(dim: int, type = "short"):
@@ -249,9 +248,6 @@ def test_model_ckpt(dim, type):
 
 
 
-
-
-
 def get_mlp_model(dim = 16, type = "sp"):
     if type=="sp":
         name = "Superpoint"
@@ -283,6 +279,7 @@ def get_mlp(dim = 16):
         model=None
     return model
 
+
 def get_mlp_128(dim = 16):
     if dim==4:
         model = MLP_module_4_128()
@@ -306,4 +303,3 @@ def get_mlp_vit(dim=16):
 # python -m core.MLP.modules
 if __name__=="__main__":
     model = test_model_ckpt(64, "short")
-    # test()

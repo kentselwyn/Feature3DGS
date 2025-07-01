@@ -17,7 +17,7 @@ from PIL import Image
 import numpy as np
 from utils.match.match_img import find_small_circle_centers, sample_descriptors_fix_sampling, \
                                     save_matchimg, match_data
-from z_localization.loc_inference_ace import get_mlp_dataset
+from mlp.mlp import get_mlp_dataset
 from copy import deepcopy
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint

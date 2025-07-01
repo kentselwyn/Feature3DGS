@@ -173,6 +173,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         match_path_0 = os.path.join(RenderRe_path, f"(Ft)(Ft)-(Ft)(Ft)",    f"{args.lg_th}_{myHist}", "imgs")
         match_path_1 = os.path.join(RenderRe_path, f"(Ft)(Ft)-(DE)(Ft)",    f"{args.lg_th}_{myHist}", "imgs")
         match_path_11= os.path.join(RenderRe_path, f"(Ft)(Ft)-(SP)(Ft)",    f"{args.lg_th}_{myHist}_{args.sp_kpt}_{args.sp_th}", "imgs")
+        match_path_12= os.path.join(RenderRe_path, f"(SP)(Ft)-(SP)(Ft)",    f"{args.lg_th}_{args.sp_kpt}_{args.sp_th}", "imgs")
         match_path_2 = os.path.join(RenderRe_path, f"(SP)(SP)-(SP)(SP)",    f"{args.lg_th}_{args.sp_kpt}_{args.sp_th}", "imgs")
         ########################################## RenderGT ##########################################
         ################ SP
@@ -191,6 +192,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         makedirs(match_path_1, exist_ok=True)
         makedirs(match_path_11, exist_ok=True)
         makedirs(match_path_2, exist_ok=True)
+        makedirs(match_path_12, exist_ok=True)
         ################ SP
         makedirs(match_path_3, exist_ok=True)
         makedirs(match_path_4, exist_ok=True)
@@ -265,7 +267,10 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
             feat1_detect =       sample_descriptors_fix_sampling(detect_kpt_gt1, f1,                scale)
             feat1_detect = mlp.decode(feat1_detect)
             # 用SP kpt抽取 render desc1
-            featttttt0 = sample_descriptors_fix_sampling(SP_pred_gt1["keypoints"][0], f1,           scale)
+            featttttt1 = sample_descriptors_fix_sampling(SP_pred_gt1["keypoints"][0], f1,           scale)
+            featttttt1 = mlp.decode(featttttt1)
+            # 用SP kpt抽取 render desc0
+            featttttt0 = sample_descriptors_fix_sampling(SP_pred0["keypoints"][0], f0,           scale)
             featttttt0 = mlp.decode(featttttt0)
             ########################################################################################### RenderRe ##########################################
             ########################################## 兩邊都render, 不會出現 ####################
@@ -283,9 +288,15 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
                            matcher)
             #### (Ft)(Ft)-(SP)(Ft) 看使用 SP kpt+render feature 的match情況
             match_and_save(kpt0.unsqueeze(0),             SP_pred_gt1["keypoints"], 
-                           feat0,                         featttttt0,
+                           feat0,                         featttttt1,
                            img_render0.permute(1, 2, 0),  img_render1.permute(1, 2, 0),
                            s0.shape[1:], pose_data,       f"{match_path_11}/{view.image_name}.png",
+                           matcher)
+            #### (SP)(Ft)-(SP)(Ft) 兩邊都是 SP kpt+render feature 的match情況
+            match_and_save(SP_pred0["keypoints"],         SP_pred_gt1["keypoints"], 
+                           featttttt0,                    featttttt1,
+                           img_render0.permute(1, 2, 0),  img_render1.permute(1, 2, 0),
+                           s0.shape[1:], pose_data,       f"{match_path_12}/{view.image_name}.png",
                            matcher)
             #### (SP)(SP)-(SP)(SP) 看render情況下rival的情況
             tmp = {}
@@ -296,6 +307,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
                            img_render0.permute(1, 2, 0),   img_render1.permute(1, 2, 0),
                            s0.shape[1:], pose_data,        f"{match_path_2}/{view.image_name}.png",
                            matcher)
+            
             ########################################################################################### RenderGT ##########################################
             ########################################## 用SP抽GT keypoints 真實情況 #####################
             #### (Ft)(Ft)-(SP)(SP) ours目前localizae方法

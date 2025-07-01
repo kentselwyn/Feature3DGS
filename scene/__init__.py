@@ -21,7 +21,7 @@ from mlp.mlp import get_mlp_new
 class Scene:
     def __init__(self, args : ModelParams, gaussians, load_iteration=None, shuffle=True, 
                  resolution_scales=[1.0], load_feature=True, view_num=None, load_testcam=1,
-                 load_test_cams=True, test_only_view_num=False):
+                 load_train_cams=True, load_test_cams=True, test_only_view_num=False):
         """b
         :param path: Path to colmap scene main folder.
         """
@@ -81,9 +81,10 @@ class Scene:
         self.mlp = mlp
 
         for resolution_scale in resolution_scales:
-            print("Loading Training Cameras")
-            self.train_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.train_cameras, resolution_scale, args,
-                                                                            encoder=encoder, mlp=mlp, load_feature=load_feature)
+            if load_train_cams:
+                print("Loading Training Cameras")
+                self.train_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.train_cameras, resolution_scale, args,
+                                                                                encoder=encoder, mlp=mlp, load_feature=load_feature)
             if load_test_cams:
                 print("Loading Test Cameras")
                 self.test_cameras[resolution_scale] = cameraList_from_camInfos(scene_info.test_cameras, resolution_scale, args,

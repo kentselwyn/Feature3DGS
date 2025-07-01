@@ -3,11 +3,11 @@ import torch
 import numpy as np
 from utils.loc.loc_utils import *
 from argparse import ArgumentParser
-from scene import Scene, GaussianModel
+from scene.gaussian.gaussian_model import GaussianModel
+from scene import Scene
 from utils.match.match_img import save_matchimg
 from utils.graphics_utils import fov2focal
 from utils.loc.depth import project_2d_to_3d
-from utils.scoremap_vis import one_channel_vis
 from gaussian_renderer.__init__loc import render
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint

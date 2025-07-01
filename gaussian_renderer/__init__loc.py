@@ -11,10 +11,10 @@
 import os
 import torch
 import math
-from scene.gaussian_model import GaussianModel
+from scene.gaussian.gaussian_model import GaussianModel
 
 mlp_dim = int(os.getenv("MLP_DIM", "16"))
-depth_render = int(os.getenv("DEPTH_RENSER", "0"))
+depth_render = int(os.getenv("DEPTH_RENSER", "1"))
 feature_opa = int(os.getenv("FEATURE_OPA", "0"))
 
 if mlp_dim==4:
@@ -48,7 +48,6 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         screenspace_points.retain_grad()
     except:
         pass
-
     # Set up rasterization configuration
     tanfovx = math.tan(viewpoint_camera.FoVx * 0.5)
     tanfovy = math.tan(viewpoint_camera.FoVy * 0.5)
@@ -68,12 +67,9 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     )
 
     rasterizer = GaussianRasterizer(raster_settings=raster_settings)
-
     means3D = pc.get_xyz
     means2D = screenspace_points
     opacity = pc.get_opacity
-
-
 
     # If precomputed 3d covariance is provided, use it. If not, then it will be computed from
     # scaling / rotation by the rasterizer.

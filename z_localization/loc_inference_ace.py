@@ -21,12 +21,12 @@ from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from utils.loc.pycolmap_utils import opencv_to_pycolmap_pnp
 from arguments import ModelParams, PipelineParams, get_combined_args
-from mlp.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment, \
-                                    get_mlp_data_7scenes_Cambridege
+from mlp.mlp import get_mlp_new
+from utils.match.match_img import save_matchimg_th
+from utils.match.metrics_match import compute_metrics
 
 random.seed(100)
-
-def localize_set(model_path, name, views, gaussians, pipe_param, background, 
+def localize_set(model_path, loc_path, name, views, gaussians, pipe_param, background, 
                  args, encoder, matcher, ace_network, ace_test_loader):
     rErrs = []
     tErrs = []
@@ -35,29 +35,11 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
     total_elapsed_time = 0
     device = torch.device("cuda")
     scene_name = model_path.split('/')[-3]
-
-
-    if args.method.startswith("SP"):
-        mlp = get_mlp_model(dim = args.mlp_dim, type=args.method)
-    elif args.method.startswith("dataset"):
-        mlp = get_mlp_data_7scenes_Cambridege(dim=args.mlp_dim, dataset=args.method)
-    elif args.method.startswith("all"):
-        mlp = get_mlp_dataset(dim = args.mlp_dim, dataset=args.method)
-    elif args.method.startswith("pgt") or args.method.startswith("pairs") or args.method.startswith("match"):
-        # print("get mlp dataset is triggered!!!!")
-        mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.method)
-        # breakpoint()
-    elif args.method == "Cambridge":
-        mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.method)
-    elif args.method.startswith("Cambridge"):
-        mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.method)
-    elif args.method.startswith("augment"):
-        mlp = get_mlp_augment(dim=args.mlp_dim, dataset=args.method)
-    mlp = mlp.to("cuda").eval()
+    mlp = get_mlp_new(dim=args.mlp_dim, name=args.method).cuda().eval()
     test_name = args.test_name
     print(scene_name)
     if args.save_match:
-        match_folder = f'{model_path}/match_imgs/{test_name}'
+        match_folder = f'{loc_path}/{test_name}/match_imgs'
         os.makedirs(match_folder, exist_ok=True)
     with torch.no_grad():
         for index, (image_B1HW, _, gt_pose_B44, _, intrinsics_B33, _, _, filenames) in enumerate(ace_test_loader):
@@ -70,9 +52,11 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
             K[0, 0] = K[1, 1] = focal_length
             K[0, 2] = view.image_width / 2
             K[1, 2] = view.image_height / 2
-            gt_R = view.R # c2w rotation
-            gt_t = view.T # w2c translation
-            # Predict scene coordinates.
+            gt_R = view.R
+            gt_t = view.T
+
+            gt_extrinsic_matrix = view.extrinsic_matrix
+
             with autocast(enabled=True):
                 scene_coordinates_B3HW = ace_network(image_B1HW)
             scene_coordinates_B3HW = scene_coordinates_B3HW.float().cpu()
@@ -85,40 +69,27 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 ppX = intrinsics_33[0, 2].item()
                 ppY = intrinsics_33[1, 2].item()
                 assert torch.allclose(intrinsics_33[0, 0], intrinsics_33[1, 1])
-                
-                frame_name = Path(frame_path).name
+
                 out_pose = torch.zeros((4, 4))
                 st0 = time.time()
                 inlier_count = dsacstar.forward_rgb(
-                    scene_coordinates_3HW.unsqueeze(0),
-                    out_pose,
-                    64,
-                    10,
-                    focal_length,
-                    ppX,
-                    ppY,
-                    100,
-                    100,
-                    ace_network.OUTPUT_SUBSAMPLE,
-                )
-                # out_R = out_pose[0:3, 0:3].numpy()
-                # out_t = out_pose[0:3, 3].numpy()
-                # st0 = time.time()
+                    scene_coordinates_3HW.unsqueeze(0), out_pose, 64, 10,
+                    focal_length, ppX, ppY, 100, 100, ace_network.OUTPUT_SUBSAMPLE,)
                 rotError, transError = loc_utils.calculate_pose_errors_ace(
                     gt_pose_44, out_pose)
                 print("ace dsacstar time: ", time.time()-st0)
                 print("ace time cdf: ", time.time()-start)
 
-                out_R = out_pose[0:3, 0:3].numpy() # c2w rotation
-                out_t = out_pose[0:3, 3].numpy() # c2w translation
+                out_R = out_pose[0:3, 0:3].numpy()
+                out_t = out_pose[0:3, 3].numpy()
 
-                R_inv = out_R.T # w2c rotation
-                t_inv = -R_inv @ out_t # w2c translation
+                R_inv = out_R.T
+                t_inv = -R_inv @ out_t
                 w2c = torch.eye(4, 4, device='cuda')
                 w2c[:3, :3] = torch.from_numpy(R_inv).float()
                 w2c[:3, 3] = torch.from_numpy(t_inv).float()
                 view.update_RT(out_R, t_inv)
-                # st0 = time.time()
+
                 render_pkg = render(view, gaussians, pipe_param, background)
                 db_render = render_pkg["render"]
                 db_score = render_pkg["score_map"]
@@ -127,17 +98,18 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 print("render time: ",time.time()-start)
                 query_render = gt_im
                 st0 = time.time()
+
                 if args.match_type==0:
                     result = loc_utils.match_img(query_render, db_score, db_feature, encoder, matcher, mlp, args)
                 elif args.match_type==1:
-                    result = loc_utils.feat_fromImg_match(query_render, db_score, db_render, encoder, matcher, args)
-                elif args.match_type==2:
                     result = loc_utils.img_match_rival(query_render, db_render, encoder, matcher)
+                elif args.match_type==2:
+                    result = loc_utils.feat_fromImg_match(query_render, db_score, db_render, encoder, matcher, args)
                 elif args.match_type==3:
                     result = loc_utils.img_match_mast3r(query_render, db_render, matcher)
                 elif args.match_type==4:
                     result = loc_utils.img_match_loftr(query_render, db_render, matcher)
-                # breakpoint()
+
                 if result is None:
                     prior_rErr.append(rotError)
                     prior_tErr.append(transError)
@@ -161,7 +133,6 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 db_world = project_2d_to_3d(result['mkpt1'].cpu(), db_depth.cpu(), 
                                             torch.tensor(K, dtype=torch.float32).cpu(), 
                                             w2c.cpu()).cpu().numpy().astype(np.float64)
-                # st0 = time.time()
                 print("project time: ", time.time()-st0)
                 q_matched = result['mkpt0'].cpu().numpy().astype(np.float64)
                 st0 = time.time()
@@ -183,13 +154,28 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 if args.save_match:
                     result['img0'] = gt_im.squeeze(0).permute(1, 2, 0)
                     result['img1'] = db_render.squeeze(0).permute(1, 2, 0)
-                    loc_utils.save_matchimg(result, 
-                        f'{match_folder}/{index}_{view.image_name}__(T:{transError:.2f}_R:{rotError:.2f})__(T:{transError_final:.2f}_R:{rotError_final:.2f}).png')
+                    T0 = gt_extrinsic_matrix
+                    T1 = view.extrinsic_matrix
+                    T_0to1 = torch.tensor(np.matmul(T1, np.linalg.inv(T0)), dtype=torch.float)
+                    T_1to0 = T_0to1.inverse()
+                    K = torch.tensor((views[0].intrinsic_matrix).astype(np.float32))
+                    pose_data = {
+                        "K0": K,
+                        "K1": K,
+                        "T_0to1": T_0to1.float(),
+                        "T_1to0": T_1to0.float(),
+                        "identifiers": [f"{view.image_name}"],
+                    }
+                    result.update(pose_data)
+                    compute_metrics(result)
+                    save_matchimg_th(result, 
+                        f'{match_folder}/{index}_{view.image_name}__' + 
+                        f'(T:{transError:.2f}_R:{rotError:.2f})__(T:{transError_final:.2f}_R:{rotError_final:.2f}).png',
+                        threshold=5e-5)
                 
                 print(index)
                 print(f"Rotation Error: {rotError} deg")
                 print(f"Translation Error: {transError} cm")
-                # Print the errors
                 print(f"Final Rotation Error: {rotError_final} deg")
                 print(f"Final Translation Error: {transError_final} cm")
                 elapsed_time = time.time()-start
@@ -201,7 +187,7 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
                 rErrs.append(rotError_final)
                 tErrs.append(transError_final)
     
-    error_foler = f'{model_path}/error_logs/{test_name}'
+    error_foler = f'{loc_path}/{test_name}/error_logs'
     os.makedirs(error_foler, exist_ok=True)
     mean_elapsed_time = total_elapsed_time / len(rErrs)
     print('rot len: ',len(prior_rErr))
@@ -215,13 +201,15 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background,
 
 def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
     gaussians = GaussianModel(model_param.sh_degree)
-    scene = Scene(model_param, gaussians, load_iteration=args.iteration, shuffle=False, load_feature=False)
+    scene = Scene(model_param, gaussians, load_iteration=args.iteration, 
+                  shuffle=False, load_feature=False, load_train_cams=False)
+    
     bg_color = [1,1,1] if model_param.white_background else [0, 0, 0]
     background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
     conf = {
         "sparse_outputs": True,
         "dense_outputs": True,
-        "max_num_keypoints": 1024,
+        "max_num_keypoints": args.max_num_kpt,
         "detection_threshold": args.sp_th,
     }
     if args.match_type != 3:
@@ -229,44 +217,47 @@ def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
         matcher = LightGlue({"filter_threshold": args.lg_th ,}).cuda().eval()
     elif args.match_type == 3:
         encoder = None
-        # matcher = 
+        matcher = None
     encoder_state_dict = torch.load(args.ace_encoder_path, map_location="cpu")
     head_state_dict = torch.load(args.ace_ckpt, map_location="cpu")
     ace_network = Regressor.create_from_split_state_dict(encoder_state_dict, head_state_dict).cuda().eval()
     ########################################################
-    scene_path = Path(args.source_path).parent
+    scene_path = Path(args.source_path)
+    loc_path = Path(model_param.model_path)/"localization"
+    os.makedirs(loc_path, exist_ok=True)
     ########################################################
     testset = CamLocDataset(
         scene_path / "test",
-        mode=0,  # Default for ACE, we don't need scene coordinates/RGB-D.
+        mode=0,
         image_height=480,
     )
     testset_loader = DataLoader(testset, shuffle=False, num_workers=0)
-    localize_set(model_param.model_path, "test", scene.getTestCameras(), 
+    localize_set(model_param.model_path, loc_path, "test", scene.getTestCameras(), 
                  gaussians, pipe_param, background, args, encoder, matcher, ace_network, testset_loader)
 
 
 if __name__ == "__main__":
-    # Set up command line argument parser
     parser = ArgumentParser(description="Testing script parameters")
     Model_param = ModelParams(parser, sentinel=True)
     Pipe_param = PipelineParams(parser)
-    parser.add_argument("--iteration", default=-1, type=int)
-    parser.add_argument("--ransac_iters", default=20000, type=int)
-    parser.add_argument("--mlp_dim", required=True, type=int)
-    parser.add_argument("--method", required=True, type=str)
-    parser.add_argument("--save_match", action='store_true', help='Save match if this flag is provided.')
-    parser.add_argument("--sp_th", default=0.01, type=float)
-    parser.add_argument("--lg_th", default=0.01, type=float)
-    parser.add_argument("--kpt_th", default=0.01, type=float)
-    parser.add_argument("--kpt_hist", default=0.9, type=float)
-    parser.add_argument("--kernel_size", default=7, type=int)
-    parser.add_argument("--stop_kpt_num", default=30, type=int)
-    parser.add_argument("--ace_ckpt", type=str)
-    parser.add_argument("--match_type", default=0, type=int)
-    parser.add_argument("--pnp", default="iters", type=str)
     parser.add_argument("--test_name", required=True, type=str)
+    parser.add_argument("--iteration", default=-1, type=int)
+    parser.add_argument("--method",   required=True, type=str)
+    parser.add_argument("--ace_ckpt", required=True, type=str)
+    parser.add_argument("--save_match", action='store_true')
+    # used for match
+    parser.add_argument("--match_type", default=0, type=int)
+    parser.add_argument("--sp_th", default=0.0, type=float)
+    parser.add_argument("--lg_th", default=0.01, type=float)
+    parser.add_argument("--kpt_hist", default=0.95, type=float)
+    parser.add_argument("--kpt_th", default=0.01, type=float)
+    parser.add_argument("--kernel_size", default=15, type=int)
+    parser.add_argument("--max_num_kpt", default=1024, type=int)
+    # ransac config
+    parser.add_argument("--ransac_iters", default=20000, type=int)
+    parser.add_argument("--stop_kpt_num", default=30, type=int)
+    parser.add_argument("--pnp", default="pycolmap", type=str)
     parser.add_argument("--ace_encoder_path", 
-                        default="/home/koki/code/cc/feature_3dgs_2/ace/ace_encoder_pretrained.pt", type=str)
+                        default="/home/koki/code/cc/feature_3dgs_2/data/ace/ace_encoder_pretrained.pt", type=str)
     args = get_combined_args(parser)
     localize(Model_param.extract(args), Pipe_param.extract(args), args)
