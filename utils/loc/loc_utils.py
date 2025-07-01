@@ -16,6 +16,7 @@ from matchers.mast3r.dust3r.dust3r.inference import inference
 from matchers.mast3r.dust3r.dust3r.utils.image import convert_tensor_to_dust3r_format
 from matchers.mast3r.utils.functions import *
 from utils.match.match_img import semi_img_match
+from pathlib import Path
 
 
 # log, calculate error
@@ -37,7 +38,8 @@ def calculate_pose_errors_ace(gt_pose_44, out_pose):
     return r_err, t_err
 
 
-def log_errors(log_dir, name, rotation_errors, translation_errors, list_text, error_text, elapsed_time=None):
+def log_errors(log_dir, rotation_errors, translation_errors, 
+                        list_text,       error_text,        elapsed_time=None):
     total_frames = len(rotation_errors)
     # Remove NaN values from rotation_errors and translation_errors
     rotation_errors = [err for err in rotation_errors if not np.isnan(err)]
@@ -66,10 +68,10 @@ def log_errors(log_dir, name, rotation_errors, translation_errors, list_text, er
         print(f'Mean elapsed time: {elapsed_time:.6f} s\n')
     error_list = rotation_errors + translation_errors
     with open(os.path.join(log_dir, 
-                           f'error_list_{name}_{list_text}.pickle'), 'wb') as f:
+                           f'error_list_{list_text}.pickle'), 'wb') as f:
         pickle.dump(error_list, f)
-    with open(os.path.join(log_dir, 
-                           f'median_error_{name}_{error_text}_end.txt'), 'a') as f:
+    with open(os.path.join(str(Path(log_dir).parent), 
+                           f'median_error_{error_text}_end.txt'), 'a') as f:
         f.write('Accuracy:\n')
         f.write(f'\t10cm/5deg: {pct10_5:.1f}%\n')
         f.write(f'\t5cm/5deg: {pct5:.1f}%\n')
@@ -153,140 +155,31 @@ def find_2d3d_dense(image_features, gaussian_pcd, gaussian_feat, chunk_size=1000
 
 
 
-
-# loc inference
-def match_img(render_q, score_db, feature_db, encoder, matcher, mlp, args):
-    tmp = {}
-    tmp["image"] = render_q
-    stt = time.time()
-    tmp_pred = encoder(tmp)
-    x = time.time()
-    print("sp time: ",x-stt)
-    desc = tmp_pred["descriptors"]
-    compressed_gt_feature = mlp(desc)
-    gt_feature = mlp.decode(compressed_gt_feature)
-    # gt_feature = desc
-    
-    # query
-    kpt_q = tmp_pred["keypoints"]
-    feat_q = gt_feature
-    # db
-    print("mlp time: ",time.time()-x)
-    x = time.time()
-    if args.kpt_hist is not None:
-        kpt_th = choose_th(score_db, args.kpt_hist)
-    else:
-        kpt_th = args.kpt_th
-    # kpt_db = extract_kpt(score_db, threshold=kpt_th)
-    kpt_db = find_small_circle_centers(score_db, threshold=kpt_th, kernel_size=args.kernel_size)
-    if kpt_db.shape[0] == 0:
-        return None
-    print("find small circle time: ", time.time()-x)
-    x = time.time()
-    kpt_db = kpt_db.clone().detach()[:, [1, 0]].to(score_db)
-    _, h, w = score_db.shape
-    scale = torch.tensor([w, h]).to(score_db)
-    feat_db = sample_descriptors_fix_sampling(kpt_db, feature_db, scale)
-    feat_db = mlp.decode(feat_db)
-    kpt_db = kpt_db.unsqueeze(0)
-    # match
-    print("sample descriptor time: ", time.time()-x)
-    x = time.time()
-    data = {}
-    data["keypoints0"] = kpt_q
-    data["keypoints1"] = kpt_db
-    data["descriptors0"] = feat_q
-    data["descriptors1"] = feat_db
-    data["image_size"] = score_db.shape[1:]
-    # breakpoint()
-    pred = matcher(data)
-    print("match time: ", time.time()-x)
-    m0 = pred['m0']
-    valid = (m0[0] > -1)
-    m0, m1 = data["keypoints0"][0][valid].cpu(), data["keypoints1"][0][m0[0][valid]].cpu()
-    result = {}
-    result['mkpt0'] = m0
-    result['mkpt1'] = m1
-    result['kpt0'] = kpt_q[0].cpu()
-    result['kpt1'] = kpt_db[0].cpu()
-    return result
+# filter gaussian based on opacity
+def save_pcd(center_points, name=""):
+    center_points = center_points.detach().cpu().numpy()
+    center_pcd = o3d.geometry.PointCloud()
+    center_pcd.points = o3d.utility.Vector3dVector(center_points)
+    center_pcd.paint_uniform_color([1, 0, 0])  # Green for cluster centers
+    o3d.io.write_point_cloud(f"centers_{name}.ply", center_pcd)
 
 
-def feat_fromImg_match(query_render, score_db, db_render, encoder, matcher, args):
-    d0 = {}
-    d1 = {}
-    d0['image'] = query_render
-    d1['image'] = db_render.unsqueeze(0)
-    p0 = encoder(d0)
-    p1 = encoder(d1)
-    tmp = {}
-    tmp["keypoints0"] = p0['keypoints']
-    tmp["descriptors0"] = p0['descriptors']
-    tmp["image_size"] = d0['image'][0].shape[1:]
-    feature_db = p1["dense_descriptors"][0]
-    if args.kpt_hist is not None:
-        kpt_th = choose_th(score_db, args.kpt_hist)
-    else:
-        kpt_th = args.kpt_th
-    kpt_db = find_small_circle_centers(score_db, threshold=kpt_th, kernel_size=args.kernel_size)
-    if kpt_db.shape[0] == 0:
-        return None
-    kpt_db = kpt_db.clone().detach()[:, [1, 0]].to(score_db)
-    _, h, w = score_db.shape
-    scale = torch.tensor([w, h]).to(score_db)
-    feat_db = sample_descriptors_fix_sampling(kpt_db, feature_db, scale)
-    tmp["keypoints1"] = kpt_db.unsqueeze(0)
-    tmp["descriptors1"] = feat_db
-    if tmp["keypoints1"].shape[1]==0:
-        return None
-    pred = matcher(tmp)
-    m0 = pred['m0']
-    valid = (m0[0] > -1)
-    m0, m1 = tmp["keypoints0"][0][valid].cpu(), tmp["keypoints1"][0][m0[0][valid]].cpu()
-    kpt0, kpt1 = tmp['keypoints0'][0].cpu(), tmp['keypoints1'][0].cpu()
-    result = {}
-    result['mkpt0'] = m0
-    result['mkpt1'] = m1
-    result['kpt0'] = kpt0
-    result['kpt1'] = kpt1
-    return result
-
-
-def img_match_rival(query_render, db_render, encoder, matcher) -> Tuple[torch.Tensor, torch.Tensor]:
-    d0 = {}
-    d1 = {}
-    d0['image'] = query_render
-    d1['image'] = db_render.unsqueeze(0)
-    p0 = encoder(d0)
-    p1 = encoder(d1)
-
-    tmp = {}
-    tmp["keypoints0"] = p0['keypoints']
-    tmp["keypoints1"] = p1['keypoints']
-    tmp["descriptors0"] = p0['descriptors']
-    tmp["descriptors1"] = p1['descriptors']
-    tmp["image_size"] = d0['image'][0].shape[1:]
-
-    if tmp["keypoints1"].shape[1]==0:
-        return None
-    pred = matcher(tmp)
-    m0 = pred['m0']
-    valid = (m0[0] > -1)
-    m0, m1 = tmp["keypoints0"][0][valid].cpu(), tmp["keypoints1"][0][m0[0][valid]].cpu()
-    kpt0, kpt1 = tmp['keypoints0'][0].cpu(), tmp['keypoints1'][0].cpu()
-
-    result = {}
-    result['mkpt0'] = m0
-    result['mkpt1'] = m1
-    result['kpt0'] = kpt0
-    result['kpt1'] = kpt1
-    return result
-
-
-def choose_th(feature, histogram_th):
-    score_flat = feature.flatten()
-    percentile_value = torch.quantile(score_flat, float(histogram_th))
-    return percentile_value.item()
+def find_gaussian_score_opa(gaussians):
+    gaussian_pcd = gaussians.get_xyz
+    gaussian_feat = gaussians.get_semantic_feature.squeeze(1)
+    scores = gaussians.get_score_feature.squeeze(-1)
+    scores = (scores - scores.min()) / (scores.max() - scores.min())
+    opacities = gaussians.get_opacity
+    filter = opacities
+    th0 = choose_th(filter, 0.95)
+    mask0 = filter>th0
+    mask0 = mask0.squeeze(-1)
+    filtered_points = gaussian_pcd[mask0]
+    filtered_feature = gaussian_feat[mask0]
+    filtered_scores = scores[mask0]
+    save_pcd(filtered_points, '0')
+    print(filtered_points.shape)
+    return filtered_points, filtered_feature
 
 
 
@@ -294,10 +187,10 @@ def choose_th(feature, histogram_th):
 
 # other matchers
 original_size = (480, 640)
-def img_match_mast3r(query_render, db_render, model, K, depth_map, w2c, gt_pose_44):
+def img_match_mast3r(img0, img1, model, K, depth_map, w2c, gt_pose_44):
     s=time.time()
-    image1_tensor = query_render
-    image2_tensor = db_render.unsqueeze(0)
+    image1_tensor = img0
+    image2_tensor = img1.unsqueeze(0)
     image1 = convert_tensor_to_dust3r_format(image1_tensor, size=512, idx=0)
     image2 = convert_tensor_to_dust3r_format(image2_tensor, size=512, idx=1)
     print(f"time 1: {time.time()-s} s")
@@ -383,9 +276,9 @@ def img_match_mast3r(query_render, db_render, model, K, depth_map, w2c, gt_pose_
     return refine_rot_error, refine_translation_error
 
 
-def img_match_loftr(query_render, db_render, matcher):
-    img0 = rgb2loftrgray(query_render.squeeze(0))
-    img1 = rgb2loftrgray(db_render)
+def img_match_loftr(img0, img1, matcher):
+    img0 = rgb2loftrgray(img0.squeeze(0))
+    img1 = rgb2loftrgray(img1)
     batch = {'image0':img0, 'image1': img1}
     matcher(batch)
     mkpts0 = batch['mkpts0_f']
@@ -398,12 +291,12 @@ def img_match_loftr(query_render, db_render, matcher):
     breakpoint()
 
 
-def img_match_aspan(query_render, db_render, matcher):
+def img_match_aspan(img0, img1, matcher):
     st = time.time()
     matcher_name = "ASpanFormer"
     with torch.no_grad():
-        img0 = rgb2loftrgray(query_render.squeeze(0))
-        img1 = rgb2loftrgray(db_render)
+        img0 = rgb2loftrgray(img0.squeeze(0))
+        img1 = rgb2loftrgray(img1)
         data = {
             "img0": img0.cuda(),
             "img1": img1.cuda(),
@@ -417,28 +310,141 @@ def img_match_aspan(query_render, db_render, matcher):
 
 
 
-# filter gaussian based on opacity
-def save_pcd(center_points, name=""):
-    center_points = center_points.detach().cpu().numpy()
-    center_pcd = o3d.geometry.PointCloud()
-    center_pcd.points = o3d.utility.Vector3dVector(center_points)
-    center_pcd.paint_uniform_color([1, 0, 0])  # Green for cluster centers
-    o3d.io.write_point_cloud(f"centers_{name}.ply", center_pcd)
+
+def choose_th(feature, histogram_th):
+    score_flat = feature.flatten()
+    percentile_value = torch.quantile(score_flat, float(histogram_th))
+    return percentile_value.item()
+
+# loc inference
+def img_match_ours(args, mlp, 
+                   img0, 
+                   scoremap1, featmap1, 
+                   encoder,   matcher):
+    tmp = {}
+    tmp["image"] = img0
+    tmp_pred = encoder(tmp)
+    #######################################
+    desc = tmp_pred["descriptors"]
+    compressed_gt_feature = mlp(desc)
+    gt_feature = mlp.decode(compressed_gt_feature)
+    # gt_feature = desc
+    #######################################
+    kpt0 = tmp_pred["keypoints"]
+    feat0 = gt_feature
+    #######################################
+    if args.kpt_hist is not None:
+        kpt_th = choose_th(scoremap1, args.kpt_hist)
+    else:
+        kpt_th = args.kpt_th
+    #######################################
+    kpt1 = find_small_circle_centers(scoremap1, threshold=kpt_th, kernel_size=args.kernel_size)
+    if kpt1.shape[0] == 0:
+        return None
+    kpt1 = kpt1.clone().detach()[:, [1, 0]].to(scoremap1)
+    _, h, w = scoremap1.shape
+    scale = torch.tensor([w, h]).to(scoremap1)
+    #######################################
+    feat1 = sample_descriptors_fix_sampling(kpt1, featmap1, scale)
+    feat1 = mlp.decode(feat1)
+    #######################################
+    data = {}
+    data["keypoints0"] = kpt0
+    data["keypoints1"] = kpt1.unsqueeze(0)
+    data["descriptors0"] = feat0
+    data["descriptors1"] = feat1
+    data["image_size"] = scoremap1.shape[1:]
+    pred = matcher(data)
+    #######################################
+    m0 = pred['m0']
+    valid = (m0[0] > -1)
+    m0, m1 = data["keypoints0"][0][valid].cpu(), data["keypoints1"][0][m0[0][valid]].cpu()
+    result = {}
+    result['mkpt0'] = m0
+    result['mkpt1'] = m1
+    result['kpt0'] = kpt0[0].cpu()
+    result['kpt1'] = kpt1[0].cpu()
+    return result
 
 
-def find_gaussian_score_opa(gaussians):
-    gaussian_pcd = gaussians.get_xyz
-    gaussian_feat = gaussians.get_semantic_feature.squeeze(1)
-    scores = gaussians.get_score_feature.squeeze(-1)
-    scores = (scores - scores.min()) / (scores.max() - scores.min())
-    opacities = gaussians.get_opacity
-    filter = opacities
-    th0 = choose_th(filter, 0.95)
-    mask0 = filter>th0
-    mask0 = mask0.squeeze(-1)
-    filtered_points = gaussian_pcd[mask0]
-    filtered_feature = gaussian_feat[mask0]
-    filtered_scores = scores[mask0]
-    save_pcd(filtered_points, '0')
-    print(filtered_points.shape)
-    return filtered_points, filtered_feature
+def img_match_rival(img0, img1, encoder, matcher) -> dict:
+    d0 = {}
+    d1 = {}
+    d0['image'] = img0
+    d1['image'] = img1.unsqueeze(0)
+    p0 = encoder(d0)
+    p1 = encoder(d1)
+    ########################################################
+    tmp = {}
+    tmp["keypoints0"] = p0['keypoints']
+    tmp["keypoints1"] = p1['keypoints']
+    tmp["descriptors0"] = p0['descriptors']
+    tmp["descriptors1"] = p1['descriptors']
+    tmp["image_size"] = d0['image'][0].shape[1:]
+    ########################################################
+    if tmp["keypoints1"].shape[1]==0:
+        return None
+    pred = matcher(tmp)
+    m0 = pred['m0']
+    valid = (m0[0] > -1)
+    m0, m1 = tmp["keypoints0"][0][valid].cpu(), tmp["keypoints1"][0][m0[0][valid]].cpu()
+    kpt0, kpt1 = tmp['keypoints0'][0].cpu(), tmp['keypoints1'][0].cpu()
+    ########################################################
+    result = {}
+    result['mkpt0'] = m0
+    result['mkpt1'] = m1
+    result['kpt0'] = kpt0
+    result['kpt1'] = kpt1
+    return result
+
+
+def img_match_kptSPfeat(args, 
+                       img0,     img1,
+                       scoremap1,
+                       encoder, matcher):
+    d0 = {}
+    d1 = {}
+    d0['image'] = img0
+    d1['image'] = img1.unsqueeze(0)
+    p0 = encoder(d0)
+    p1 = encoder(d1)
+    #######################################
+    if args.kpt_hist is not None:
+        kpt_th = choose_th(scoremap1, args.kpt_hist)
+    else:
+        kpt_th = args.kpt_th
+    kpt1 = find_small_circle_centers(scoremap1, threshold=kpt_th, kernel_size=args.kernel_size)
+    if kpt1.shape[0] == 0:
+        return None
+    kpt1 = kpt1.clone().detach()[:, [1, 0]].to(scoremap1)
+    _, h, w = scoremap1.shape
+    scale = torch.tensor([w, h]).to(scoremap1)
+    featmap1 = p1["dense_descriptors"][0]
+    feat1 = sample_descriptors_fix_sampling(kpt1, featmap1, scale)
+    #######################################
+    tmp = {}
+    tmp["keypoints0"] = p0['keypoints']
+    tmp["descriptors0"] = p0['descriptors']
+    tmp["keypoints1"] = kpt1.unsqueeze(0)
+    tmp["descriptors1"] = feat1
+    tmp["image_size"] = d0['image'][0].shape[1:]
+    if tmp["keypoints1"].shape[1]==0:
+        return None
+    #######################################
+    pred = matcher(tmp)
+    m0 = pred['m0']
+    valid = (m0[0] > -1)
+    m0, m1 = tmp["keypoints0"][0][valid].cpu(), tmp["keypoints1"][0][m0[0][valid]].cpu()
+    kpt0, kpt1 = tmp['keypoints0'][0].cpu(), tmp['keypoints1'][0].cpu()
+    result = {}
+    result['mkpt0'] = m0
+    result['mkpt1'] = m1
+    result['kpt0'] = kpt0
+    result['kpt1'] = kpt1
+    return result
+
+
+def img_match_RenderRender(args, mlp, matcher,
+                            scoremap0, featmap0,
+                            scoremap1, featmap1,):
+    pass

@@ -273,7 +273,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
             featttttt0 = sample_descriptors_fix_sampling(SP_pred0["keypoints"][0], f0,           scale)
             featttttt0 = mlp.decode(featttttt0)
             ########################################################################################### RenderRe ##########################################
-            ########################################## 兩邊都render, 不會出現 ####################
+            ####################### 兩邊都render, 不會出現 ####################
             #### (Ft)(Ft)-(Ft)(Ft) 看render情況下ours
             match_and_save(kpt0.unsqueeze(0),              kpt1.unsqueeze(0), 
                            feat0,                          feat1,
@@ -309,7 +309,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
                            matcher)
             
             ########################################################################################### RenderGT ##########################################
-            ########################################## 用SP抽GT keypoints 真實情況 #####################
+            ####################### 用SP抽GT keypoints 真實情況 #####################
             #### (Ft)(Ft)-(SP)(SP) ours目前localizae方法
             match_and_save(kpt0.unsqueeze(0),             SP_pred_gt1["keypoints"], 
                            feat0,                         SP_pred_gt1["descriptors"],
@@ -334,7 +334,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
                            img_render0.permute(1, 2, 0),  img_gt1.permute(1, 2, 0),
                            s0.shape[1:], pose_data,       f"{match_path_6}/{view.image_name}.png",
                            matcher)
-            ########################################## 用Ft抽GT keypoints 不會出現 單純測試 ###############
+            ####################### 用Ft抽GT keypoints 不會出現 單純測試 ###############
             #### (Ft)(Ft)-(Ft)(SP) 使用render的keypoints抽取ground truth SP的desc, 效果不錯, 一邊用Ft, 一邊用SP
             match_and_save(kpt0.unsqueeze(0),             kpt1.unsqueeze(0), 
                            feat0,                         feat_sp1_gt,
@@ -347,7 +347,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
                            img_render0.permute(1, 2, 0),  img_gt1.permute(1, 2, 0),
                            s0.shape[1:], pose_data,       f"{match_path_8}/{view.image_name}.png",
                            matcher)
-            ########################################## 用DE抽GT keypoints, 真實情況, 看detector效果 #######
+            ####################### 用DE抽GT keypoints, 真實情況, 看detector效果 #######
             #### (Ft)(SP)-(DE)(SP) 兩邊都用SP feature
             match_and_save(kpt0.unsqueeze(0),             detect_kpt_gt1.unsqueeze(0), 
                            feat_sp0,                      feat_sp1_gt_detect,

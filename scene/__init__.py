@@ -19,9 +19,11 @@ from encoders.superpoint.superpoint import SuperPoint
 from mlp.mlp import get_mlp_new
 
 class Scene:
-    def __init__(self, args : ModelParams, gaussians, load_iteration=None, shuffle=True, 
-                 resolution_scales=[1.0], load_feature=True, view_num=None, load_testcam=1,
-                 load_train_cams=True, load_test_cams=True, test_only_view_num=False):
+    def __init__(self, args:ModelParams, gaussians, load_iteration=None, 
+                 resolution_scales=[1.0],  view_num=None, shuffle=True, 
+                 load_train_cams=True, load_test_cams=True, 
+                 load_feature=True,
+                 test_only_view_num=False):
         """b
         :param path: Path to colmap scene main folder.
         """
@@ -45,7 +47,7 @@ class Scene:
         elif os.path.exists(os.path.join(args.source_path, "sparse")):
             scene_info = dataset_readers.readColmapSceneInfo(path=args.source_path, foundation_model=args.foundation_model, 
                                                           eval=args.eval, images=args.images, view_num=view_num, 
-                                                          load_feature = load_feature, load_testcam=load_testcam,
+                                                          load_feature = load_feature, load_testcam=load_test_cams,
                                                           )
         else:
             assert False, "Could not recognize scene type!"
