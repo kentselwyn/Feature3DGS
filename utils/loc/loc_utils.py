@@ -67,11 +67,9 @@ def log_errors(log_dir, rotation_errors, translation_errors,
     if elapsed_time is not None:
         print(f'Mean elapsed time: {elapsed_time:.6f} s\n')
     error_list = rotation_errors + translation_errors
-    with open(os.path.join(log_dir, 
-                           f'error_list_{list_text}.pickle'), 'wb') as f:
+    with open(os.path.join(log_dir, f'error_list_{list_text}.pickle'), 'wb') as f:
         pickle.dump(error_list, f)
-    with open(os.path.join(str(Path(log_dir).parent), 
-                           f'median_error_{error_text}_end.txt'), 'a') as f:
+    with open(os.path.join(str(Path(log_dir).parent), f'median_error_{error_text}_end.txt'), 'a') as f:
         f.write('Accuracy:\n')
         f.write(f'\t10cm/5deg: {pct10_5:.1f}%\n')
         f.write(f'\t5cm/5deg: {pct5:.1f}%\n')
@@ -288,7 +286,6 @@ def img_match_loftr(img0, img1, matcher):
     batch["mkpt1"] = batch['mkpts1_f']
     batch["img0"] = (img0.cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
     batch["img1"] = (img1["render"].cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
-    breakpoint()
 
 
 def img_match_aspan(img0, img1, matcher):
@@ -316,11 +313,12 @@ def choose_th(feature, histogram_th):
     percentile_value = torch.quantile(score_flat, float(histogram_th))
     return percentile_value.item()
 
-# loc inference
-def img_match_ours(args, mlp, 
+
+# 0 ours
+def img_match_ours(args, 
                    img0, 
                    scoremap1, featmap1, 
-                   encoder,   matcher):
+                   encoder,   matcher, mlp):
     tmp = {}
     tmp["image"] = img0
     tmp_pred = encoder(tmp)
@@ -363,15 +361,16 @@ def img_match_ours(args, mlp,
     result['mkpt0'] = m0
     result['mkpt1'] = m1
     result['kpt0'] = kpt0[0].cpu()
-    result['kpt1'] = kpt1[0].cpu()
+    result['kpt1'] = kpt1.cpu()
     return result
 
 
+# 1 rival
 def img_match_rival(img0, img1, encoder, matcher) -> dict:
     d0 = {}
     d1 = {}
     d0['image'] = img0
-    d1['image'] = img1.unsqueeze(0)
+    d1['image'] = img1
     p0 = encoder(d0)
     p1 = encoder(d1)
     ########################################################
@@ -395,9 +394,12 @@ def img_match_rival(img0, img1, encoder, matcher) -> dict:
     result['mkpt1'] = m1
     result['kpt0'] = kpt0
     result['kpt1'] = kpt1
+    result['desc0'] = tmp["descriptors0"]
+    result['desc1'] = tmp['descriptors1']
     return result
 
 
+# 2 Renderkpt featSP
 def img_match_kptSPfeat(args, 
                        img0,     img1,
                        scoremap1,
@@ -405,7 +407,7 @@ def img_match_kptSPfeat(args,
     d0 = {}
     d1 = {}
     d0['image'] = img0
-    d1['image'] = img1.unsqueeze(0)
+    d1['image'] = img1
     p0 = encoder(d0)
     p1 = encoder(d1)
     #######################################
@@ -444,9 +446,11 @@ def img_match_kptSPfeat(args,
     return result
 
 
-def img_match_RenderRender(args, mlp, matcher,
+# 3 nothappen ours
+def img_match_RenderRender(args,
                             scoremap0, featmap0,
-                            scoremap1, featmap1,):
+                            scoremap1, featmap1,
+                            matcher, mlp, ):
     th0 = choose_th(scoremap0, args.kpt_hist)
     th1 = choose_th(scoremap1, args.kpt_hist)
     kpt0 = find_small_circle_centers(scoremap0, threshold=th0, kernel_size=args.kernel_size).clone().detach()[:, [1, 0]]
@@ -475,3 +479,78 @@ def img_match_RenderRender(args, mlp, matcher,
     result['kpt0'] = kpt0.cpu()
     result['kpt1'] = kpt1.cpu()
     return result
+
+
+def img_match_circular(result01, img0, img1, img2, encoder, matcher) -> dict:
+    d2 = {}
+    d2['image'] = img2
+    p2 = encoder(d2)
+    ####################################### 02 match
+    tmp = {}
+    tmp["keypoints0"] = result01['kpt0'].unsqueeze(0).cuda()
+    tmp["keypoints1"] = p2['keypoints']
+    tmp["descriptors0"] = result01['desc0'].cuda()
+    tmp["descriptors1"] = p2['descriptors']
+    tmp["image_size"] = d2['image'][0].shape[-2:]
+    pred02 = matcher(tmp)
+    ####
+    m0 = pred02['m0']
+    valid = (m0[0] > -1)
+    m0, m1 = tmp["keypoints0"][0][valid].cpu(), tmp["keypoints1"][0][m0[0][valid]].cpu()
+    result02 = {}
+    result02['mkpt0'] = m0
+    result02['mkpt1'] = m1
+    result02['kpt0'] = tmp['keypoints0'][0].cpu()
+    result02['kpt1'] = tmp['keypoints1'][0].cpu()
+    ####################################### 12 match
+    tmp = {}
+    tmp["keypoints0"] = result01['kpt1'].unsqueeze(0).cuda()
+    tmp["keypoints1"] = p2['keypoints']
+    tmp["descriptors0"] = result01['desc1'].cuda()
+    tmp["descriptors1"] = p2['descriptors']
+    tmp["image_size"] = d2['image'][0].shape[-2:]
+    pred12 = matcher(tmp)
+    ####
+    m0 = pred12['m0']
+    valid = (m0[0] > -1)
+    m0, m1 = tmp["keypoints0"][0][valid].cpu(), tmp["keypoints1"][0][m0[0][valid]].cpu()
+    result12 = {}
+    result12['mkpt0'] = m0
+    result12['mkpt1'] = m1
+    result12['kpt0'] = tmp['keypoints0'][0].cpu()
+    result12['kpt1'] = tmp['keypoints1'][0].cpu()
+    ####################################### 找012之間的match
+    A = result01['mkpt1']
+    B = result12['mkpt0']
+    A_exp = A.unsqueeze(1)
+    B_exp = B.unsqueeze(0)
+    equal_matrix = (A_exp == B_exp).all(dim=2)
+    A_idx, B_idx = torch.where(equal_matrix)
+    match_012 = {}
+    match_012["mkpt0"] = result01['mkpt0'][A_idx]
+    match_012["mkpt1"] = result12['mkpt1'][B_idx]
+    ####################################### 找012, 02 重合的match
+    A = result02['mkpt0']
+    B = match_012["mkpt0"]
+    A_exp = A.unsqueeze(1)
+    B_exp = B.unsqueeze(0)
+    equal_matrix = (A_exp == B_exp).all(dim=2)
+    A_idx, B_idx = torch.where(equal_matrix)
+    ####
+    match_012_filtered = {}
+    match_012_filtered["mkpt0"] = match_012["mkpt0"][B_idx]
+    match_012_filtered["mkpt1"] = match_012["mkpt1"][B_idx]
+    #######################################
+    A = result02['mkpt1']
+    B = match_012_filtered["mkpt1"]
+    A_exp = A.unsqueeze(1)
+    B_exp = B.unsqueeze(0)
+    equal_matrix = (A_exp == B_exp).all(dim=2)
+    A_idx, B_idx = torch.where(equal_matrix)
+    ####
+    match_012_final = {}
+    match_012_final['kpt0'] = result01['kpt0']
+    match_012_final['kpt1'] = result12['kpt1']
+    match_012_final["mkpt0"] = result02["mkpt0"][A_idx]
+    match_012_final["mkpt1"] = result02["mkpt1"][A_idx]
+    return match_012_final
