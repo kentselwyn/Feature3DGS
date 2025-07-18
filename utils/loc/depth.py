@@ -5,7 +5,7 @@ import open3d as o3d
 from plyfile import PlyData
 from scene.gaussian.gaussian_model import GaussianModel
 from argparse import ArgumentParser
-from gaussian_renderer import render
+from gaussian_renderer import render_gsplat
 from utils.match.match_img import extract_kpt
 from utils.scoremap_vis import one_channel_vis
 from utils.graphics_utils import getWorld2View2, fov2focal
@@ -65,7 +65,7 @@ def find_depth(model_param:ModelParams, pipe_param:PipelineParams,):
     K[0, 2] = view.image_width / 2
     K[1, 2] = view.image_height / 2
     K = torch.tensor(K, dtype=torch.float32)
-    render_pkg = render(view, gaussians, pipe_param, background)
+    render_pkg = render_gsplat(view, gaussians, background)
     ply_path = "/home/koki/code/cc/feature_3dgs_2/data/cluster_centers.ply"
     plydata = PlyData.read(ply_path)
     vertex_data = plydata['vertex']

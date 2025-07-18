@@ -11,7 +11,7 @@ from copy import deepcopy
 import torch.nn.functional as F
 from argparse import ArgumentParser
 from render import  feature_visualize_saving
-from gaussian_renderer import GaussianModel, render
+from Feature3DGS.gaussian_renderer.__init__edit import GaussianModel, render
 from utils.scoremap_vis import one_channel_vis
 from arguments import ModelParams, PipelineParams, get_combined_args
 

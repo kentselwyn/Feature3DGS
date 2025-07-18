@@ -5,7 +5,7 @@ import open3d as o3d
 from scene import Scene
 from scene.gaussian.gaussian_model_score import GaussianModel as Gauss_score
 from scene.gaussian.gaussian_model_feature import GaussianModel as GaussianModelFeature
-from gaussian_renderer import render
+from Feature3DGS.gaussian_renderer.__init__edit import render
 ###################################################
 from argparse import ArgumentParser
 from arguments import ModelParams, PipelineParams, get_combined_args

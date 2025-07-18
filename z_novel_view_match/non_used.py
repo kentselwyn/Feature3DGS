@@ -4,7 +4,7 @@ import random
 import time
 from scene import Scene
 from argparse import Namespace
-from gaussian_renderer import render
+from Feature3DGS.gaussian_renderer.__init__edit import render
 import torch.nn.functional as F
 from utils.match.match_img import score_feature_match
 from scene.gaussian_model import GaussianModel

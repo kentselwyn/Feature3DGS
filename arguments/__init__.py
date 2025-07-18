@@ -58,7 +58,8 @@ class ModelParams(ParamGroup):
         self.score_scale = 1.0
         self.eval = False
         self.speedup = False ###
-        self.load_testcam = 1
+        self.load_testcam = False
+        self.use_abs_grad = False
 ##################################################
         self.num_kpts = 1024
         self.detect_th = 0.0

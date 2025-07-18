@@ -10,7 +10,7 @@ from argparse import ArgumentParser
 from encoders.superpoint.superpoint import SuperPoint
 from scene.gaussian.gaussian_model import GaussianModel
 from arguments import ModelParams, PipelineParams, get_combined_args
-from gaussian_renderer import render
+from Feature3DGS.gaussian_renderer.__init__edit import render
 from torch.utils.tensorboard.writer import SummaryWriter
 from torch.utils.data import Dataset, DataLoader
 import torch.optim.lr_scheduler as lr_scheduler

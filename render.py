@@ -23,7 +23,7 @@ import sklearn.decomposition
 import torch.nn.functional as F
 from matchers.lightglue import LightGlue
 from argparse import ArgumentParser
-from gaussian_renderer import render
+from gaussian_renderer import render_gsplat
 from copy import deepcopy
 from encoders.superpoint.superpoint import SuperPoint
 from utils.general_utils import PILtoTorch
@@ -136,7 +136,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
     if args.render_kpt_desc:
         for _, view in enumerate(tqdm(views, desc="Rendering progress")):
             print(view.image_name)
-            render_pkg = render(view, gaussians, pipe_param, background)
+            render_pkg = render_gsplat(view, gaussians, background)
             gt_img = view.original_image[0:3, :, :]
             gt_feature_map = view.semantic_feature.cuda() 
             torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, f"{view.image_name}.png")) 
@@ -207,14 +207,14 @@ def render_set(model_path, name, iteration, views, gaussians, pipe_param, backgr
         makedirs(match_path_9, exist_ok=True)
         makedirs(match_path_10, exist_ok=True)
         
-        pkg0 = render(views[0], gaussians, Pipe_param.extract(args), background)
+        pkg0 = render_gsplat(views[0], gaussians, background)
 
         K = torch.tensor((views[0].intrinsic_matrix).astype(np.float32))
         T0 = views[0].extrinsic_matrix
         for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
             if idx==0:
                 continue
-            pkg1 = render(view, gaussians, Pipe_param.extract(args), background)
+            pkg1 = render_gsplat(view, gaussians, background)
             T1 = view.extrinsic_matrix
             s0, s1, f0, f1 = pkg0['score_map'], pkg1['score_map'], \
                                     pkg0['feature_map'], pkg1['feature_map']
@@ -430,7 +430,7 @@ def render_novel_views(model_path, name, iteration, views, gaussians, pipe_param
         view.world_view_transform = torch.tensor(getWorld2View2(pose[:, :3], pose[:, 3], view.trans, view.scale)).transpose(0, 1).cuda()
         view.full_proj_transform = (view.world_view_transform.unsqueeze(0).bmm(view.projection_matrix.unsqueeze(0))).squeeze(0)
         view.camera_center = view.world_view_transform.inverse()[3, :3]
-        render_pkg = render(view, gaussians, pipe_param, background)
+        render_pkg = render_gsplat(view, gaussians, background)
         torchvision.utils.save_image(render_pkg["render"], os.path.join(render_path, f"{view.image_name}.png")) 
         ########## visualize feature map
         gt_feature_map = view.semantic_feature.cuda()
@@ -528,7 +528,7 @@ def render_pairs(model_path, feature_name, img_name, name, iteration, views, gau
     new_views = read_pairs_scene_info(model_path, views, feature_name, img_name)
 
     for _, view in enumerate(tqdm(new_views, desc="Rendering progress")):
-        render_pkg = render(view, gaussians, pipe_param, background)
+        render_pkg = render_gsplat(view, gaussians, background)
         gt = view.original_image[0:3, :, :]
         gt_feature = view.semantic_feature
         gt_score = view.score_feature

@@ -29,7 +29,7 @@ class Camera(nn.Module):
             load_feature=True
         ): 
         super(Camera, self).__init__()
-        print(uid)
+        # print(uid)
         self.uid = uid
         self.colmap_id = colmap_id
         self.R = R

@@ -1,6 +1,6 @@
-start_train=0
+start_train=1
 start_render=0
-start_loc=1
+start_loc=0
 {
     ################### training ####################
         data_name="7_scenes"
@@ -51,13 +51,13 @@ start_loc=1
 }
 
 SOURSE_PATH="/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/$data_name/$scene_name"
-OUT_PATH="$SOURSE_PATH/outputs/$out_name"
+OUT_PATH="/mnt/home_6T/public/kentselwyn/gsplat_exps/$data_name/$scene_name/outputs/$out_name"
 
 # ( bash z_scripts/tmp/train.sh )
 if (( start_train )); then
     python train.py -s "$SOURSE_PATH" -i "rgb" -m "$OUT_PATH" --iterations $iterations \
                     --score_loss "$score_loss" --score_scale "$score_scale"  \
-                    --num_kpts $num_kpts --detect_th $detect_th --mlp_dim $mlp_dim --mlp_name $mlp_name
+                    --num_kpts $num_kpts --detect_th $detect_th --mlp_dim $mlp_dim --mlp_name $mlp_name --use_abs_grad --load_testcam
 fi
 
 
