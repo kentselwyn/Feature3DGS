@@ -2,6 +2,48 @@ import torch
 from torch import nn
 from pathlib import Path
 from torchrl.modules import MLP
+import re
+
+
+def get_latest_epoch_checkpoint(directory_path: Path) -> Path:
+    """
+    Find the checkpoint file with the highest epoch number in the given directory.
+    
+    Args:
+        directory_path: Path to the directory containing checkpoint files
+        
+    Returns:
+        Path to the checkpoint file with the highest epoch number
+        
+    Raises:
+        FileNotFoundError: If no checkpoint files are found
+        ValueError: If directory doesn't exist
+    """
+    directory_path = Path(directory_path)
+    
+    if not directory_path.exists():
+        raise ValueError(f"Directory does not exist: {directory_path}")
+    
+    # Search for epoch_*.pt files in the directory and subdirectories
+    epoch_files = []
+    
+    # First try direct path for epoch_*.pt files
+    for file_path in directory_path.rglob("epoch_*.pt"):
+        match = re.search(r'epoch_(\d+)\.pt$', file_path.name)
+        if match:
+            epoch_num = int(match.group(1))
+            epoch_files.append((epoch_num, file_path))
+    
+    if not epoch_files:
+        raise FileNotFoundError(f"No epoch checkpoint files found in {directory_path}")
+    
+    # Sort by epoch number and return the highest one
+    epoch_files.sort(key=lambda x: x[0], reverse=True)
+    latest_epoch, latest_path = epoch_files[0]
+    
+    print(f"Found latest checkpoint: {latest_path} (epoch {latest_epoch})")
+    return latest_path
+import re
 
 
 
@@ -227,61 +269,142 @@ def get_mlp_model(dim = 16, type = "SP"):
         
 
 def get_mlp_dataset(dim=16, dataset="pgt_7scenes_chess") -> MLP_module_16_short:
-    CKPT_FOLDER = Path(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc")
+    CKPT_FOLDER = Path(f"/work/u8351896/7scenes/")
     if dataset=="pgt_7scenes_chess":
         if dim==4:
-            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20241224_223934_dim4_batch64_lr0.0008_epoch5000/epoch_542.pt"
-            model = MLP_module_4_short()
-            ckpt = torch.load(model_path)
-            model.load_state_dict(ckpt)
+            try:
+                # Use helper function to find latest checkpoint
+                base_dir = CKPT_FOLDER / dataset
+                model_path = get_latest_epoch_checkpoint(base_dir)
+                model = MLP_module_4_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
+            except (FileNotFoundError, ValueError):
+                # Fallback to hardcoded path if helper function fails
+                model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20241224_223934_dim4_batch64_lr0.0008_epoch5000/epoch_542.pt"
+                model = MLP_module_4_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
         elif dim==8:
-            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20241224_213513_dim8_batch64_lr0.001_epoch10000/epoch_9813.pt"
-            model = MLP_module_8_short()
-            ckpt = torch.load(model_path)
-            model.load_state_dict(ckpt)
+            try:
+                # Use helper function to find latest checkpoint
+                base_dir = CKPT_FOLDER / dataset
+                model_path = get_latest_epoch_checkpoint(base_dir)
+                model = MLP_module_8_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
+            except (FileNotFoundError, ValueError):
+                # Fallback to hardcoded path if helper function fails
+                model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20241224_213513_dim8_batch64_lr0.001_epoch10000/epoch_9813.pt"
+                model = MLP_module_8_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
         elif dim==16:
-            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20241224_210047_dim16_batch64_lr0.001_epoch10000/epoch_9810.pt"
-            model = MLP_module_16_short()
-            ckpt = torch.load(model_path)
-            model.load_state_dict(ckpt)
+            try:
+                # Use helper function to find latest checkpoint
+                base_dir = CKPT_FOLDER / dataset
+                model_path = get_latest_epoch_checkpoint(base_dir)
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
+            except (FileNotFoundError, ValueError):
+                # Fallback to hardcoded path if helper function fails
+                model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20241224_210047_dim16_batch64_lr0.001_epoch10000/epoch_9810.pt"
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
     if dataset=="pgt_7scenes_fire":
         if dim==16:
-            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250107_162819_dim16_batch64_lr0.0008_epoch5000/epoch_1776.pt"
-            model = MLP_module_16_short()
-            ckpt = torch.load(model_path)
-            model.load_state_dict(ckpt)
+            try:
+                # Use helper function to find latest checkpoint
+                base_dir = CKPT_FOLDER / dataset
+                model_path = get_latest_epoch_checkpoint(base_dir)
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
+            except (FileNotFoundError, ValueError):
+                # Fallback to hardcoded path if helper function fails
+                model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250107_162819_dim16_batch64_lr0.0008_epoch5000/epoch_1776.pt"
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
     
     if dataset=="pgt_7scenes_heads":
         if dim==16:
-            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250115_024821_dim16_batch64_lr0.0008_epoch5000/epoch_2335.pt"
-            model = MLP_module_16_short()
-            ckpt = torch.load(model_path)
-            model.load_state_dict(ckpt)
+            try:
+                # Use helper function to find latest checkpoint
+                base_dir = CKPT_FOLDER / dataset
+                model_path = get_latest_epoch_checkpoint(base_dir)
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
+            except (FileNotFoundError, ValueError):
+                # Fallback to hardcoded path if helper function fails
+                model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250115_024821_dim16_batch64_lr0.0008_epoch5000/epoch_2335.pt"
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
     if dataset=="pgt_7scenes_office":
         if dim==16:
-            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250115_030334_dim16_batch64_lr0.0008_epoch5000/epoch_791.pt"
-            model = MLP_module_16_short()
-            ckpt = torch.load(model_path)
-            model.load_state_dict(ckpt)
+            try:
+                # Use helper function to find latest checkpoint
+                base_dir = CKPT_FOLDER / dataset
+                model_path = get_latest_epoch_checkpoint(base_dir)
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
+            except (FileNotFoundError, ValueError):
+                # Fallback to hardcoded path if helper function fails
+                model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250115_030334_dim16_batch64_lr0.0008_epoch5000/epoch_791.pt"
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
     if dataset=="pgt_7scenes_pumpkin":
         if dim==16:
-            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/epoch_852.pt"
-            model = MLP_module_16_short()
-            ckpt = torch.load(model_path)
-            model.load_state_dict(ckpt)
+            try:
+                # Use helper function to find latest checkpoint
+                base_dir = CKPT_FOLDER / dataset
+                model_path = get_latest_epoch_checkpoint(base_dir)
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
+            except (FileNotFoundError, ValueError):
+                # Fallback to hardcoded path if helper function fails
+                model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/epoch_852.pt"
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
     if dataset=="pgt_7scenes_redkitchen":
         if dim==16:
-            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/epoch_456.pt"
-            model = MLP_module_16_short()
-            ckpt = torch.load(model_path)
-            model.load_state_dict(ckpt)
+            try:
+                # Use helper function to find latest checkpoint
+                base_dir = CKPT_FOLDER / dataset
+                model_path = get_latest_epoch_checkpoint(base_dir)
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
+            except (FileNotFoundError, ValueError):
+                # Fallback to hardcoded path if helper function fails
+                model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/epoch_456.pt"
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
     
     if dataset=="pgt_7scenes_stairs":
         if dim==16:
-            model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250107_160254_dim16_batch64_lr0.0008_epoch5000/epoch_1722.pt"
-            model = MLP_module_16_short()
-            ckpt = torch.load(model_path)
-            model.load_state_dict(ckpt)
+            try:
+                # Use helper function to find latest checkpoint
+                base_dir = CKPT_FOLDER / dataset
+                model_path = get_latest_epoch_checkpoint(base_dir)
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
+            except (FileNotFoundError, ValueError):
+                # Fallback to hardcoded path if helper function fails
+                model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250107_160254_dim16_batch64_lr0.0008_epoch5000/epoch_1722.pt"
+                model = MLP_module_16_short()
+                ckpt = torch.load(model_path)
+                model.load_state_dict(ckpt)
         if dim==32:
             model_path = CKPT_FOLDER/f"7_scenes/{dataset}/mlpckpt/type:SP_time:20250203_064553_dim32_batch64_lr0.0008_epoch5000/epoch_1212.pt"
             model = MLP_module_32_short()

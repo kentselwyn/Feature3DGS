@@ -3,13 +3,13 @@ start_render=0
 start_loc=1
 
 # Define all 7Scenes dataset scenes
-scenes=("chess" "fire" "heads" "office" "pumpkin" "redkitchen" "stairs")
+scenes=("chess" "redkitchen" "stairs")
 
 # Common parameters for all scenes
 {
     ################### training ####################
         data_name="7scenes"
-        iterations=30000
+        iterations=60000
         score_loss="weighted" # L2, weighted, L1   
         score_scale=0.6
     ################### feature ####################
@@ -58,7 +58,7 @@ for scene in "${scenes[@]}"; do
     
     # Set paths
     # out_name="1_${iterations}_${score_loss}_${score_scale}_${num_kpts}_${detect_th}_${mlp_dim}_${mlp_name}"
-    out_name="original"
+    out_name="no_rgb"
     test_name="${test_iteration}_${loc_sp_th}_${loc_lg_th}_"
     test_name+="${score_hist}_${max_num_kpt}_${kernel_size}_${stop_kpt_num}_${pnp_option}"
     
@@ -68,9 +68,9 @@ for scene in "${scenes[@]}"; do
     # Training
     if (( start_train )); then
         echo "Training for scene: $scene"
-        python train_new.py -s "$SOURSE_PATH" -i "rgb" -m "$OUT_PATH" --iterations $iterations \
+        python train_no_rgb.py -s "$SOURSE_PATH" -i "rgb" -m "$OUT_PATH" --iterations $iterations \
                         --score_loss "$score_loss" --score_scale "$score_scale"  \
-                        --num_kpts $num_kpts --detect_th $detect_th --mlp_dim $mlp_dim --mlp_name $mlp_name --use_abs_grad --load_testcam
+                        --num_kpts $num_kpts --detect_th $detect_th --mlp_dim $mlp_dim --mlp_name $mlp_name --use_abs_grad --load_testcam --features_only
     fi
 
     # Rendering
@@ -89,7 +89,7 @@ for scene in "${scenes[@]}"; do
     # Localization
     if (( start_loc )); then
         echo "Localization for scene: $scene"
-        python -m z_localization.loc_inference -m $OUT_PATH --iteration $test_iteration \
+        python -m z_localization.loc_inference_with_plots -m $OUT_PATH --iteration $test_iteration \
                                                 --mlp_dim $mlp_dim --mlp_method $mlp_name \
                                                 --sp_th $loc_sp_th --lg_th $loc_lg_th --kpt_hist $score_hist \
                                                 --ransac_iters 20000 --kernel_size $kernel_size \

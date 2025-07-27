@@ -369,8 +369,7 @@ def readSplitInfo(path, images, pcd = None, view_num=None, test_only_view_num=Fa
     ply_path = os.path.join(path, "out.ply")
     scene_name = path.split("_")[-1]
     if '7scenes' in path:
-        sfm_path = os.path.join(f"/home/koki/code/cc/feature_3dgs_2/data/vis_loc/gsplatloc/7scenes_reference_models", 
-                                scene_name, "old_gt_refined")
+        sfm_path = os.path.join(os.path.dirname(path), "7scenes_reference_models", scene_name, "old_gt_refined")
     elif 'Cambridge' in path:
         sfm_path = path
     else:
@@ -468,7 +467,7 @@ def readSplitInfo(path, images, pcd = None, view_num=None, test_only_view_num=Fa
             storePly(ply_path, xyz, rgb)
         except:
             print("Error reading reconstruction.nvm file. Please ensure it exists and is in the correct format.")
-    
+
     try:
         pcd = fetchPly(ply_path)
     except:

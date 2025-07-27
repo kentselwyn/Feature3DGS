@@ -67,6 +67,9 @@ class ModelParams(ParamGroup):
         self.mlp_name = "7scenes_stairs"
 ##################################################
         self.render_items = ['RGB', 'Depth', 'Edge', 'Normal', 'Curvature', 'Feature Map', 'Score Map']
+        # Absolute gradient parameters
+        self.absgrad_start_iter = 500
+        self.absgrad_lr_scale = 0.05
         super().__init__(parser, "Loading Parameters", sentinel)
 
     def extract(self, args):

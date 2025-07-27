@@ -73,6 +73,7 @@ def render_gsplat(
     bg_color: torch.Tensor,
     override_color=None,
     rgb_only=False,
+    features_only=False,
     norm_feat_bf_render=True,
     near_plane=0.01,
     far_plane=10000,
@@ -82,6 +83,9 @@ def render_gsplat(
     """
     Render the 3DGS scene.
     Background tensor (bg_color) must be on GPU!
+    
+    Args:
+        features_only: If True, only render feature and score maps, skip RGB rendering
     """
     means3D = pc.get_xyz
     opacity = pc.get_opacity
@@ -118,80 +122,162 @@ def render_gsplat(
         device="cuda",
     )
 
-    # render color
-    render_colors, render_alphas, info = rasterization(
-        means=means3D,  # [N, 3]
-        quats=rotations,  # [N, 4]
-        scales=scales,  # [N, 3]
-        opacities=opacity.squeeze(-1),  # [N,]
-        colors=colors,
-        viewmats=viewmat[None],  # [1, 4, 4]
-        Ks=K[None],  # [1, 3, 3]
-        backgrounds=bg_color[None],
-        width=width,
-        height=height,
-        packed=False,
-        sh_degree=sh_degree,
-        near_plane=near_plane,
-        far_plane=far_plane,
-        **rasterize_args
-    )
-    # [1, H, W, 3] -> [3, H, W]
-    rendered_image = render_colors[0].permute(2, 0, 1)
-    color = rendered_image
-    radii = info["radii"].squeeze(0)  # [N, 2]
-    radii = torch.square(radii[:, 0]) + torch.square(radii[:, 1]) # [N,]
-    visible_mask = radii > 0
+    # Initialize return values
+    color = None
+    radii = None
+    visible_mask = None
+    render_alphas = None
+    info = None
 
-    try:
-        info["means2d"].retain_grad()  # [1, N, 2]
-    except:
+    # render color (skip if features_only is True)
+    if not features_only:
+        render_colors, render_alphas, info = rasterization(
+            means=means3D,  # [N, 3]
+            quats=rotations,  # [N, 4]
+            scales=scales,  # [N, 3]
+            opacities=opacity.squeeze(-1),  # [N,]
+            colors=colors,
+            viewmats=viewmat[None],  # [1, 4, 4]
+            Ks=K[None],  # [1, 3, 3]
+            backgrounds=bg_color[None],
+            width=width,
+            height=height,
+            packed=False,
+            sh_degree=sh_degree,
+            near_plane=near_plane,
+            far_plane=far_plane,
+            **rasterize_args
+        )
+        # [1, H, W, 3] -> [3, H, W]
+        rendered_image = render_colors[0].permute(2, 0, 1)
+        color = rendered_image
+        radii = info["radii"].squeeze(0)  # [N, 2]
+        radii = torch.square(radii[:, 0]) + torch.square(radii[:, 1]) # [N,]
+        visible_mask = radii > 0
+
+        try:
+            info["means2d"].retain_grad()  # [1, N, 2]
+        except:
+            pass
+    else:
+        # In features_only mode, radii and visible_mask will be set in feature rendering
         pass
-
     # render feature and score maps
     if rgb_only is False:
-        loc_feature = pc.get_loc_feature[visible_mask].squeeze()
-        score_feature = pc.get_loc_score[visible_mask].squeeze()
-        if norm_feat_bf_render:
-            loc_feature = F.normalize(loc_feature, p=2, dim=-1)
+        # In features_only mode, use feature rendering for visibility
+        if features_only:
+            # Use feature rendering to determine visibility and viewspace points
+            loc_feature = pc.get_semantic_feature.squeeze()
+            if norm_feat_bf_render:
+                loc_feature = F.normalize(loc_feature, p=2, dim=-1)
 
-        feat_map, alphas, meta = rasterization(
-            means=means3D[visible_mask],  # [N, 3]
-            quats=rotations[visible_mask],  # [N, 4]
-            scales=scales[visible_mask],  # [N, 3]
-            opacities=opacity.squeeze(-1)[visible_mask],  # [N,]
-            colors=loc_feature,
-            viewmats=viewmat[None],  # [1, 4, 4]
-            Ks=K[None],  # [1, 3, 3]
-            width=width,
-            height=height,
-            packed=False,
-            near_plane=near_plane,
-            far_plane=far_plane,
-            **rasterize_args
-        )
-        feat_map = feat_map[0].permute(2, 0, 1)
-        feat_map = F.normalize(feat_map, p=2, dim=0)
+            feat_map, render_alphas, info = rasterization(
+                means=means3D,  # [N, 3]
+                quats=rotations,  # [N, 4]
+                scales=scales,  # [N, 3]
+                opacities=opacity.squeeze(-1),  # [N,]
+                colors=loc_feature,
+                viewmats=viewmat[None],  # [1, 4, 4]
+                Ks=K[None],  # [1, 3, 3]
+                width=width,
+                height=height,
+                packed=False,
+                near_plane=near_plane,
+                far_plane=far_plane,
+                **rasterize_args
+            )
+            feat_map = feat_map[0].permute(2, 0, 1)
+            feat_map = F.normalize(feat_map, p=2, dim=0)
+            
+            # Get visibility info from feature rendering
+            radii = info["radii"].squeeze(0)  # [N, 2]
+            radii = torch.square(radii[:, 0]) + torch.square(radii[:, 1]) # [N,]
+            visible_mask = radii > 0
+            
+            # Create dummy RGB output
+            color = torch.zeros(3, height, width, device="cuda")
+            
+            # Render score map using the same visible gaussians
+            score_feature = pc.get_score_feature[visible_mask].squeeze()
+            score_map, alphas, meta = rasterization(
+                means=means3D[visible_mask],  # [N, 3]
+                quats=rotations[visible_mask],  # [N, 4]
+                scales=scales[visible_mask],  # [N, 3]
+                opacities=opacity.squeeze(-1)[visible_mask],  # [N,]
+                colors=score_feature.unsqueeze(-1),
+                viewmats=viewmat[None],  # [1, 4, 4]
+                Ks=K[None],  # [1, 3, 3]
+                width=width,
+                height=height,
+                packed=False,
+                near_plane=near_plane,
+                far_plane=far_plane,
+                **rasterize_args
+            )
+            score_map = score_map[0].permute(2, 0, 1)
+            
+            try:
+                info["means2d"].retain_grad()  # [1, N, 2]
+            except:
+                pass
+        else:
+            # Standard mode: render features using visibility from RGB rendering
+            loc_feature = pc.get_semantic_feature[visible_mask].squeeze()
+            score_feature = pc.get_score_feature[visible_mask].squeeze()
+            if norm_feat_bf_render:
+                loc_feature = F.normalize(loc_feature, p=2, dim=-1)
 
-        score_map, alphas, meta = rasterization(
-            means=means3D[visible_mask],  # [N, 3]
-            quats=rotations[visible_mask],  # [N, 4]
-            scales=scales[visible_mask],  # [N, 3]
-            opacities=opacity.squeeze(-1)[visible_mask],  # [N,]
-            colors=score_feature.unsqueeze(-1),
-            viewmats=viewmat[None],  # [1, 4, 4]
-            Ks=K[None],  # [1, 3, 3]
-            width=width,
-            height=height,
-            packed=False,
-            near_plane=near_plane,
-            far_plane=far_plane,
-            **rasterize_args
-        )
-        score_map = score_map[0].permute(2, 0, 1)
+            feat_map, alphas, meta = rasterization(
+                means=means3D[visible_mask],  # [N, 3]
+                quats=rotations[visible_mask],  # [N, 4]
+                scales=scales[visible_mask],  # [N, 3]
+                opacities=opacity.squeeze(-1)[visible_mask],  # [N,]
+                colors=loc_feature,
+                viewmats=viewmat[None],  # [1, 4, 4]
+                Ks=K[None],  # [1, 3, 3]
+                width=width,
+                height=height,
+                packed=False,
+                near_plane=near_plane,
+                far_plane=far_plane,
+                **rasterize_args
+            )
+            feat_map = feat_map[0].permute(2, 0, 1)
+            feat_map = F.normalize(feat_map, p=2, dim=0)
+
+            score_map, alphas, meta = rasterization(
+                means=means3D[visible_mask],  # [N, 3]
+                quats=rotations[visible_mask],  # [N, 4]
+                scales=scales[visible_mask],  # [N, 3]
+                opacities=opacity.squeeze(-1)[visible_mask],  # [N,]
+                colors=score_feature.unsqueeze(-1),
+                viewmats=viewmat[None],  # [1, 4, 4]
+                Ks=K[None],  # [1, 3, 3]
+                width=width,
+                height=height,
+                packed=False,
+                near_plane=near_plane,
+                far_plane=far_plane,
+                **rasterize_args
+            )
+            score_map = score_map[0].permute(2, 0, 1)
+
+            try: 
+                meta["means2d"].retain_grad()  # [1, N, 2]
+            except:
+                pass
     else:
         feat_map = None
         score_map = None
+        
+        # If features_only but rgb_only is True, we need to initialize missing values
+        if features_only:
+            color = torch.zeros(3, height, width, device="cuda")
+            radii = torch.zeros(means3D.shape[0], device="cuda")
+            visible_mask = torch.zeros(means3D.shape[0], dtype=torch.bool, device="cuda")
+            render_alphas = torch.zeros(1, height, width, 1, device="cuda")
+            # Create minimal info dict
+            info = {"means2d": torch.zeros(1, means3D.shape[0], 2, device="cuda")}
 
     return {
         "render": color,
@@ -214,6 +300,7 @@ def render_from_pose_gsplat(
     bg_color=None,
     render_mode="RGB+ED",
     rgb_only=False,
+    features_only=False,
     norm_feat_bf_render=True,
     near_plane=0.01,
     far_plane=10000,
@@ -245,43 +332,84 @@ def render_from_pose_gsplat(
     if bg_color is None:
         bg_color = torch.zeros(3, device="cuda")
 
-    render_colors, render_alphas, info = rasterization(
-        means=means3D,  # [N, 3]
-        quats=rotations,  # [N, 4]
-        scales=scales,  # [N, 3]
-        opacities=opacity.squeeze(-1),  # [N,]
-        colors=colors,
-        viewmats=pose[None],  # [1, 4, 4]
-        Ks=K[None],  # [1, 3, 3]
-        backgrounds=bg_color[None],
-        width=int(width),
-        height=int(height),
-        packed=False,
-        sh_degree=sh_degree,
-        near_plane=near_plane,
-        far_plane=far_plane,
-        render_mode=render_mode,
-        **rasterize_args
-    )
-    # [1, H, W, 3] -> [3, H, W]
-    rendered_image = render_colors[0].permute(2, 0, 1)
-    color = rendered_image[:3]
-    if rendered_image.shape[0] == 4:
-        depth = rendered_image[3:]
-    else:
-        depth = None
-    radii = info["radii"].squeeze(0)  # [N, 2]
-    radii = torch.square(radii[:, 0]) + torch.square(radii[:, 1]) # [N,]
-    visible_mask = radii > 0
+    # Initialize return values
+    color = None
+    depth = None
+    radii = None
+    visible_mask = None
+    render_alphas = None
+    info = None
 
-    try:
-        info["means2d"].retain_grad()  # [1, N, 2]
-    except:
-        pass
+    # render color (skip if features_only is True)
+    if not features_only:
+        render_colors, render_alphas, info = rasterization(
+            means=means3D,  # [N, 3]
+            quats=rotations,  # [N, 4]
+            scales=scales,  # [N, 3]
+            opacities=opacity.squeeze(-1),  # [N,]
+            colors=colors,
+            viewmats=pose[None],  # [1, 4, 4]
+            Ks=K[None],  # [1, 3, 3]
+            backgrounds=bg_color[None],
+            width=int(width),
+            height=int(height),
+            packed=False,
+            sh_degree=sh_degree,
+            near_plane=near_plane,
+            far_plane=far_plane,
+            render_mode=render_mode,
+            **rasterize_args
+        )
+        # [1, H, W, 3] -> [3, H, W]
+        rendered_image = render_colors[0].permute(2, 0, 1)
+        color = rendered_image[:3]
+        if rendered_image.shape[0] == 4:
+            depth = rendered_image[3:]
+        else:
+            depth = None
+        radii = info["radii"].squeeze(0)  # [N, 2]
+        radii = torch.square(radii[:, 0]) + torch.square(radii[:, 1]) # [N,]
+        visible_mask = radii > 0
+
+        try:
+            info["means2d"].retain_grad()  # [1, N, 2]
+        except:
+            pass
+    else:
+        # For features_only mode, we need to do a minimal render to get visibility info
+        dummy_colors = torch.zeros(means3D.shape[0], 1, device=means3D.device)
+        dummy_bg = torch.zeros(1, device="cuda")  # Single channel background for dummy colors
+        render_colors, render_alphas, info = rasterization(
+            means=means3D,  # [N, 3]
+            quats=rotations,  # [N, 4]
+            scales=scales,  # [N, 3]
+            opacities=opacity.squeeze(-1),  # [N,]
+            colors=dummy_colors,
+            viewmats=pose[None],  # [1, 4, 4]
+            Ks=K[None],  # [1, 3, 3]
+            backgrounds=dummy_bg[None],  # [1, 1] to match single channel
+            width=int(width),
+            height=int(height),
+            packed=False,
+            near_plane=near_plane,
+            far_plane=far_plane,
+            **rasterize_args
+        )
+        # Create dummy outputs
+        color = torch.zeros(3, int(height), int(width), device="cuda")
+        depth = None
+        radii = info["radii"].squeeze(0)  # [N, 2]
+        radii = torch.square(radii[:, 0]) + torch.square(radii[:, 1]) # [N,]
+        visible_mask = radii > 0
+
+        try:
+            info["means2d"].retain_grad()  # [1, N, 2]
+        except:
+            pass
 
     if rgb_only is False:
-        loc_feature = pc.get_loc_feature[visible_mask].squeeze()
-        score_feature = pc.get_loc_score[visible_mask]
+        loc_feature = pc.get_semantic_feature[visible_mask].squeeze(1)
+        score_feature = pc.get_score_feature[visible_mask].squeeze(1)
         if norm_feat_bf_render:
             loc_feature = F.normalize(loc_feature, p=2, dim=-1)
 
@@ -318,16 +446,31 @@ def render_from_pose_gsplat(
             far_plane=far_plane,
             **rasterize_args
         )
+        score_map = score_map[0].permute(2, 0, 1)
+
+        try:
+            meta["means2d"].retain_grad()  # [1, N, 2]
+        except:
+            pass
     else:
         feat_map = None
+        score_map = None
 
     # Those Gaussians that were frustum culled or had a radius of 0 were not visible.
     # They will be excluded from value updates used in the splitting criteria.
+    viewspace_points = info["means2d"]
+    if not rgb_only and not features_only:
+        # Use meta from feature rendering if available
+        try:
+            viewspace_points = meta["means2d"]
+        except:
+            pass
+    
     return {
         "render": color,
         "score_map": score_map,
         "feature_map": feat_map,
-        "viewspace_points": info["means2d"],
+        "viewspace_points": viewspace_points,
         "visibility_filter": radii > 0,
         "radii": radii,
         "alphas": render_alphas,
@@ -389,7 +532,7 @@ def update_learning_rates(optimizers: Dict[str, torch.optim.Optimizer], iteratio
 
 
 def render_with_gsplat(viewpoint_cam, params: Dict[str, torch.nn.Parameter], background, 
-                      rgb_only=False, norm_feat_bf_render=True, **kwargs):
+                      rgb_only=False, features_only=False, norm_feat_bf_render=True, **kwargs):
     """Render using gsplat rasterization"""
     # Prepare camera parameters
     width, height = viewpoint_cam.image_width, viewpoint_cam.image_height
@@ -410,25 +553,50 @@ def render_with_gsplat(viewpoint_cam, params: Dict[str, torch.nn.Parameter], bac
     sh_degree = 3  # Assuming max SH degree is 3
     colors = torch.cat([params["sh0"], params["shN"]], dim=1)
     
-    # Render RGB
-    render_colors, render_alphas, info = rasterization(
-        means=params["means"],
-        quats=params["quats"],
-        scales=params["scales"],
-        opacities=params["opacities"],
-        colors=colors,
-        viewmats=viewmat[None],
-        Ks=K[None],
-        backgrounds=background[None] if background is not None else None,
-        width=width,
-        height=height,
-        packed=False,
-        sh_degree=sh_degree,
-        **kwargs
-    )
+    # Initialize return values
+    rendered_image = None
+    render_alphas = None
+    info = None
     
-    # Convert output format: [1, H, W, 3] -> [3, H, W]
-    rendered_image = render_colors[0].permute(2, 0, 1)
+    # Render RGB (skip if features_only is True)
+    if not features_only:
+        render_colors, render_alphas, info = rasterization(
+            means=params["means"],
+            quats=params["quats"],
+            scales=params["scales"],
+            opacities=params["opacities"],
+            colors=colors,
+            viewmats=viewmat[None],
+            Ks=K[None],
+            backgrounds=background[None] if background is not None else None,
+            width=width,
+            height=height,
+            packed=False,
+            sh_degree=sh_degree,
+            **kwargs
+        )
+        # Convert output format: [1, H, W, 3] -> [3, H, W]
+        rendered_image = render_colors[0].permute(2, 0, 1)
+    else:
+        # For features_only mode, we need to do a minimal render to get visibility info
+        dummy_colors = torch.zeros(params["means"].shape[0], 1, device=params["means"].device)
+        dummy_bg = torch.zeros(1, device="cuda")  # Single channel background for dummy colors
+        render_colors, render_alphas, info = rasterization(
+            means=params["means"],
+            quats=params["quats"],
+            scales=params["scales"],
+            opacities=params["opacities"],
+            colors=dummy_colors,
+            viewmats=viewmat[None],
+            Ks=K[None],
+            backgrounds=dummy_bg[None],  # [1, 1] to match single channel
+            width=width,
+            height=height,
+            packed=False,
+            **kwargs
+        )
+        # Create dummy RGB image
+        rendered_image = torch.zeros(3, height, width, device="cuda")
     
     # Calculate visibility filter
     radii = info["radii"].squeeze(0)
@@ -447,8 +615,8 @@ def render_with_gsplat(viewpoint_cam, params: Dict[str, torch.nn.Parameter], bac
         # Render feature map
         visible_indices = visibility_filter
         if visible_indices.sum() > 0:
-            loc_feature = params["loc_feature"][visible_indices]
-            score_feature = params["score_feature"][visible_indices]
+            loc_feature = params["loc_feature"][visible_indices].squeeze(1)
+            score_feature = params["score_feature"][visible_indices].squeeze(1)
             
             if norm_feat_bf_render:
                 loc_feature = F.normalize(loc_feature, p=2, dim=-1)

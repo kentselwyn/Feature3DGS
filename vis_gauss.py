@@ -5,7 +5,7 @@ import open3d as o3d
 from scene import Scene
 from scene.gaussian.gaussian_model_score import GaussianModel as Gauss_score
 from scene.gaussian.gaussian_model_feature import GaussianModel as GaussianModelFeature
-from Feature3DGS.gaussian_renderer.__init__edit import render
+from gaussian_renderer import render_gsplat
 ###################################################
 from argparse import ArgumentParser
 from arguments import ModelParams, PipelineParams, get_combined_args
@@ -75,7 +75,7 @@ if __name__=="__main__":
     background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
     gaussians = GaussianModelFeature(3)
     scene = Scene(Model_param.extract(args), gaussians, shuffle=False, view_num=args.view_num, 
-                      load_feature=True, load_iteration=args.iteration, load_ply_with_feature_trained=True)
+                      load_feature=True, load_iteration=args.iteration)
     
     conf = {
         "sparse_outputs": True,
@@ -91,8 +91,8 @@ if __name__=="__main__":
 
     views = scene.getTestCameras()
 
-    out_path = f"/home/koki/code/cc/feature_3dgs_2/tmp/imgs/vis_feat"
-    out_path_gt = "/home/koki/code/cc/feature_3dgs_2/tmp/imgs/vis_feat_gt"
+    out_path = os.path.join(args.model_path, "viz_preds")
+    out_path_gt = os.path.join(args.model_path, "viz_gt")
     if args.render_score:
         out_path   +="_score"
         out_path_gt+="_score"
@@ -113,7 +113,7 @@ if __name__=="__main__":
 
     with torch.no_grad():
         for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
-            render_pkg = render(view, gaussians, Pipe_param.extract(args), background)
+            render_pkg = render_gsplat(view, gaussians, background, rgb_only=False)
 
             if args.render_score:
                 score_map = render_pkg['score_map']
@@ -137,11 +137,11 @@ if __name__=="__main__":
                 Image.fromarray((gt_feature_map_vis.cpu().numpy() * 255).astype(np.uint8)).save(os.path.join(
                     f"{out_path_gt}/{view.image_name}.png"))
         if args.render_match:
-            pkg0 = render(views[0], gaussians, Pipe_param.extract(args), background)
+            pkg0 = render_gsplat(views[0], gaussians, background, rgb_only=False)
             for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
                 if idx==0:
                     continue
-                pkg1 = render(view, gaussians, Pipe_param.extract(args), background)
+                pkg1 = render_gsplat(view, gaussians, background, rgb_only=False)
                 s0, s1, f0, f1 = pkg0['score_map'], pkg1['score_map'], \
                                     pkg0['feature_map'], pkg1['feature_map']
                 

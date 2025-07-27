@@ -17,7 +17,7 @@ from scene.gaussian.gaussian_model import GaussianModel
 from torch.utils.data import DataLoader
 from utils.graphics_utils import fov2focal
 from utils.loc.depth import project_2d_to_3d
-from gaussian_renderer.__init__loc import render
+from gaussian_renderer import render_gsplat
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from utils.loc.pycolmap_utils import opencv_to_pycolmap_pnp
@@ -117,7 +117,7 @@ def localize_set(args,
                 gt_extrinsic_matrix = view.extrinsic_matrix
                 ########################################################
                 if args.match_type==3 or args.match_type==4 or (args.save_render_img is not None):
-                    render_pkg0 = render(view, gaussians, pipe_param, background)
+                    render_pkg0 = render_gsplat(view, gaussians, background, rgb_only=False)
                 ########################################################
                 out_R = out_pose[0:3, 0:3].numpy()
                 out_t = out_pose[0:3, 3].numpy()
@@ -127,7 +127,7 @@ def localize_set(args,
                 w2c[:3, :3] = torch.from_numpy(R_inv).float()
                 w2c[:3, 3] = torch.from_numpy(t_inv).float()
                 view.update_RT(out_R, t_inv)
-                render_pkg1 = render(view, gaussians, pipe_param, background)
+                render_pkg1 = render_gsplat(view, gaussians, background, rgb_only=False)
                 ########################################################
                 gt_img0 = view.original_image[0:3, :, :].cuda().unsqueeze(0)
                 # 0 ours
@@ -203,7 +203,7 @@ def localize_set(args,
                     update_R = R_final.T
                     update_t = t_final.squeeze(-1)
                     view.update_RT(update_R, update_t)
-                    render_pkg1 = render(view, gaussians, pipe_param, background)
+                    render_pkg1 = render_gsplat(view, gaussians, background, rgb_only=False)
                     # gt_img0, render_pkg1["render"], render_pkg2["render"]
                     if args.match_type==6:
                         match_012_final = loc_utils.img_match_circular(
@@ -231,7 +231,7 @@ def localize_set(args,
                         update_R = R_third.T
                         update_t = t_third.squeeze(-1)
                         view.update_RT(update_R, update_t)
-                        render_pkg1 = render(view, gaussians, pipe_param, background)
+                        render_pkg1 = render_gsplat(view, gaussians, background, rgb_only=False)
                         match_012_final = loc_utils.img_match_rival(gt_img0, render_pkg1["render"].unsqueeze(0), 
                                                        encoder, matcher)
                         result = match_012_final
@@ -285,7 +285,7 @@ def localize_set(args,
                     update_t = t_final.squeeze(-1)
                     new_view = copy.deepcopy(view)
                     new_view.update_RT(update_R, update_t)
-                    render_pkg_final = render(new_view, gaussians, pipe_param, background)
+                    render_pkg_final = render_gsplat(new_view, gaussians, background, rgb_only=False)
                     render_img_final = render_pkg_final["render"].permute(1, 2, 0)
                     ################
                     top = torch.cat((gt_img, render_img_gt), dim=1)

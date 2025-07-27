@@ -427,6 +427,38 @@ class GaussianModel:
         self.prune_points(prune_mask)
         torch.cuda.empty_cache()
 
-    def add_densification_stats(self, viewspace_point_tensor, update_filter):
-        self.xyz_gradient_accum[update_filter] += torch.norm(viewspace_point_tensor.grad[update_filter,:2], dim=-1, keepdim=True)
+    def add_densification_stats(self, viewspace_point_tensor, update_filter, width, height):
+        grad = viewspace_point_tensor.grad.squeeze(0) # [N, 2]
+        # Normalize the gradient to [-1, 1] screen size
+        grad[:, 0] *= width * 0.5
+        grad[:, 1] *= height * 0.5
+        self.xyz_gradient_accum[update_filter] += torch.norm(grad[update_filter], dim=-1, keepdim=True)
         self.denom[update_filter] += 1
+        
+    def apply_abs_grad_step(self, lr_scale=0.1):
+        """
+        Apply absolute positional gradients to move Gaussians.
+        This directly updates positions based on the absolute value of gradients
+        without using the optimizer.
+        
+        Args:
+            lr_scale: Scale factor to control the step size
+        """
+        if not hasattr(self._xyz, 'grad') or self._xyz.grad is None:
+            return
+            
+        with torch.no_grad():
+            # Get absolute gradients
+            abs_grad = torch.abs(self._xyz.grad)
+            
+            # Normalize to prevent extreme movements
+            grad_norm = torch.norm(abs_grad, dim=1, keepdim=True)
+            grad_norm = torch.clamp(grad_norm, min=1e-10)  # Avoid division by zero
+            normalized_grad = abs_grad / grad_norm
+            
+            # Apply step (move in the direction of the absolute gradient)
+            step_size = lr_scale * self.spatial_lr_scale
+            self._xyz.data += step_size * normalized_grad
+            
+            # Zero out the xyz gradients to prevent double update when optimizer.step() is called
+            self._xyz.grad.zero_()

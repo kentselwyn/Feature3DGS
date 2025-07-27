@@ -7,7 +7,7 @@ import torch
 import pickle
 import open3d as o3d
 from typing import Tuple
-from matchers.LoFTR.utils.utils import rgb2loftrgray
+# from matchers.LoFTR.utils.utils import rgb2loftrgray
 import torch.nn.functional as F
 from utils.match.match_img import sample_descriptors_fix_sampling, \
                                     find_small_circle_centers
@@ -274,34 +274,34 @@ def img_match_mast3r(img0, img1, model, K, depth_map, w2c, gt_pose_44):
     return refine_rot_error, refine_translation_error
 
 
-def img_match_loftr(img0, img1, matcher):
-    img0 = rgb2loftrgray(img0.squeeze(0))
-    img1 = rgb2loftrgray(img1)
-    batch = {'image0':img0, 'image1': img1}
-    matcher(batch)
-    mkpts0 = batch['mkpts0_f']
-    mkpts1 = batch['mkpts1_f']
-    mconf = batch['mconf']
-    batch["mkpt0"] = batch['mkpts0_f']
-    batch["mkpt1"] = batch['mkpts1_f']
-    batch["img0"] = (img0.cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
-    batch["img1"] = (img1["render"].cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
+# def img_match_loftr(img0, img1, matcher):
+#     img0 = rgb2loftrgray(img0.squeeze(0))
+#     img1 = rgb2loftrgray(img1)
+#     batch = {'image0':img0, 'image1': img1}
+#     matcher(batch)
+#     mkpts0 = batch['mkpts0_f']
+#     mkpts1 = batch['mkpts1_f']
+#     mconf = batch['mconf']
+#     batch["mkpt0"] = batch['mkpts0_f']
+#     batch["mkpt1"] = batch['mkpts1_f']
+#     batch["img0"] = (img0.cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
+#     batch["img1"] = (img1["render"].cpu().detach().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
 
 
-def img_match_aspan(img0, img1, matcher):
-    st = time.time()
-    matcher_name = "ASpanFormer"
-    with torch.no_grad():
-        img0 = rgb2loftrgray(img0.squeeze(0))
-        img1 = rgb2loftrgray(img1)
-        data = {
-            "img0": img0.cuda(),
-            "img1": img1.cuda(),
-        }
-        print("time1:", time.time()-st)
-        semi_img_match(data, matcher)
-        print("time2:", time.time()-st)
-    return data
+# def img_match_aspan(img0, img1, matcher):
+#     st = time.time()
+#     matcher_name = "ASpanFormer"
+#     with torch.no_grad():
+#         img0 = rgb2loftrgray(img0.squeeze(0))
+#         img1 = rgb2loftrgray(img1)
+#         data = {
+#             "img0": img0.cuda(),
+#             "img1": img1.cuda(),
+#         }
+#         print("time1:", time.time()-st)
+#         semi_img_match(data, matcher)
+#         print("time2:", time.time()-st)
+#     return data
 
 
 
@@ -339,8 +339,9 @@ def img_match_ours(args,
     kpt1 = find_small_circle_centers(scoremap1, threshold=kpt_th, kernel_size=args.kernel_size)
     if kpt1.shape[0] == 0:
         return None
+    scoremap1 = scoremap1.squeeze(0)
     kpt1 = kpt1.clone().detach()[:, [1, 0]].to(scoremap1)
-    _, h, w = scoremap1.shape
+    h, w = scoremap1.shape
     scale = torch.tensor([w, h]).to(scoremap1)
     #######################################
     feat1 = sample_descriptors_fix_sampling(kpt1, featmap1, scale)

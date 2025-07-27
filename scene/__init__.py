@@ -16,7 +16,7 @@ import scene.dataset_readers as dataset_readers
 from utils.system_utils import searchForMaxIteration
 from scene.camera_utils import cameraList_from_camInfos, camera_to_JSON
 from encoders.superpoint.superpoint import SuperPoint
-from mlp.mlp import get_mlp_new
+from mlp.mlp import get_mlp_dataset
 
 class Scene:
     def __init__(self, args:ModelParams, gaussians, load_iteration=None, 
@@ -78,7 +78,7 @@ class Scene:
             "detection_threshold": float(args.detect_th),
         }
         encoder = SuperPoint(conf).cuda().eval()
-        mlp = get_mlp_new(dim=args.mlp_dim, name=args.mlp_name).cuda().eval()
+        mlp = get_mlp_dataset(dim=args.mlp_dim, dataset=args.mlp_name).cuda().eval()
         self.encoder = encoder
         self.mlp = mlp
 

@@ -8,12 +8,15 @@ from scene import Scene
 from utils.match.match_img import save_matchimg
 from utils.graphics_utils import fov2focal
 from utils.loc.depth import project_2d_to_3d
-from gaussian_renderer.__init__loc import render
+from gaussian_renderer import render_from_pose_gsplat
 from matchers.lightglue import LightGlue
 from encoders.superpoint.superpoint import SuperPoint
 from arguments import ModelParams, PipelineParams, get_combined_args
 from mlp.mlp import get_mlp_model, get_mlp_dataset, get_mlp_augment
+from tqdm import tqdm
 
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 def choose_th(score, histogram_th):
     score_flat = score.flatten()
@@ -59,7 +62,10 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background, arg
         match_folder = f'{model_path}/match_imgs/{test_name}'
         os.makedirs(match_folder, exist_ok=True)
 
-    for index, _ in enumerate(views):
+    # Create progress bar for localization
+    pbar = tqdm(enumerate(views), total=len(views), desc="Localizing")
+    
+    for index, _ in pbar:
         view = views[index]
         start = time.time()
         gt_im = view.original_image[0:3, :, :].cuda().unsqueeze(0)
@@ -69,7 +75,7 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background, arg
         gt_keypoints = pred["keypoints"].squeeze(0)
         desc = pred["descriptors"].squeeze(0)
         dense_desc = pred["dense_descriptors"].squeeze(0)
-        gt_feature = mlp.decode(mlp(desc))
+        gt_feature = mlp(desc)
 
         K = np.eye(3)
         focal_length = fov2focal(view.FoVx, view.image_width)
@@ -79,7 +85,7 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background, arg
         start = time.time()
         with torch.no_grad():
             matched_3d, matched_2d = find_2d3d_correspondences(gt_keypoints.detach(), gt_feature.detach(),
-                                                                gaussian_pcd.detach(), gaussian_feat_h.detach())
+                                                                gaussian_pcd.detach(), gaussian_feat.detach())
         gt_R = view.R
         gt_t = view.T
         _, R, t, _ = cv2.solvePnPRansac(matched_3d, matched_2d, 
@@ -90,9 +96,13 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background, arg
                                         )
         R, _ = cv2.Rodrigues(R)
         rotError, transError = calculate_pose_errors(gt_R, gt_t, R.T, t)
-        print(f"{index}, {view.image_name}")
-        print(f"Rotation Error: {rotError} deg")
-        print(f"Translation Error: {transError} cm")
+        
+        # Update progress bar with initial errors
+        # pbar.set_postfix({
+        #     'Image': view.image_name,
+        #     'Initial_R_err': f'{rotError:.2f}°',
+        #     'Initial_T_err': f'{transError:.2f}cm'
+        # })
 
         # breakpoint()
 
@@ -102,7 +112,14 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background, arg
         view.update_RT(R.T, t[:,0])
 
         with torch.no_grad():
-            render_pkg = render(view, gaussians, pipe_param, background)
+            # Extract pose matrix and camera parameters for render_from_pose_gsplat
+            pose = view.world_view_transform.transpose(0, 1).cuda()  # Convert to world-to-camera matrix
+            fovx = view.FoVx
+            fovy = view.FoVy
+            width = view.image_width
+            height = view.image_height
+            render_pkg = render_from_pose_gsplat(gaussians, pose, fovx, fovy, width, height, 
+                                               bg_color=background, rgb_only=False)
         
         db_render = render_pkg["render"]
         db_score = render_pkg["score_map"]
@@ -110,18 +127,30 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background, arg
         db_depth = render_pkg["depth"]
         query_render = gt_im
 
-        result = match_img(query_render, db_score, db_feature, encoder, matcher, mlp, args)
+        result = img_match_ours(args, query_render, db_score, db_feature, encoder, matcher, mlp)
         if result is None:
             prior_rErr.append(rotError)
             prior_tErr.append(transError)
             rErrs.append(rotError)
             tErrs.append(transError)
+            pbar.set_postfix({
+                #'Image': view.image_name,
+                'I_AE': f'{rotError:.2f}°',
+                'I_TE': f'{transError:.2f}cm',
+                'Status': 'No matches'
+            })
             continue
         if not len(result['mkpt1'].cpu())>4:
             prior_rErr.append(rotError)
             prior_tErr.append(transError)
             rErrs.append(rotError)
             tErrs.append(transError)
+            pbar.set_postfix({
+                #'Image': view.image_name,
+                'AE': f'{rotError:.2f}°',
+                'TE': f'{transError:.2f}cm',
+                'Status': 'Insufficient matches'
+            })
             continue
 
         result['img0'] = gt_im.squeeze(0).permute(1, 2, 0)
@@ -138,23 +167,109 @@ def localize_set(model_path, name, views, gaussians, pipe_param, background, arg
         R_final, _ = cv2.Rodrigues(R_final)
         rotError_final, transError_final = calculate_pose_errors(gt_R, gt_t, R_final.T, t_final)
 
-        # Print the errors
-        print(f"Final Rotation Error: {rotError_final} deg")
-        print(f"Final Translation Error: {transError_final} cm")
-        print(f"elapsed time: {time.time()-start}")
+        # Update progress bar with final errors
+        elapsed_time = time.time() - start
+        pbar.set_postfix({
+            # 'Image': view.image_name,                
+            'I_AE': f'{rotError:.2f}°',
+            'I_TE': f'{transError:.2f}cm',
+            'F_AE': f'{rotError_final:.2f}°',
+            'F_TE': f'{transError_final:.2f}cm',
+            'Time': f'{elapsed_time:.2f}s'
+        })
         
         prior_rErr.append(rotError)
         prior_tErr.append(transError)
         rErrs.append(rotError_final)
         tErrs.append(transError_final)
 
+    # Close progress bar
+    pbar.close()
+
     error_foler = f'{model_path}/error_logs/{test_name}'
     os.makedirs(error_foler, exist_ok=True)
-    print('rot len: ',len(prior_rErr))
-    print('final rot len: ', len(rErrs))
+    print(f'\nLocalization complete!')
+    print(f'Images processed: {len(prior_rErr)}')
+    print(f'Successful localizations: {len(rErrs)}')
     print()
-    log_errors(error_foler, name, prior_rErr, prior_tErr, list_text="", error_text=f"prior")
-    log_errors(error_foler, name, rErrs, tErrs, list_text="", error_text="warp")
+    log_errors(error_foler, prior_rErr, prior_tErr, list_text="", error_text=f"prior")
+    log_errors(error_foler, rErrs, tErrs, list_text="", error_text="warp")
+
+def plot_pose_error_analysis(split_errors, scene_name, output_file):
+    """Plot histogram and scatter plot analysis of pose errors, color-coded by split."""
+    fig = plt.figure(figsize=(15, 5))
+    gs = gridspec.GridSpec(1, 3, figure=fig)
+    colors = {'train': 'tab:blue', 'test': 'tab:orange'}
+    # Translation error histogram
+    ax1 = fig.add_subplot(gs[0, 0])
+    for split, (t_err, _) in split_errors.items():
+        ax1.hist(t_err, bins=50, alpha=0.6, color=colors[split], edgecolor='black', label=f'{split.capitalize()}')
+        ax1.axvline(np.mean(t_err), color=colors[split], linestyle='--', linewidth=2, label=f'{split.capitalize()} Mean: {np.mean(t_err):.3f}m')
+        ax1.axvline(np.median(t_err), color=colors[split], linestyle=':', linewidth=2, label=f'{split.capitalize()} Median: {np.median(t_err):.3f}m')
+    ax1.set_xlabel('Translation Error (m)')
+    ax1.set_ylabel('Frequency')
+    ax1.set_title('Translation Error Distribution')
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+    # Rotation error histogram
+    ax2 = fig.add_subplot(gs[0, 1])
+    for split, (_, r_err) in split_errors.items():
+        ax2.hist(r_err, bins=50, alpha=0.6, color=colors[split], edgecolor='black', label=f'{split.capitalize()}')
+        ax2.axvline(np.mean(r_err), color=colors[split], linestyle='--', linewidth=2, label=f'{split.capitalize()} Mean: {np.mean(r_err):.3f}°')
+        ax2.axvline(np.median(r_err), color=colors[split], linestyle=':', linewidth=2, label=f'{split.capitalize()} Median: {np.median(r_err):.3f}°')
+    ax2.set_xlabel('Rotation Error (degrees)')
+    ax2.set_ylabel('Frequency')
+    ax2.set_title('Rotation Error Distribution')
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+    # Translation vs Rotation scatter plot
+    ax3 = fig.add_subplot(gs[0, 2])
+    for split, (t_err, r_err) in split_errors.items():
+        ax3.scatter(t_err, r_err, alpha=0.6, color=colors[split], s=10, label=f'{split.capitalize()}')
+    ax3.set_xlabel('Translation Error (m)')
+    ax3.set_ylabel('Rotation Error (degrees)')
+    ax3.set_title('Translation vs Rotation Error')
+    ax3.legend()
+    ax3.grid(True, alpha=0.3)
+    plt.suptitle(f'Pose Error Analysis - {scene_name.upper()}', fontsize=14, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(output_file, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Pose error analysis plot saved to: {output_file}")
+
+def plot_success_rate_curves(split_errors, scene_name, output_file):
+    """Plot success rate curves vs error thresholds, color-coded by split."""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+    colors = {'train': 'tab:blue', 'test': 'tab:orange'}
+    # Translation success rate curve
+    t_thresholds = np.linspace(0, 2.5, 100)
+    for split, (t_err, _) in split_errors.items():
+        t_success_rates = [np.mean(t_err <= threshold) * 100 for threshold in t_thresholds]
+        ax1.plot(t_thresholds, t_success_rates, linewidth=2, color=colors[split], label=f'{split.capitalize()}')
+    ax1.set_xlabel('Translation Error Threshold (m)')
+    ax1.set_ylabel('Success Rate (%)')
+    ax1.set_title('Translation Success Rate vs Threshold')
+    ax1.grid(True, alpha=0.3)
+    ax1.set_xlim(0, 2.5)
+    ax1.set_ylim(0, 100)
+    ax1.legend()
+    # Rotation success rate curve
+    r_thresholds = np.linspace(0, 90, 100)
+    for split, (_, r_err) in split_errors.items():
+        r_success_rates = [np.mean(r_err <= threshold) * 100 for threshold in r_thresholds]
+        ax2.plot(r_thresholds, r_success_rates, linewidth=2, color=colors[split], label=f'{split.capitalize()}')
+    ax2.set_xlabel('Rotation Error Threshold (degrees)')
+    ax2.set_ylabel('Success Rate (%)')
+    ax2.set_title('Rotation Success Rate vs Threshold')
+    ax2.grid(True, alpha=0.3)
+    ax2.set_xlim(0, 90)
+    ax2.set_ylim(0, 100)
+    ax2.legend()
+    plt.suptitle(f'Success Rate Curves - {scene_name.upper()}', fontsize=14, fontweight='bold')
+    plt.tight_layout()
+    plt.savefig(output_file, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Success rate curves plot saved to: {output_file}")
 
 
 def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
@@ -174,6 +289,8 @@ def localize(model_param:ModelParams, pipe_param:PipelineParams, args):
                  gaussians, pipe_param, background, args, encoder, matcher)
 
 
+
+
 if __name__ == "__main__":
     # Set up command line argument parser
     parser = ArgumentParser(description="Testing script parameters")
@@ -181,7 +298,7 @@ if __name__ == "__main__":
     Pipe_param = PipelineParams(parser)
     parser.add_argument("--iteration", default=-1, type=int)
     parser.add_argument("--ransac_iters", default=20000, type=int)
-    parser.add_argument("--mlp_dim", required=True, type=int)
+    # parser.add_argument("--mlp_dim", required=True, type=int)
     parser.add_argument("--mlp_method", required=True, type=str)
     parser.add_argument("--save_match", action='store_true', help='Save match if this flag is provided.')
     parser.add_argument("--sp_th", default=0.01, type=float)
